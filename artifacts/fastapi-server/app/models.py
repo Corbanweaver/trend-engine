@@ -20,7 +20,38 @@ class IngestResponse(BaseModel):
 
 class IdeasRequest(BaseModel):
     text: str
+    niche: str = "fitness"
+
+
+class VideoIdea(BaseModel):
+    hook: str
+    angle: str
+    idea: str
 
 
 class IdeasResponse(BaseModel):
-    ideas: list[str]
+    ideas: list[VideoIdea]
+
+
+class TrendTopic(BaseModel):
+    topic: str
+    count: int
+    total_engagement: int
+
+
+class TrendsResponse(BaseModel):
+    trends: list[TrendTopic]
+
+
+class TrendIdea(BaseModel):
+    trend: str
+    ideas: list[VideoIdea]
+
+
+class TrendIdeasRequest(BaseModel):
+    niche: str = "fitness"
+
+
+class TrendIdeasResponse(BaseModel):
+    niche: str
+    trend_ideas: list[TrendIdea]

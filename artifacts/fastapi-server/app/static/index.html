@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Engine — Viral Video Ideas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .controls select,
+        .controls input,
+        .controls button {
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            font-size: 0.95rem;
+        }
+
+        .controls select { min-width: 160px; }
+        .controls input { flex: 1; min-width: 200px; }
+
+        .controls button {
+            background: #5b4cff;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            padding: 12px 24px;
+            transition: background 0.2s;
+        }
+
+        .controls button:hover { background: #4a3de6; }
+        .controls button:disabled { background: #333; cursor: not-allowed; }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .actions button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .actions button:hover { background: #252525; border-color: #555; }
+
+        .status {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .status.info { display: block; background: #1a2332; border: 1px solid #2a4a6b; color: #6db3f2; }
+        .status.success { display: block; background: #1a2e1a; border: 1px solid #2a6b2a; color: #6bf26d; }
+        .status.error { display: block; background: #2e1a1a; border: 1px solid #6b2a2a; color: #f26d6d; }
+
+        .section-title {
+            font-size: 1.3rem;
+            color: #fff;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title span { font-size: 1.1rem; }
+
+        .trends {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .trend-card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+
+        .trend-card:hover { border-color: #5b4cff; }
+
+        .trend-card .topic {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 8px;
+            text-transform: capitalize;
+        }
+
+        .trend-card .meta {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .trend-group {
+            margin-bottom: 36px;
+        }
+
+        .trend-group h3 {
+            font-size: 1.1rem;
+            color: #5b4cff;
+            margin-bottom: 16px;
+            text-transform: capitalize;
+        }
+
+        .idea-card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .idea-card:hover { border-color: #444; }
+
+        .idea-card .hook {
+            font-weight: 700;
+            color: #ff6b6b;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .idea-card .angle {
+            color: #ffd93d;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+
+        .idea-card .idea-text {
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 3px solid #333;
+            border-top-color: #5b4cff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        label { font-size: 0.85rem; color: #888; margin-bottom: 4px; display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Content Engine</h1>
+            <p>Turn trending Reddit topics into viral video ideas with AI</p>
+        </header>
+
+        <div class="controls">
+            <div>
+                <label for="niche">Niche</label>
+                <select id="niche">
+                    <option value="fitness">Fitness</option>
+                    <option value="dating">Dating</option>
+                    <option value="finance">Finance</option>
+                    <option value="productivity">Productivity</option>
+                    <option value="nutrition">Nutrition</option>
+                    <option value="mental health">Mental Health</option>
+                    <option value="tech">Tech</option>
+                    <option value="custom">Custom...</option>
+                </select>
+            </div>
+            <div style="flex:1; display:none;" id="custom-niche-wrap">
+                <label for="custom-niche">Your niche</label>
+                <input type="text" id="custom-niche" placeholder="e.g. crypto, cooking, parenting">
+            </div>
+            <div style="flex:1;">
+                <label for="topic-input">Topic (optional)</label>
+                <input type="text" id="topic-input" placeholder="e.g. cold plunge benefits, creatine myths">
+            </div>
+            <div style="display:flex; align-items:flex-end;">
+                <button id="generate-btn" onclick="generateIdeas()">Generate Ideas</button>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button onclick="ingestReddit()">Pull Latest Reddit Posts</button>
+            <button onclick="loadTrends()">View Trends</button>
+            <button onclick="loadTrendIdeas()">Trends + Ideas</button>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <div id="trends-section" style="display:none;">
+            <div class="section-title"><span>Trending Topics</span></div>
+            <div class="trends" id="trends-grid"></div>
+        </div>
+
+        <div id="ideas-section" style="display:none;">
+            <div class="section-title"><span>Video Ideas</span></div>
+            <div id="ideas-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const nicheSelect = document.getElementById('niche');
+        const customWrap = document.getElementById('custom-niche-wrap');
+        const customInput = document.getElementById('custom-niche');
+
+        nicheSelect.addEventListener('change', () => {
+            customWrap.style.display = nicheSelect.value === 'custom' ? 'block' : 'none';
+        });
+
+        function getNiche() {
+            return nicheSelect.value === 'custom' ? customInput.value || 'fitness' : nicheSelect.value;
+        }
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('status');
+            el.textContent = msg;
+            el.className = 'status ' + type;
+        }
+
+        function hideStatus() {
+            document.getElementById('status').className = 'status';
+        }
+
+        function showLoading(sectionId) {
+            document.getElementById(sectionId).style.display = 'block';
+            const container = sectionId === 'trends-section'
+                ? document.getElementById('trends-grid')
+                : document.getElementById('ideas-list');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><div>Working on it...</div></div>';
+        }
+
+        function renderIdeaCard(idea) {
+            return `
+                <div class="idea-card">
+                    <div class="hook">${idea.hook}</div>
+                    ${idea.angle ? `<div class="angle">${idea.angle}</div>` : ''}
+                    <div class="idea-text">${idea.idea}</div>
+                </div>
+            `;
+        }
+
+        async function ingestReddit() {
+            showStatus('Pulling posts from Reddit...', 'info');
+            try {
+                const res = await fetch('/ingest/reddit', { method: 'POST' });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Failed');
+                showStatus(`Done! Ingested ${data.ingested} new posts, skipped ${data.skipped} duplicates.`, 'success');
+            } catch (e) {
+                showStatus('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function loadTrends() {
+            showLoading('trends-section');
+            hideStatus();
+            try {
+                const res = await fetch('/trends/');
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Failed');
+                const grid = document.getElementById('trends-grid');
+                if (data.trends.length === 0) {
+                    grid.innerHTML = '<div class="empty">No trends yet. Pull Reddit posts first.</div>';
+                    return;
+                }
+                grid.innerHTML = data.trends.map(t => `
+                    <div class="trend-card">
+                        <div class="topic">${t.topic}</div>
+                        <div class="meta">${t.count} mentions</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                showStatus('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function loadTrendIdeas() {
+            showLoading('trends-section');
+            showLoading('ideas-section');
+            showStatus('Generating ideas from trends... this may take a moment.', 'info');
+            try {
+                const niche = getNiche();
+                const res = await fetch('/trend-ideas/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ niche })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Failed');
+
+                const trendsGrid = document.getElementById('trends-grid');
+                trendsGrid.innerHTML = data.trend_ideas.map(ti => `
+                    <div class="trend-card">
+                        <div class="topic">${ti.trend}</div>
+                    </div>
+                `).join('');
+                document.getElementById('trends-section').style.display = 'block';
+
+                const ideasList = document.getElementById('ideas-list');
+                ideasList.innerHTML = data.trend_ideas.map(ti => `
+                    <div class="trend-group">
+                        <h3>${ti.trend}</h3>
+                        ${ti.ideas.map(renderIdeaCard).join('')}
+                    </div>
+                `).join('');
+                document.getElementById('ideas-section').style.display = 'block';
+                hideStatus();
+            } catch (e) {
+                showStatus('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function generateIdeas() {
+            const topic = document.getElementById('topic-input').value.trim();
+            if (!topic) {
+                showStatus('Enter a topic to generate ideas.', 'error');
+                return;
+            }
+            showLoading('ideas-section');
+            showStatus('Generating viral ideas...', 'info');
+            document.getElementById('generate-btn').disabled = true;
+            try {
+                const niche = getNiche();
+                const res = await fetch('/ideas/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: topic, niche })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Failed');
+
+                const ideasList = document.getElementById('ideas-list');
+                ideasList.innerHTML = `
+                    <div class="trend-group">
+                        <h3>${topic}</h3>
+                        ${data.ideas.map(renderIdeaCard).join('')}
+                    </div>
+                `;
+                document.getElementById('ideas-section').style.display = 'block';
+                hideStatus();
+            } catch (e) {
+                showStatus('Error: ' + e.message, 'error');
+            } finally {
+                document.getElementById('generate-btn').disabled = false;
+            }
+        }
+
+        document.getElementById('topic-input').addEventListener('keydown', e => {
+            if (e.key === 'Enter') generateIdeas();
+        });
+    </script>
+</body>
+</html>

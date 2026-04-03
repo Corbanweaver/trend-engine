@@ -13,8 +13,15 @@ from app.models import IngestResponse, RedditPost
 router = APIRouter(prefix="/ingest", tags=["ingest"])
 
 SUBREDDIT = "fitness"
-POST_LIMIT = 25
+POST_LIMIT = 50
 RSS_URL = f"https://www.reddit.com/r/{SUBREDDIT}/hot.rss?limit={POST_LIMIT}"
+
+
+def clean_html(raw: str) -> str:
+    cleaned = re.sub(r"<!--.*?-->", "", raw)
+    cleaned = re.sub(r"<[^>]+>", " ", cleaned)
+    cleaned = html.unescape(cleaned)
+    return re.sub(r"\s+", " ", cleaned).strip()
 
 
 def parse_published(entry: dict) -> datetime:
@@ -53,13 +60,9 @@ def ingest_reddit(db: Session = Depends(get_db)):
         if not post_id:
             continue
 
-        title = entry.get("title", "")
+        title = entry.get("title", "").strip()
         summary = entry.get("summary", "")
-        raw = summary if summary and len(summary) > len(title) else title
-        cleaned = re.sub(r"<[^>]+>", " ", raw)
-        cleaned = re.sub(r"<!--.*?-->", "", cleaned)
-        cleaned = html.unescape(cleaned)
-        post_text = re.sub(r"\s+", " ", cleaned).strip()
+        body = clean_html(summary) if summary else title
 
         created_at = parse_published(entry)
 
@@ -74,12 +77,13 @@ def ingest_reddit(db: Session = Depends(get_db)):
 
         db.execute(
             text("""
-                INSERT INTO reddit_posts (id, text, engagement, created_at)
-                VALUES (:id, :text, :engagement, :created_at)
+                INSERT INTO reddit_posts (id, title, text, engagement, created_at)
+                VALUES (:id, :title, :text, :engagement, :created_at)
             """),
             {
                 "id": post_id,
-                "text": post_text,
+                "title": title,
+                "text": body,
                 "engagement": 0,
                 "created_at": created_at,
             },
@@ -89,7 +93,7 @@ def ingest_reddit(db: Session = Depends(get_db)):
         posts_out.append(
             RedditPost(
                 id=post_id,
-                text=post_text,
+                text=title,
                 engagement=0,
                 created_at=created_at,
             )

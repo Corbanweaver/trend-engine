@@ -1,0 +1,126 @@
+PHASE 2 — Fix + Run the App
+Step 3: Install dependencies
+
+In Replit shell:
+
+pip install fastapi uvicorn praw psycopg2-binary openai
+Step 4: Add API keys
+
+In Replit:
+
+Go to Secrets (🔒 icon)
+
+Add:
+
+OPENAI_API_KEY=your_key
+REDDIT_CLIENT_ID=your_id
+REDDIT_SECRET=your_secret
+Step 5: Run the server
+
+Click Run, or:
+
+uvicorn main:app --reload
+
+You should see:
+
+API running
+/docs endpoint (Swagger UI)
+PHASE 3 — Make Reddit Ingestion Actually Work
+Step 6: Refine ingestion prompt
+
+Ask Replit AI:
+
+Update the Reddit ingestion endpoint to:
+- Pull 50 posts from r/fitness
+- Store title, score, and timestamp in PostgreSQL
+- Avoid duplicates
+
+👉 Test:
+
+Go to /docs
+Run /ingest/reddit
+
+Now you have real data.
+
+PHASE 4 — Add AI Idea Generation (Core Value)
+Step 7: Improve idea endpoint
+
+Prompt:
+
+Improve the /ideas endpoint:
+- Input: trend or topic
+- Output:
+  - 5 viral TikTok ideas
+  - Each includes a hook and unique angle
+- Make outputs punchy and engaging
+Step 8: Test it
+
+Call:
+
+/ideas → input: "cold plunge benefits"
+
+You now have:
+👉 a working creator tool already
+
+PHASE 5 — Add Trend Detection (Simple Version)
+Step 9: Add basic trend logic
+
+Prompt:
+
+Create a function that:
+- Groups similar Reddit posts by keywords
+- Counts how often topics appear
+- Returns top 5 trending topics
+
+👉 This avoids complex ML initially
+
+Step 10: Create trend endpoint
+Create endpoint /trends that:
+- Reads stored posts
+- Returns top trending topics based on frequency and engagement
+PHASE 6 — Connect Trends → Ideas
+Step 11: Chain it together
+
+Prompt:
+
+Create endpoint /trend-ideas that:
+- Gets top trends
+- Generates 3 video ideas per trend using OpenAI
+- Returns structured JSON
+
+👉 This is your core product loop
+
+PHASE 7 — Add Basic Frontend (Inside Replit)
+Step 12: Generate UI
+
+Prompt:
+
+Create a simple HTML page that:
+- Displays trending topics
+- Shows AI-generated video ideas
+- Has a clean, modern layout
+
+Replit will generate:
+
+HTML + CSS
+Possibly basic JS
+Step 13: Connect frontend → backend
+
+Prompt:
+
+Update the frontend to fetch data from /trend-ideas and display it dynamically
+PHASE 8 — Make It Feel Like a Product
+Step 14: Add user input
+
+Prompt:
+
+Add ability for users to input their niche (fitness, dating, finance)
+and tailor ideas based on that niche
+Step 15: Improve prompts (VERY IMPORTANT)
+
+Prompt:
+
+Make the AI outputs more viral by:
+- Using curiosity-driven hooks
+- Including contrarian angles
+- Avoiding generic advice
