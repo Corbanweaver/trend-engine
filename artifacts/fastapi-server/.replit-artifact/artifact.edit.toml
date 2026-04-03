@@ -1,0 +1,20 @@
+kind = "api"
+previewPath = "/python-api"
+title = "FastAPI Server"
+version = "1.0.0"
+
+[[services]]
+localPort = 8000
+name = "FastAPI Server"
+paths = ["/python-api"]
+
+[services.development]
+run = "cd artifacts/fastapi-server && python main.py"
+
+[services.production]
+
+[services.production.run]
+args = ["python", "artifacts/fastapi-server/main.py"]
+
+[services.production.run.env]
+PORT = "8000"
