@@ -37,17 +37,29 @@ artifacts/fastapi-server/
 ├── main.py              # Uvicorn entry point
 └── app/
     ├── main.py          # FastAPI app + CORS + router registration
+    ├── database.py      # PostgreSQL connection + table init
+    ├── models.py        # Pydantic request/response models
     └── routers/
-        └── items.py     # Example CRUD router
+        ├── items.py     # Example CRUD router (in-memory)
+        ├── ingest.py    # POST /ingest/reddit — pull fitness posts via RSS
+        └── ideas.py     # POST /ideas/ — generate viral video ideas via OpenAI
 ```
+
+### Dependencies
+- feedparser — Reddit RSS parsing (no API key needed)
+- openai — via Replit AI Integrations (no user key needed)
+- SQLAlchemy + psycopg2-binary — PostgreSQL ORM
+- httpx — HTTP client
+
+### Database
+- Table `reddit_posts` (id TEXT PK, text, engagement INT, created_at TIMESTAMPTZ)
+- Auto-created on app startup
 
 ### Endpoints
 - `GET /health` — health check
-- `GET /items/` — list all items
-- `GET /items/{id}` — get item by ID
-- `POST /items/` — create item
-- `PUT /items/{id}` — update item
-- `DELETE /items/{id}` — delete item
+- `POST /ingest/reddit` — pull hot posts from r/fitness, store in DB, skip duplicates
+- `POST /ideas/` — accepts `{"text": "..."}`, returns 5 viral video ideas via OpenAI
+- `GET /items/` — list all items (example)
 - `GET /docs` — Swagger UI (interactive API docs)
 - `GET /redoc` — ReDoc API docs
 
