@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models import TrendIdeasRequest, TrendIdeasResponse, TrendIdea, VideoIdea
 from app.routers.trends import extract_topics
 from app.youtube_client import youtube_search
+from app.instagram_client import search_instagram
 
 router = APIRouter(prefix="/trend-ideas", tags=["trend-ideas"])
 
@@ -92,6 +93,16 @@ async def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest(), db: Ses
         except Exception:
             videos = []
 
-        result.append(TrendIdea(trend=trend.topic, ideas=ideas, example_videos=videos))
+        try:
+            ig_posts = await search_instagram(f"{niche}{trend.topic.replace(' ', '')}", max_results=3)
+        except Exception:
+            ig_posts = []
+
+        result.append(TrendIdea(
+            trend=trend.topic,
+            ideas=ideas,
+            example_videos=videos,
+            instagram_posts=ig_posts,
+        ))
 
     return TrendIdeasResponse(niche=niche, trend_ideas=result)

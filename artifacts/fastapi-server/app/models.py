@@ -48,6 +48,7 @@ class TrendIdea(BaseModel):
     trend: str
     ideas: list[VideoIdea]
     example_videos: list[dict] = []
+    instagram_posts: list[dict] = []
 
 
 class TrendIdeasRequest(BaseModel):

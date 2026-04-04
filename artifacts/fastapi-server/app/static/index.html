@@ -316,6 +316,65 @@
             color: #666;
         }
 
+        .ig-card {
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .ig-card:hover { border-color: #e1306c; }
+
+        .ig-card .ig-thumb {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #000;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .ig-card .ig-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .ig-card .ig-info {
+            padding: 10px 12px;
+        }
+
+        .ig-card .ig-caption {
+            font-size: 0.8rem;
+            color: #ccc;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .ig-card .ig-stats {
+            font-size: 0.75rem;
+            color: #888;
+            display: flex;
+            gap: 12px;
+        }
+
+        .ig-card .ig-stats span { color: #e1306c; }
+
+        .source-label {
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-right: 6px;
+        }
+
+        .source-youtube { background: #ff000022; color: #ff4444; }
+        .source-instagram { background: #e1306c22; color: #e1306c; }
+
         .video-embed-container {
             position: relative;
             width: 100%;
@@ -436,6 +495,7 @@
             <button onclick="loadTrends()">View Trends</button>
             <button onclick="loadTrendIdeas()">Trends + Ideas + Videos</button>
             <button onclick="searchYouTube()">Search YouTube</button>
+            <button onclick="searchInstagram()">Search Instagram</button>
         </div>
 
         <div class="status" id="status"></div>
@@ -545,6 +605,29 @@
             `;
         }
 
+        function renderIgCard(post) {
+            const thumb = post.thumbnail_url || post.media_url || '';
+            const thumbHtml = thumb
+                ? `<img src="${thumb}" alt="${escapeHtml(post.caption || '')}" loading="lazy">`
+                : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#666;">No preview</div>`;
+
+            return `
+                <div class="ig-card">
+                    <a href="${post.permalink}" target="_blank" rel="noopener" class="ig-thumb">
+                        ${thumbHtml}
+                    </a>
+                    <div class="ig-info">
+                        <div class="ig-caption">${escapeHtml(post.caption || 'No caption')}</div>
+                        <div class="ig-stats">
+                            <span>${post.like_count || 0} likes</span>
+                            <span>${post.comments_count || 0} comments</span>
+                            <span>${post.media_type}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
@@ -614,9 +697,18 @@
                 ideasList.innerHTML = data.trend_ideas.map(ti => {
                     const videosHtml = (ti.example_videos && ti.example_videos.length > 0) ? `
                         <div class="videos-section">
-                            <h4>Example Videos from YouTube</h4>
+                            <h4><span class="source-label source-youtube">YouTube</span> Example Videos</h4>
                             <div class="video-grid">
                                 ${ti.example_videos.map(renderVideoCard).join('')}
+                            </div>
+                        </div>
+                    ` : '';
+
+                    const igHtml = (ti.instagram_posts && ti.instagram_posts.length > 0) ? `
+                        <div class="videos-section">
+                            <h4><span class="source-label source-instagram">Instagram</span> Top Posts</h4>
+                            <div class="video-grid">
+                                ${ti.instagram_posts.map(renderIgCard).join('')}
                             </div>
                         </div>
                     ` : '';
@@ -626,6 +718,7 @@
                             <h3>${escapeHtml(ti.trend)} <span class="badge">${ti.ideas.length} ideas</span></h3>
                             ${ti.ideas.map(renderIdeaCard).join('')}
                             ${videosHtml}
+                            ${igHtml}
                         </div>
                     `;
                 }).join('');
@@ -722,6 +815,37 @@
                     grid.innerHTML = '<div class="empty">No videos found.</div>';
                 } else {
                     grid.innerHTML = data.videos.map(renderVideoCard).join('');
+                }
+                hideStatus();
+            } catch (e) {
+                showStatus('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function searchInstagram() {
+            const topic = document.getElementById('topic-input').value.trim();
+            const niche = getNiche();
+            const query = topic || niche;
+
+            document.getElementById('youtube-section').style.display = 'block';
+            document.getElementById('youtube-section').querySelector('.section-title').textContent = 'Instagram Results';
+            showLoading('youtube-grid');
+            showStatus('Searching Instagram...', 'info');
+
+            try {
+                const res = await fetch('/instagram/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query, max_results: 6 })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Failed');
+
+                const grid = document.getElementById('youtube-grid');
+                if (data.posts.length === 0) {
+                    grid.innerHTML = '<div class="empty">No Instagram posts found. Make sure your Instagram Business account is connected.</div>';
+                } else {
+                    grid.innerHTML = data.posts.map(renderIgCard).join('');
                 }
                 hideStatus();
             } catch (e) {
