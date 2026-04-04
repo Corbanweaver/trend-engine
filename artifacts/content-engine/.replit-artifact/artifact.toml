@@ -1,0 +1,22 @@
+kind = "web"
+previewPath = "/"
+title = "Content Engine"
+version = "1.0.0"
+id = "artifacts/content-engine"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18298
+
+[services.development]
+run = "cd /home/runner/workspace/artifacts/fastapi-server && PORT=18298 python main.py"
+
+[services.env]
+PORT = "18298"
+BASE_PATH = "/"
