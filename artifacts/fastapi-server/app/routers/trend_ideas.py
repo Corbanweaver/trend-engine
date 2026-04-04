@@ -10,6 +10,7 @@ from app.models import TrendIdeasRequest, TrendIdeasResponse, TrendIdea, VideoId
 from app.routers.trends import extract_topics
 from app.youtube_client import youtube_search
 from app.instagram_client import search_instagram
+from app.tiktok_client import tiktok_trending_search
 
 router = APIRouter(prefix="/trend-ideas", tags=["trend-ideas"])
 
@@ -94,15 +95,21 @@ async def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest(), db: Ses
             videos = []
 
         try:
-            ig_posts = await search_instagram(f"{niche}{trend.topic.replace(' ', '')}", max_results=3)
+            ig_posts = await search_instagram(f"{niche} {trend.topic}".replace(' ', ''), max_results=3)
         except Exception:
             ig_posts = []
+
+        try:
+            tiktok_vids = await tiktok_trending_search(f"{niche} {trend.topic}", max_results=3)
+        except Exception:
+            tiktok_vids = []
 
         result.append(TrendIdea(
             trend=trend.topic,
             ideas=ideas,
             example_videos=videos,
             instagram_posts=ig_posts,
+            tiktok_videos=tiktok_vids,
         ))
 
     return TrendIdeasResponse(niche=niche, trend_ideas=result)

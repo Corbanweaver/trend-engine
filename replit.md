@@ -30,7 +30,7 @@ pnpm workspace monorepo using TypeScript, plus a Python FastAPI Content Engine s
 
 ## Python FastAPI Content Engine
 
-Located at `artifacts/fastapi-server/`. Runs via the "FastAPI Server" workflow on port 8000.
+Located at `artifacts/fastapi-server/`. Runs via the "artifacts/content-engine: web" workflow on port 18298.
 
 ### Structure
 ```
@@ -40,21 +40,33 @@ artifacts/fastapi-server/
     ├── main.py          # FastAPI app + CORS + router registration + static files
     ├── database.py      # PostgreSQL connection + table init
     ├── models.py        # Pydantic request/response models
+    ├── youtube_client.py  # YouTube Data API v3 client (uses YOUTUBE_API_KEY)
+    ├── instagram_client.py # Instagram Graph API client (hashtag search via Business account)
+    ├── tiktok_client.py   # TikTok content discovery (public data + search links)
     ├── static/
-    │   └── index.html   # Frontend UI
+    │   └── index.html   # Frontend UI (dark-themed dashboard)
     └── routers/
         ├── items.py     # Example CRUD router (in-memory)
         ├── ingest.py    # POST /ingest/reddit — pull fitness posts via RSS
         ├── ideas.py     # POST /ideas/ — generate viral video ideas via OpenAI
         ├── trends.py    # GET /trends/ — keyword-based trend detection
-        └── trend_ideas.py # POST /trend-ideas/ — chain trends → AI ideas
+        ├── trend_ideas.py # POST /trend-ideas/ — chain trends → AI ideas + multi-platform videos
+        ├── youtube.py   # POST /youtube/search — YouTube video search
+        ├── instagram.py # POST /instagram/search — Instagram hashtag search
+        └── tiktok.py    # POST /tiktok/search — TikTok content discovery
 ```
 
 ### Dependencies
 - feedparser — Reddit RSS parsing (no API key needed)
 - openai — via Replit AI Integrations (no user key needed)
 - SQLAlchemy + psycopg2-binary — PostgreSQL
-- httpx — HTTP client
+- httpx — HTTP client for YouTube, Instagram, TikTok APIs
+
+### Environment Secrets
+- `YOUTUBE_API_KEY` — YouTube Data API v3 key
+- `INSTAGRAM_ACCESS_TOKEN` — Instagram Graph API token (requires Business/Creator account + Facebook Page)
+- `INSTAGRAM_BUSINESS_ACCOUNT_ID` — Instagram Business account ID (auto-detected from token)
+- `SESSION_SECRET` — session secret
 
 ### Database
 - Table `reddit_posts` (id TEXT PK, title TEXT, text TEXT, engagement INT, created_at TIMESTAMPTZ)
@@ -66,18 +78,27 @@ artifacts/fastapi-server/
 - `POST /ingest/reddit` — pull 50 hot posts from r/fitness, store in DB, skip duplicates
 - `GET /trends/` — top 5 trending topics from stored post titles
 - `POST /ideas/` — accepts `{"text": "...", "niche": "fitness"}`, returns 5 viral video ideas with hook/angle/idea/script
-- `POST /trend-ideas/` — accepts `{"niche": "fitness"}`, chains trends → 3 AI ideas per trend + YouTube example videos
-- `POST /youtube/search` — search YouTube for short-form videos by query (uses Replit YouTube connector)
+- `POST /trend-ideas/` — accepts `{"niche": "fitness"}`, chains trends → 3 AI ideas per trend + YouTube + Instagram + TikTok examples
+- `POST /youtube/search` — search YouTube for short-form videos by query
+- `POST /instagram/search` — search Instagram top posts by hashtag
+- `POST /tiktok/search` — search TikTok trending content
 - `GET /docs` — Swagger UI (interactive API docs)
 
 ### Product Loop
-1. Ingest Reddit posts → 2. Detect trends → 3. Generate viral video ideas per trend
+1. Ingest Reddit posts → 2. Detect trends → 3. Generate viral video ideas per trend → 4. Find example videos from YouTube, Instagram, TikTok
 
 ### Frontend
 - Dark-themed single-page app at `/`
 - Niche selector (fitness, dating, finance, etc. + custom input)
-- Buttons: Pull Reddit Posts, View Trends, Trends + Ideas
+- Buttons: Pull Reddit Posts, View Trends, Trends + Ideas + Videos, Search YouTube, Search Instagram, Search TikTok
 - Topic input for direct idea generation
-- Displays hooks (red), angles (yellow), and ideas (gray)
+- Video cards with thumbnails, inline YouTube playback, expandable scripts
+- Color-coded source labels: YouTube (red), Instagram (pink), TikTok (cyan)
+
+### Instagram Notes
+- Instagram Graph API requires: Business/Creator account + Facebook Page + linked IG account
+- Token must be generated from Graph API Explorer with pages_show_list, instagram_basic, instagram_manage_insights, pages_read_engagement
+- User's "New Pages Experience" Facebook Page may need classic Page conversion for API access
+- Currently returns empty results — revisit when Page setup is complete
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.

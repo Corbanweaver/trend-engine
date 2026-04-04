@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.instagram_client import search_instagram
 
 router = APIRouter(prefix="/instagram", tags=["instagram"])
@@ -7,7 +7,7 @@ router = APIRouter(prefix="/instagram", tags=["instagram"])
 
 class InstagramSearchRequest(BaseModel):
     query: str
-    max_results: int = 5
+    max_results: int = Field(default=5, ge=1, le=20)
 
 
 class InstagramPost(BaseModel):

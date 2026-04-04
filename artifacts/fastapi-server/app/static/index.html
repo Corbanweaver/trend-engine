@@ -75,13 +75,14 @@
 
         .actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 24px;
             flex-wrap: wrap;
         }
 
         .actions button {
-            padding: 9px 16px;
+            padding: 8px 14px;
+            font-size: 0.82rem;
             border-radius: 8px;
             border: 1px solid #333;
             background: #1a1a1a;
@@ -374,6 +375,63 @@
 
         .source-youtube { background: #ff000022; color: #ff4444; }
         .source-instagram { background: #e1306c22; color: #e1306c; }
+        .source-tiktok { background: #00f2ea22; color: #00f2ea; }
+
+        .tt-card {
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .tt-card:hover { border-color: #00f2ea; }
+
+        .tt-card .tt-thumb {
+            width: 100%;
+            aspect-ratio: 9/16;
+            max-height: 200px;
+            background: #000;
+            overflow: hidden;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tt-card .tt-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .tt-card .tt-info {
+            padding: 10px 12px;
+        }
+
+        .tt-card .tt-desc {
+            font-size: 0.8rem;
+            color: #ccc;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .tt-card .tt-author {
+            font-size: 0.75rem;
+            color: #00f2ea;
+            margin-bottom: 4px;
+        }
+
+        .tt-card .tt-stats {
+            font-size: 0.72rem;
+            color: #888;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
 
         .video-embed-container {
             position: relative;
@@ -496,6 +554,7 @@
             <button onclick="loadTrendIdeas()">Trends + Ideas + Videos</button>
             <button onclick="searchYouTube()">Search YouTube</button>
             <button onclick="searchInstagram()">Search Instagram</button>
+            <button onclick="searchTikTok()">Search TikTok</button>
         </div>
 
         <div class="status" id="status"></div>
@@ -605,6 +664,36 @@
             `;
         }
 
+        function formatCount(n) {
+            if (n >= 1000000000) return (n / 1000000000).toFixed(1) + 'B';
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+            return String(n);
+        }
+
+        function renderTtCard(video) {
+            const thumbHtml = video.cover
+                ? `<img src="${video.cover}" alt="${escapeHtml(video.description || '')}" loading="lazy">`
+                : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#666;font-size:2rem;">&#9654;</div>`;
+
+            return `
+                <div class="tt-card">
+                    <a href="${safeUrl(video.url)}" target="_blank" rel="noopener" class="tt-thumb">
+                        ${thumbHtml}
+                    </a>
+                    <div class="tt-info">
+                        <div class="tt-author">@${escapeHtml(video.author)}</div>
+                        <div class="tt-desc">${escapeHtml(video.description || 'No description')}</div>
+                        <div class="tt-stats">
+                            <span>${formatCount(video.play_count || 0)} plays</span>
+                            <span>${formatCount(video.like_count || 0)} likes</span>
+                            <span>${formatCount(video.comment_count || 0)} comments</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         function renderIgCard(post) {
             const thumb = post.thumbnail_url || post.media_url || '';
             const thumbHtml = thumb
@@ -613,7 +702,7 @@
 
             return `
                 <div class="ig-card">
-                    <a href="${post.permalink}" target="_blank" rel="noopener" class="ig-thumb">
+                    <a href="${safeUrl(post.permalink)}" target="_blank" rel="noopener" class="ig-thumb">
                         ${thumbHtml}
                     </a>
                     <div class="ig-info">
@@ -632,6 +721,15 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function safeUrl(url) {
+            if (!url) return '#';
+            try {
+                const u = new URL(url);
+                if (u.protocol === 'https:' || u.protocol === 'http:') return url;
+            } catch {}
+            return '#';
         }
 
         async function ingestReddit() {
@@ -713,12 +811,22 @@
                         </div>
                     ` : '';
 
+                    const ttHtml = (ti.tiktok_videos && ti.tiktok_videos.length > 0) ? `
+                        <div class="videos-section">
+                            <h4><span class="source-label source-tiktok">TikTok</span> Trending Videos</h4>
+                            <div class="video-grid">
+                                ${ti.tiktok_videos.map(renderTtCard).join('')}
+                            </div>
+                        </div>
+                    ` : '';
+
                     return `
                         <div class="trend-group">
                             <h3>${escapeHtml(ti.trend)} <span class="badge">${ti.ideas.length} ideas</span></h3>
                             ${ti.ideas.map(renderIdeaCard).join('')}
                             ${videosHtml}
                             ${igHtml}
+                            ${ttHtml}
                         </div>
                     `;
                 }).join('');
@@ -815,6 +923,37 @@
                     grid.innerHTML = '<div class="empty">No videos found.</div>';
                 } else {
                     grid.innerHTML = data.videos.map(renderVideoCard).join('');
+                }
+                hideStatus();
+            } catch (e) {
+                showStatus('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function searchTikTok() {
+            const topic = document.getElementById('topic-input').value.trim();
+            const niche = getNiche();
+            const query = topic || niche;
+
+            document.getElementById('youtube-section').style.display = 'block';
+            document.getElementById('youtube-section').querySelector('.section-title').textContent = 'TikTok Results';
+            showLoading('youtube-grid');
+            showStatus('Searching TikTok...', 'info');
+
+            try {
+                const res = await fetch('/tiktok/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query, max_results: 6 })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Failed');
+
+                const grid = document.getElementById('youtube-grid');
+                if (data.videos.length === 0) {
+                    grid.innerHTML = '<div class="empty">No TikTok videos found for this query.</div>';
+                } else {
+                    grid.innerHTML = data.videos.map(renderTtCard).join('');
                 }
                 hideStatus();
             } catch (e) {
