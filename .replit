@@ -30,13 +30,13 @@ args = "FastAPI Server"
 name = "FastAPI Server"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd artifacts/fastapi-server && python main.py"
 waitForPort = 8000
-
-[workflows.workflow.metadata]
-outputType = "console"
 
 [agent]
 stack = "PNPM_WORKSPACE"
