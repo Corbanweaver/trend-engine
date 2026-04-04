@@ -1,68 +1,12 @@
 import os
 import httpx
 
-_connection_settings = None
-
-
-async def _get_access_token() -> str:
-    global _connection_settings
-
-    if (
-        _connection_settings
-        and _connection_settings.get("settings", {}).get("expires_at")
-    ):
-        import datetime
-        expires = _connection_settings["settings"]["expires_at"]
-        from datetime import datetime as dt, timezone
-        if dt.fromisoformat(expires.replace("Z", "+00:00")).timestamp() > dt.now(timezone.utc).timestamp():
-            return _connection_settings["settings"]["access_token"]
-
-    hostname = os.environ.get("REPLIT_CONNECTORS_HOSTNAME")
-    repl_identity = os.environ.get("REPL_IDENTITY")
-    web_repl_renewal = os.environ.get("WEB_REPL_RENEWAL")
-
-    if repl_identity:
-        x_replit_token = f"repl {repl_identity}"
-    elif web_repl_renewal:
-        x_replit_token = f"depl {web_repl_renewal}"
-    else:
-        raise RuntimeError("X-Replit-Token not found for repl/depl")
-
-    if not hostname:
-        raise RuntimeError("REPLIT_CONNECTORS_HOSTNAME not set")
-
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"https://{hostname}/api/v2/connection",
-            params={"include_secrets": "true", "connector_names": "youtube"},
-            headers={
-                "Accept": "application/json",
-                "X-Replit-Token": x_replit_token,
-            },
-        )
-        resp.raise_for_status()
-        data = resp.json()
-
-    items = data.get("items", [])
-    if not items:
-        raise RuntimeError("YouTube not connected")
-
-    _connection_settings = items[0]
-    settings = _connection_settings.get("settings", {})
-    token = settings.get("access_token") or (
-        settings.get("oauth", {}).get("credentials", {}).get("access_token")
-    )
-
-    if not token:
-        raise RuntimeError("YouTube access token not found")
-
-    return token
+YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
 
 
 async def youtube_search(query: str, max_results: int = 5) -> list[dict]:
-    try:
-        token = await _get_access_token()
-    except RuntimeError:
+    api_key = YOUTUBE_API_KEY or os.environ.get("YOUTUBE_API_KEY", "")
+    if not api_key:
         return []
 
     async with httpx.AsyncClient(timeout=10.0) as client:
@@ -75,8 +19,8 @@ async def youtube_search(query: str, max_results: int = 5) -> list[dict]:
                 "maxResults": max_results,
                 "order": "relevance",
                 "videoDuration": "short",
+                "key": api_key,
             },
-            headers={"Authorization": f"Bearer {token}"},
         )
 
         if resp.status_code == 403:
