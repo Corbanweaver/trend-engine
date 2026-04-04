@@ -65,8 +65,9 @@ artifacts/fastapi-server/
 - `GET /health` — health check
 - `POST /ingest/reddit` — pull 50 hot posts from r/fitness, store in DB, skip duplicates
 - `GET /trends/` — top 5 trending topics from stored post titles
-- `POST /ideas/` — accepts `{"text": "...", "niche": "fitness"}`, returns 5 viral video ideas with hook/angle/idea
-- `POST /trend-ideas/` — accepts `{"niche": "fitness"}`, chains trends → 3 AI ideas per trend
+- `POST /ideas/` — accepts `{"text": "...", "niche": "fitness"}`, returns 5 viral video ideas with hook/angle/idea/script
+- `POST /trend-ideas/` — accepts `{"niche": "fitness"}`, chains trends → 3 AI ideas per trend + YouTube example videos
+- `POST /youtube/search` — search YouTube for short-form videos by query (uses Replit YouTube connector)
 - `GET /docs` — Swagger UI (interactive API docs)
 
 ### Product Loop

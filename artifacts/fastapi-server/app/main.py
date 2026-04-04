@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.database import init_db
-from app.routers import items, ingest, ideas, trends, trend_ideas
+from app.routers import items, ingest, ideas, trends, trend_ideas, youtube
 
 app = FastAPI(
     title="Content Engine API",
@@ -25,6 +25,7 @@ app.include_router(ingest.router)
 app.include_router(ideas.router)
 app.include_router(trends.router)
 app.include_router(trend_ideas.router)
+app.include_router(youtube.router)
 
 STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

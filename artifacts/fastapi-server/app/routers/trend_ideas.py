@@ -8,6 +8,7 @@ from openai import OpenAI
 from app.database import get_db
 from app.models import TrendIdeasRequest, TrendIdeasResponse, TrendIdea, VideoIdea
 from app.routers.trends import extract_topics
+from app.youtube_client import youtube_search
 
 router = APIRouter(prefix="/trend-ideas", tags=["trend-ideas"])
 
@@ -19,8 +20,9 @@ Rules for EVERY idea:
 - The HOOK must stop the scroll in under 2 seconds. Use curiosity gaps, bold claims, or pattern interrupts. Never start generic.
 - The ANGLE must be contrarian, surprising, or counterintuitive. Challenge common beliefs. Avoid generic advice.
 - The IDEA should be specific enough to film immediately — include the format (POV, listicle, story, reaction, experiment, etc.)
+- The SCRIPT should be a complete 30-60 second video script with the hook opening line, 3-4 talking points, and a call-to-action. Write it in first person as if the creator is speaking to camera. Keep it punchy and conversational.
 
-Return your response as a JSON array with exactly 3 objects, each having "hook", "angle", and "idea" keys. Return ONLY the JSON array, no other text."""
+Return your response as a JSON array with exactly 3 objects, each having "hook", "angle", "idea", and "script" keys. Return ONLY the JSON array, no other text."""
 
 
 def get_openai_client() -> OpenAI:
@@ -45,16 +47,17 @@ def parse_ideas_json(raw: str) -> list[VideoIdea]:
                     hook=item.get("hook", ""),
                     angle=item.get("angle", ""),
                     idea=item.get("idea", ""),
+                    script=item.get("script", ""),
                 )
                 for item in data[:3]
             ]
     except json.JSONDecodeError:
         pass
-    return [VideoIdea(hook=cleaned[:100], angle="", idea=cleaned)]
+    return [VideoIdea(hook=cleaned[:100], angle="", idea=cleaned, script="")]
 
 
 @router.post("/", response_model=TrendIdeasResponse)
-def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest(), db: Session = Depends(get_db)):
+async def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest(), db: Session = Depends(get_db)):
     rows = db.execute(
         sql_text("SELECT title, engagement FROM reddit_posts WHERE title != '' ORDER BY created_at DESC LIMIT 200")
     ).fetchall()
@@ -72,7 +75,7 @@ def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest(), db: Session =
     for trend in trends:
         response = client.chat.completions.create(
             model="gpt-5.2",
-            max_completion_tokens=1024,
+            max_completion_tokens=2048,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {
@@ -83,6 +86,12 @@ def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest(), db: Session =
         )
         raw = response.choices[0].message.content or ""
         ideas = parse_ideas_json(raw)
-        result.append(TrendIdea(trend=trend.topic, ideas=ideas))
+
+        try:
+            videos = await youtube_search(f"{niche} {trend.topic}", max_results=3)
+        except Exception:
+            videos = []
+
+        result.append(TrendIdea(trend=trend.topic, ideas=ideas, example_videos=videos))
 
     return TrendIdeasResponse(niche=niche, trend_ideas=result)

@@ -15,8 +15,9 @@ Rules for EVERY idea:
 - The HOOK must stop the scroll in under 2 seconds. Use curiosity gaps, bold claims, or pattern interrupts. Never start with "Did you know" or generic openers.
 - The ANGLE must be contrarian, surprising, or counterintuitive. Challenge common beliefs. Avoid generic advice that sounds like every other creator.
 - The IDEA should be specific enough to film immediately — include the format (POV, listicle, story, reaction, experiment, etc.)
+- The SCRIPT should be a complete 30-60 second video script with the hook opening line, 3-4 talking points, and a call-to-action. Write it in first person as if the creator is speaking to camera. Keep it punchy and conversational.
 
-Return your response as a JSON array with exactly 5 objects, each having "hook", "angle", and "idea" keys. Return ONLY the JSON array, no other text."""
+Return your response as a JSON array with exactly 5 objects, each having "hook", "angle", "idea", and "script" keys. Return ONLY the JSON array, no other text."""
 
 
 def get_openai_client() -> OpenAI:
@@ -42,6 +43,7 @@ def parse_ideas(raw: str) -> list[VideoIdea]:
                     hook=item.get("hook", ""),
                     angle=item.get("angle", ""),
                     idea=item.get("idea", ""),
+                    script=item.get("script", ""),
                 )
                 for item in data[:5]
             ]
@@ -55,7 +57,7 @@ def parse_ideas(raw: str) -> list[VideoIdea]:
             continue
         stripped = line.lstrip("0123456789.)- ").strip()
         if stripped:
-            ideas.append(VideoIdea(hook=stripped, angle="", idea=stripped))
+            ideas.append(VideoIdea(hook=stripped, angle="", idea=stripped, script=""))
     return ideas[:5]
 
 
@@ -69,7 +71,7 @@ def generate_ideas(body: IdeasRequest):
 
     response = client.chat.completions.create(
         model="gpt-5.2",
-        max_completion_tokens=2048,
+        max_completion_tokens=4096,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {

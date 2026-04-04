@@ -27,6 +27,7 @@ class VideoIdea(BaseModel):
     hook: str
     angle: str
     idea: str
+    script: str = ""
 
 
 class IdeasResponse(BaseModel):
@@ -46,6 +47,7 @@ class TrendsResponse(BaseModel):
 class TrendIdea(BaseModel):
     trend: str
     ideas: list[VideoIdea]
+    example_videos: list[dict] = []
 
 
 class TrendIdeasRequest(BaseModel):
@@ -55,3 +57,23 @@ class TrendIdeasRequest(BaseModel):
 class TrendIdeasResponse(BaseModel):
     niche: str
     trend_ideas: list[TrendIdea]
+
+
+class YouTubeSearchRequest(BaseModel):
+    query: str
+    max_results: int = 5
+
+
+class YouTubeVideo(BaseModel):
+    video_id: str
+    title: str
+    channel: str
+    thumbnail: str
+    published_at: str
+    url: str
+    embed_url: str
+
+
+class YouTubeSearchResponse(BaseModel):
+    query: str
+    videos: list[YouTubeVideo]
