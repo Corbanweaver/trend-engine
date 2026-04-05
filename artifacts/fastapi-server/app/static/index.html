@@ -3,327 +3,373 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Content Engine — AI-Powered Viral Video Ideas</title>
+    <title>Content Engine</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0a0a;
-            color: #e0e0e0;
+            background: #f5f5f7;
+            color: #1d1d1f;
             min-height: 100vh;
         }
+
+        .top-bar {
+            background: #fff;
+            border-bottom: 1px solid #e5e5e7;
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .top-bar-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1d1d1f;
+            white-space: nowrap;
+        }
+
+        .logo span { color: #6c5ce7; }
+
+        .search-bar {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            min-width: 280px;
+        }
+
+        .search-bar select,
+        .search-bar input {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #d1d1d6;
+            background: #f5f5f7;
+            font-size: 0.85rem;
+            color: #1d1d1f;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-bar select:focus,
+        .search-bar input:focus { border-color: #6c5ce7; }
+
+        .search-bar select { min-width: 120px; }
+        .search-bar input { flex: 1; min-width: 140px; }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #6c5ce7;
+            color: #fff;
+        }
+
+        .btn-primary:hover { background: #5a4bd1; }
+        .btn-primary:disabled { background: #c8c8cc; cursor: not-allowed; }
+
+        .btn-outline {
+            background: #fff;
+            color: #6c5ce7;
+            border: 1px solid #6c5ce7;
+        }
+
+        .btn-outline:hover { background: #f0eeff; }
 
         .container {
             max-width: 1100px;
             margin: 0 auto;
-            padding: 24px 20px;
+            padding: 20px 24px;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 28px;
-        }
-
-        header h1 {
-            font-size: 1.8rem;
-            color: #fff;
-            margin-bottom: 4px;
-            letter-spacing: -0.5px;
-        }
-
-        header p {
-            color: #666;
-            font-size: 0.85rem;
-        }
-
-        .source-badges {
-            display: flex;
-            gap: 6px;
-            justify-content: center;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-
-        .source-badges span {
-            font-size: 0.65rem;
-            padding: 3px 8px;
+        .status-bar {
+            padding: 10px 16px;
             border-radius: 10px;
-            font-weight: 600;
-        }
-
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            align-items: flex-end;
-        }
-
-        .controls label {
-            display: block;
-            font-size: 0.75rem;
-            color: #888;
-            margin-bottom: 4px;
-        }
-
-        .controls select,
-        .controls input,
-        .controls button {
-            padding: 9px 12px;
-            border-radius: 8px;
-            border: 1px solid #2a2a2a;
-            background: #141414;
-            color: #e0e0e0;
-            font-size: 0.85rem;
-        }
-
-        .controls select { min-width: 130px; }
-        .controls input { flex: 1; min-width: 160px; }
-
-        .btn-primary {
-            background: #5b4cff !important;
-            border: none !important;
-            color: #fff !important;
-            cursor: pointer;
-            font-weight: 600;
-            padding: 9px 18px !important;
-            transition: background 0.2s;
-            border-radius: 8px;
-            font-size: 0.85rem;
-        }
-
-        .btn-primary:hover { background: #4a3de6 !important; }
-        .btn-primary:disabled { background: #333 !important; cursor: not-allowed; }
-
-        .actions {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .actions button {
-            padding: 7px 12px;
-            border-radius: 8px;
-            border: 1px solid #2a2a2a;
-            background: #141414;
-            color: #ccc;
-            cursor: pointer;
-            font-size: 0.78rem;
-            transition: all 0.2s;
-        }
-
-        .actions button:hover { background: #1e1e1e; border-color: #444; }
-
-        .status {
-            padding: 10px 14px;
-            border-radius: 8px;
             margin-bottom: 16px;
             font-size: 0.85rem;
             display: none;
+            animation: slideIn 0.3s ease;
         }
 
-        .status.info { display: block; background: #1a1a2e; color: #7b8cff; border: 1px solid #2a2a4e; }
-        .status.error { display: block; background: #2e1a1a; color: #ff6b6b; border: 1px solid #4e2a2a; }
-        .status.success { display: block; background: #1a2e1a; color: #6bff6b; border: 1px solid #2a4e2a; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-        .section-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 14px;
-            color: #fff;
+        .status-bar.info { display: block; background: #eef0ff; color: #6c5ce7; border: 1px solid #d5d0ff; }
+        .status-bar.error { display: block; background: #fff0f0; color: #e74c3c; border: 1px solid #ffd0d0; }
+        .status-bar.success { display: block; background: #f0fff0; color: #27ae60; border: 1px solid #c0f0c0; }
+
+        .source-pills {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .pill {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .pill:hover { transform: scale(1.05); }
+
+        .pill-reddit { background: #fff0eb; color: #ff6b35; }
+        .pill-youtube { background: #fff0f0; color: #e74c3c; }
+        .pill-instagram { background: #fff0f6; color: #e1306c; }
+        .pill-tiktok { background: #f0ffff; color: #00b8b8; }
+        .pill-gtrends { background: #f0f5ff; color: #4285f4; }
+        .pill-news { background: #f0fff0; color: #27ae60; }
+        .pill-hn { background: #fff5eb; color: #f0652f; }
+        .pill-web { background: #f5f0ff; color: #9b59b6; }
+
+        .trend-card {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #e5e5e7;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .trend-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+
+        .trend-header {
+            padding: 18px 22px 14px;
+            border-bottom: 1px solid #f0f0f2;
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: space-between;
+        }
+
+        .trend-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #1d1d1f;
+        }
+
+        .trend-badges {
+            display: flex;
+            gap: 6px;
         }
 
         .badge {
-            background: #5b4cff;
-            color: #fff;
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 10px;
+            font-size: 0.68rem;
+            padding: 3px 8px;
+            border-radius: 20px;
             font-weight: 600;
         }
 
-        .trend-group {
-            background: #111;
-            border: 1px solid #1e1e1e;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+        .badge-ideas { background: #6c5ce7; color: #fff; }
+        .badge-sources { background: #f0f0f2; color: #86868b; }
+
+        .trend-body { padding: 0; }
+
+        .idea-row {
+            padding: 16px 22px;
+            border-bottom: 1px solid #f5f5f7;
+            display: flex;
+            gap: 16px;
         }
 
-        .trend-group h3 {
-            font-size: 1rem;
-            margin-bottom: 14px;
+        .idea-row:last-child { border-bottom: none; }
+
+        .idea-number {
+            width: 28px;
+            height: 28px;
+            background: #6c5ce7;
             color: #fff;
-        }
-
-        .idea-card {
-            background: #0d0d0d;
-            border: 1px solid #222;
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 10px;
-        }
-
-        .idea-card .hook {
-            color: #ff4444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
             font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .idea-content { flex: 1; }
+
+        .idea-hook {
+            font-weight: 700;
+            color: #e74c3c;
             font-size: 0.9rem;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
-        .idea-card .angle {
-            color: #ffd700;
+        .idea-angle {
+            color: #f39c12;
             font-size: 0.82rem;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
-        .idea-card .idea-text {
-            color: #bbb;
+        .idea-text {
+            color: #636366;
             font-size: 0.82rem;
             margin-bottom: 8px;
         }
 
-        .script-toggle {
-            font-size: 0.75rem;
+        .script-btn {
+            font-size: 0.72rem;
             padding: 4px 10px;
             border-radius: 6px;
-            border: 1px solid #333;
-            background: #1a1a1a;
-            color: #888;
+            border: 1px solid #d1d1d6;
+            background: #fff;
+            color: #86868b;
             cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .script-toggle:hover { border-color: #555; }
+        .script-btn:hover { border-color: #6c5ce7; color: #6c5ce7; }
 
-        .script-content {
+        .script-box {
             display: none;
             margin-top: 10px;
-            padding: 12px;
-            background: #0a0a0a;
+            padding: 12px 16px;
+            background: #f9f9fb;
             border-radius: 8px;
-            border: 1px solid #1e1e1e;
             font-size: 0.82rem;
-            line-height: 1.6;
-            color: #ccc;
+            line-height: 1.7;
+            color: #48484a;
             white-space: pre-wrap;
+            border: 1px solid #e5e5e7;
         }
 
-        .script-content.open { display: block; }
+        .script-box.open { display: block; }
 
-        .source-section {
-            margin-top: 16px;
-            padding-top: 14px;
-            border-top: 1px solid #1e1e1e;
+        .media-section {
+            padding: 16px 22px;
+            border-top: 1px solid #f0f0f2;
         }
 
-        .source-section h4 {
-            font-size: 0.85rem;
+        .media-section h4 {
+            font-size: 0.82rem;
+            color: #86868b;
             margin-bottom: 10px;
-            color: #aaa;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
             display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .source-label {
-            display: inline-block;
-            font-size: 0.65rem;
-            padding: 2px 7px;
-            border-radius: 10px;
-            font-weight: 600;
+        .media-section h4 .arrow {
+            transition: transform 0.2s;
+            font-size: 0.7rem;
         }
 
-        .source-youtube { background: #ff000020; color: #ff4444; }
-        .source-instagram { background: #e1306c20; color: #e1306c; }
-        .source-tiktok { background: #00f2ea20; color: #00f2ea; }
-        .source-news { background: #4caf5020; color: #66bb6a; }
-        .source-gtrends { background: #4285f420; color: #4285f4; }
-        .source-hn { background: #ff660020; color: #ff6600; }
-        .source-web { background: #9c27b020; color: #ba68c8; }
-        .source-reddit { background: #ff450020; color: #ff6b35; }
+        .media-section h4.open .arrow { transform: rotate(90deg); }
 
-        .card-grid {
+        .media-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 10px;
         }
 
-        .mini-card {
-            background: #0d0d0d;
-            border: 1px solid #222;
-            border-radius: 8px;
-            overflow: hidden;
-            transition: border-color 0.2s;
+        .media-body {
+            display: none;
         }
 
-        .mini-card:hover { border-color: #444; }
+        .media-body.open { display: block; }
 
-        .mini-card .thumb {
+        .m-card {
+            background: #f9f9fb;
+            border: 1px solid #e5e5e7;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .m-card:hover { border-color: #c8c8cc; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+
+        .m-card .m-thumb {
             width: 100%;
             aspect-ratio: 16/9;
-            background: #000;
+            background: #eee;
             overflow: hidden;
+            position: relative;
+            cursor: pointer;
         }
 
-        .mini-card .thumb img {
+        .m-card .m-thumb img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .mini-card .card-body {
+        .m-card .m-body {
             padding: 8px 10px;
         }
 
-        .mini-card .card-title {
-            font-size: 0.78rem;
-            color: #ddd;
-            margin-bottom: 3px;
+        .m-card .m-title {
+            font-size: 0.76rem;
+            color: #1d1d1f;
+            margin-bottom: 2px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            font-weight: 500;
         }
 
-        .mini-card .card-meta {
-            font-size: 0.7rem;
-            color: #666;
+        .m-card .m-meta {
+            font-size: 0.68rem;
+            color: #86868b;
         }
 
-        .list-item {
+        .link-item {
             padding: 8px 12px;
-            background: #0d0d0d;
-            border: 1px solid #222;
+            background: #f9f9fb;
+            border: 1px solid #e5e5e7;
             border-radius: 8px;
             margin-bottom: 6px;
             transition: border-color 0.2s;
         }
 
-        .list-item:hover { border-color: #444; }
+        .link-item:hover { border-color: #c8c8cc; }
 
-        .list-item a {
-            color: #7b8cff;
+        .link-item a {
+            color: #6c5ce7;
             text-decoration: none;
             font-size: 0.82rem;
             font-weight: 500;
         }
 
-        .list-item a:hover { color: #9ba8ff; }
+        .link-item a:hover { text-decoration: underline; }
 
-        .list-item .item-meta {
-            font-size: 0.72rem;
-            color: #666;
+        .link-item .l-meta {
+            font-size: 0.7rem;
+            color: #86868b;
             margin-top: 2px;
         }
 
-        .list-item .item-snippet {
-            font-size: 0.75rem;
-            color: #888;
+        .link-item .l-snippet {
+            font-size: 0.72rem;
+            color: #636366;
             margin-top: 3px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -331,29 +377,20 @@
             overflow: hidden;
         }
 
-        .trends {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
+        .gtrends-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
         }
 
-        .trend-pill {
-            background: #141414;
-            border: 1px solid #2a2a2a;
-            border-radius: 10px;
-            padding: 12px;
-            text-align: center;
+        .gtrends-pills span {
+            padding: 4px 10px;
+            background: #f0f5ff;
+            border: 1px solid #d5e3ff;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            color: #4285f4;
         }
-
-        .trend-pill .topic {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: #fff;
-            margin-bottom: 4px;
-        }
-
-        .trend-pill .score { font-size: 0.75rem; color: #5b4cff; }
 
         .video-embed-container {
             position: relative;
@@ -366,98 +403,90 @@
             top: 0; left: 0;
             width: 100%; height: 100%;
             border: none;
+            border-radius: 8px;
         }
 
-        .loading {
+        .play-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 32px;
+            height: 32px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .play-btn::after {
+            content: "";
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 6px 0 6px 11px;
+            border-color: transparent transparent transparent #fff;
+            margin-left: 2px;
+        }
+
+        .loading-state {
             text-align: center;
-            padding: 32px;
-            color: #666;
+            padding: 40px;
+            color: #86868b;
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .spinner {
-            width: 24px;
-            height: 24px;
-            border: 2px solid #333;
-            border-top-color: #5b4cff;
+            width: 28px;
+            height: 28px;
+            border: 3px solid #e5e5e7;
+            border-top-color: #6c5ce7;
             border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            margin: 0 auto 10px;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 12px;
         }
 
-        .empty {
+        .empty-state {
             text-align: center;
-            padding: 20px;
-            color: #555;
-            font-size: 0.85rem;
+            padding: 40px 20px;
+            color: #86868b;
+            font-size: 0.9rem;
         }
 
-        .collapsible-header {
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .collapsible-header::before {
-            content: "▸";
-            display: inline-block;
-            margin-right: 6px;
-            transition: transform 0.2s;
-        }
-
-        .collapsible-header.open::before {
-            transform: rotate(90deg);
-        }
-
-        .collapsible-body {
-            display: none;
-        }
-
-        .collapsible-body.open {
-            display: block;
-        }
-
-        .data-source-count {
+        .quick-actions {
             display: flex;
-            gap: 12px;
+            gap: 6px;
             flex-wrap: wrap;
-            margin-bottom: 16px;
-            padding: 10px 14px;
-            background: #111;
-            border-radius: 10px;
-            border: 1px solid #1e1e1e;
+            margin-bottom: 12px;
         }
 
-        .data-source-count .ds-item {
+        .quick-actions button {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #e5e5e7;
+            background: #fff;
+            color: #636366;
+            cursor: pointer;
             font-size: 0.75rem;
-            color: #888;
+            transition: all 0.2s;
         }
 
-        .data-source-count .ds-item span {
-            font-weight: 700;
+        .quick-actions button:hover {
+            background: #f0eeff;
+            border-color: #6c5ce7;
+            color: #6c5ce7;
         }
+
+        #custom-niche-wrap { display: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Content Engine</h1>
-            <p>AI-powered viral video ideas from 8+ data sources</p>
-            <div class="source-badges">
-                <span class="source-label source-reddit">Reddit</span>
-                <span class="source-label source-youtube">YouTube</span>
-                <span class="source-label source-instagram">Instagram</span>
-                <span class="source-label source-tiktok">TikTok</span>
-                <span class="source-label source-gtrends">Google Trends</span>
-                <span class="source-label source-news">Google News</span>
-                <span class="source-label source-hn">Hacker News</span>
-                <span class="source-label source-web">Web Search</span>
-            </div>
-        </header>
-
-        <div class="controls">
-            <div>
-                <label for="niche">Niche</label>
+    <div class="top-bar">
+        <div class="top-bar-inner">
+            <div class="logo">Content<span>Engine</span></div>
+            <div class="search-bar">
                 <select id="niche">
                     <option value="fitness">Fitness</option>
                     <option value="dating">Dating</option>
@@ -472,7 +501,7 @@
                     <option value="music">Music</option>
                     <option value="travel">Travel</option>
                     <option value="beauty">Beauty</option>
-                    <option value="entrepreneurship">Entrepreneurship</option>
+                    <option value="entrepreneurship">Business</option>
                     <option value="photography">Photography</option>
                     <option value="parenting">Parenting</option>
                     <option value="pets">Pets</option>
@@ -482,93 +511,69 @@
                     <option value="motivation">Motivation</option>
                     <option value="custom">Custom...</option>
                 </select>
-            </div>
-            <div style="flex:1; display:none;" id="custom-niche-wrap">
-                <label for="custom-niche">Your niche</label>
-                <input type="text" id="custom-niche" placeholder="e.g. crypto, gardening, cars">
-            </div>
-            <div style="flex:1;">
-                <label for="topic-input">Topic (optional)</label>
-                <input type="text" id="topic-input" placeholder="e.g. cold plunge benefits, creatine myths">
-            </div>
-            <div style="display:flex; align-items:flex-end;">
-                <button class="btn-primary" id="generate-btn" onclick="generateIdeas()">Generate Ideas</button>
+                <input type="text" id="custom-niche" placeholder="Your niche..." style="display:none;">
+                <input type="text" id="topic-input" placeholder="Topic (optional)...">
+                <button class="btn btn-primary" id="generate-btn" onclick="runFullAnalysis()">Analyze</button>
             </div>
         </div>
+    </div>
 
-        <div class="actions">
+    <div class="container">
+        <div class="source-pills">
+            <span class="pill pill-reddit">Reddit</span>
+            <span class="pill pill-youtube">YouTube</span>
+            <span class="pill pill-tiktok">TikTok</span>
+            <span class="pill pill-gtrends">Google Trends</span>
+            <span class="pill pill-news">Google News</span>
+            <span class="pill pill-hn">Hacker News</span>
+            <span class="pill pill-web">Web Search</span>
+            <span class="pill pill-instagram">Instagram</span>
+        </div>
+
+        <div class="quick-actions">
             <button onclick="ingestReddit()">Pull Reddit Posts</button>
-            <button onclick="loadTrends()">View Trends</button>
-            <button onclick="loadTrendIdeas()">Full Analysis (All Sources)</button>
-            <button onclick="searchYouTube()">YouTube</button>
-            <button onclick="searchTikTok()">TikTok</button>
-            <button onclick="searchInstagram()">Instagram</button>
-            <button onclick="searchGoogleNews()">News</button>
-            <button onclick="searchHN()">Hacker News</button>
-            <button onclick="searchWeb()">Web Search</button>
-            <button onclick="searchGoogleTrends()">Google Trends</button>
+            <button onclick="searchSingle('youtube')">YouTube Only</button>
+            <button onclick="searchSingle('tiktok')">TikTok Only</button>
+            <button onclick="searchSingle('news')">News Only</button>
+            <button onclick="searchSingle('hn')">Hacker News Only</button>
+            <button onclick="searchSingle('web')">Web Only</button>
+            <button onclick="searchSingle('gtrends')">Trends Only</button>
         </div>
 
-        <div class="status" id="status"></div>
+        <div class="status-bar" id="status"></div>
 
-        <div id="trends-section" style="display:none;">
-            <div class="section-title">Trending Topics</div>
-            <div class="trends" id="trends-grid"></div>
-        </div>
-
-        <div id="results-section" style="display:none;">
-            <div class="section-title" id="results-title">Results</div>
-            <div id="results-grid"></div>
-        </div>
-
-        <div id="ideas-section" style="display:none;">
-            <div class="section-title">Video Ideas & Scripts</div>
-            <div id="ideas-list"></div>
-        </div>
+        <div id="results"></div>
     </div>
 
     <script>
         const nicheSelect = document.getElementById('niche');
-        const customWrap = document.getElementById('custom-niche-wrap');
         const customInput = document.getElementById('custom-niche');
 
         nicheSelect.addEventListener('change', () => {
-            customWrap.style.display = nicheSelect.value === 'custom' ? 'block' : 'none';
+            customInput.style.display = nicheSelect.value === 'custom' ? 'block' : 'none';
         });
 
         function getNiche() {
             return nicheSelect.value === 'custom' ? customInput.value || 'fitness' : nicheSelect.value;
         }
 
+        function getQuery() {
+            return document.getElementById('topic-input').value.trim() || getNiche();
+        }
+
         function showStatus(msg, type) {
             const el = document.getElementById('status');
             el.textContent = msg;
-            el.className = 'status ' + type;
+            el.className = 'status-bar ' + type;
         }
 
         function hideStatus() {
-            document.getElementById('status').className = 'status';
-        }
-
-        function showLoading(containerId) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '<div class="loading"><div class="spinner"></div><div>Scanning sources...</div></div>';
-        }
-
-        function toggleScript(btn) {
-            const content = btn.nextElementSibling;
-            content.classList.toggle('open');
-            btn.textContent = content.classList.contains('open') ? 'Hide Script' : 'View Script';
-        }
-
-        function toggleCollapsible(header) {
-            header.classList.toggle('open');
-            header.nextElementSibling.classList.toggle('open');
+            document.getElementById('status').className = 'status-bar';
         }
 
         function escapeHtml(text) {
             const div = document.createElement('div');
-            div.textContent = text;
+            div.textContent = text || '';
             return div.innerHTML;
         }
 
@@ -581,172 +586,157 @@
             return '#';
         }
 
-        function formatCount(n) {
-            if (n >= 1000000000) return (n / 1000000000).toFixed(1) + 'B';
-            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-            return String(n || 0);
+        function fmt(n) {
+            n = n || 0;
+            if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+            if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+            if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+            return String(n);
         }
 
-        function renderIdeaCard(idea) {
-            return `
-                <div class="idea-card">
-                    <div class="hook">${escapeHtml(idea.hook)}</div>
-                    <div class="angle">${escapeHtml(idea.angle)}</div>
-                    <div class="idea-text">${escapeHtml(idea.idea)}</div>
-                    ${idea.script ? `
-                        <button class="script-toggle" onclick="toggleScript(this)">View Script</button>
-                        <div class="script-content">${escapeHtml(idea.script)}</div>
-                    ` : ''}
-                </div>
-            `;
+        function toggleScript(btn) {
+            const box = btn.nextElementSibling;
+            box.classList.toggle('open');
+            btn.textContent = box.classList.contains('open') ? 'Hide Script' : 'View Script';
         }
 
-        function renderVideoCard(video) {
-            const thumbUrl = video.thumbnail || '';
-            const vidId = video.video_id || video.videoId || '';
-            const channel = video.channel || video.channelTitle || '';
+        function toggleMedia(h4) {
+            h4.classList.toggle('open');
+            h4.nextElementSibling.classList.toggle('open');
+        }
 
+        function renderIdea(idea, idx) {
             return `
-                <div class="mini-card" onclick="this.querySelector('.thumb').innerHTML='<div class=\\'video-embed-container\\'><iframe src=\\'https://www.youtube.com/embed/${vidId}?autoplay=1\\' allow=\\'autoplay\\' allowfullscreen></iframe></div>'">
-                    <div class="thumb" style="position:relative;">
-                        ${thumbUrl ? `<img src="${thumbUrl}" loading="lazy">` : ''}
-                        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;background:rgba(0,0,0,0.7);border-radius:50%;display:flex;align-items:center;justify-content:center;"><div style="width:0;height:0;border-style:solid;border-width:8px 0 8px 14px;border-color:transparent transparent transparent #fff;margin-left:2px;"></div></div>
-                    </div>
-                    <div class="card-body">
-                        <div class="card-title">${escapeHtml(video.title || '')}</div>
-                        <div class="card-meta">${escapeHtml(channel)}</div>
+                <div class="idea-row">
+                    <div class="idea-number">${idx + 1}</div>
+                    <div class="idea-content">
+                        <div class="idea-hook">${escapeHtml(idea.hook)}</div>
+                        <div class="idea-angle">${escapeHtml(idea.angle)}</div>
+                        <div class="idea-text">${escapeHtml(idea.idea)}</div>
+                        ${idea.script ? `
+                            <button class="script-btn" onclick="toggleScript(this)">View Script</button>
+                            <div class="script-box">${escapeHtml(idea.script)}</div>
+                        ` : ''}
                     </div>
                 </div>
             `;
         }
 
-        function renderIgCard(post) {
-            const thumb = post.thumbnail_url || post.media_url || '';
+        function renderYTCard(v) {
+            const vid = v.video_id || v.videoId || '';
             return `
-                <div class="mini-card">
-                    <a href="${safeUrl(post.permalink)}" target="_blank" rel="noopener">
-                        <div class="thumb" style="aspect-ratio:1;">${thumb ? `<img src="${thumb}" loading="lazy">` : ''}</div>
+                <div class="m-card" onclick="this.querySelector('.m-thumb').innerHTML='<div class=\\'video-embed-container\\'><iframe src=\\'https://www.youtube.com/embed/${vid}?autoplay=1\\' allow=\\'autoplay\\' allowfullscreen></iframe></div>'">
+                    <div class="m-thumb">
+                        ${v.thumbnail ? `<img src="${v.thumbnail}" loading="lazy">` : ''}
+                        <div class="play-btn"></div>
+                    </div>
+                    <div class="m-body">
+                        <div class="m-title">${escapeHtml(v.title)}</div>
+                        <div class="m-meta">${escapeHtml(v.channel || v.channelTitle || '')}</div>
+                    </div>
+                </div>`;
+        }
+
+        function renderTTCard(v) {
+            return `
+                <div class="m-card">
+                    <a href="${safeUrl(v.url)}" target="_blank" rel="noopener">
+                        <div class="m-thumb" style="aspect-ratio:9/16;max-height:140px;">
+                            ${v.cover ? `<img src="${v.cover}" loading="lazy">` : '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#00b8b8;font-size:0.8rem;">View on TikTok</div>'}
+                        </div>
                     </a>
-                    <div class="card-body">
-                        <div class="card-title">${escapeHtml(post.caption || 'No caption')}</div>
-                        <div class="card-meta">${formatCount(post.like_count)} likes &middot; ${post.media_type}</div>
+                    <div class="m-body">
+                        <div class="m-title">${escapeHtml(v.description)}</div>
+                        <div class="m-meta">@${escapeHtml(v.author)} &middot; ${fmt(v.play_count)} plays</div>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
 
-        function renderTtCard(video) {
+        function renderIGCard(p) {
+            const thumb = p.thumbnail_url || p.media_url || '';
             return `
-                <div class="mini-card">
-                    <a href="${safeUrl(video.url)}" target="_blank" rel="noopener">
-                        <div class="thumb" style="aspect-ratio:9/16;max-height:160px;">${video.cover ? `<img src="${video.cover}" loading="lazy">` : '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#00f2ea;font-size:1.5rem;">TikTok</div>'}</div>
+                <div class="m-card">
+                    <a href="${safeUrl(p.permalink)}" target="_blank" rel="noopener">
+                        <div class="m-thumb" style="aspect-ratio:1;">${thumb ? `<img src="${thumb}" loading="lazy">` : ''}</div>
                     </a>
-                    <div class="card-body">
-                        <div class="card-title">${escapeHtml(video.description || '')}</div>
-                        <div class="card-meta">@${escapeHtml(video.author)} &middot; ${formatCount(video.play_count)} plays</div>
+                    <div class="m-body">
+                        <div class="m-title">${escapeHtml(p.caption || 'No caption')}</div>
+                        <div class="m-meta">${fmt(p.like_count)} likes</div>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
 
-        function renderNewsItem(article) {
+        function renderNewsItem(a) {
+            return `<div class="link-item"><a href="${safeUrl(a.link)}" target="_blank">${escapeHtml(a.title)}</a><div class="l-meta">${escapeHtml(a.source)} &middot; ${escapeHtml(a.published)}</div></div>`;
+        }
+
+        function renderHNItem(s) {
+            return `<div class="link-item"><a href="${safeUrl(s.hn_link || s.url)}" target="_blank">${escapeHtml(s.title)}</a><div class="l-meta">${s.score} pts &middot; ${s.comments} comments</div></div>`;
+        }
+
+        function renderWebItem(r) {
+            return `<div class="link-item"><a href="${safeUrl(r.url)}" target="_blank">${escapeHtml(r.title)}</a><div class="l-snippet">${escapeHtml(r.snippet)}</div></div>`;
+        }
+
+        function renderRedditItem(p) {
+            return `<div class="link-item"><a href="${safeUrl(p.url)}" target="_blank">${escapeHtml(p.title)}</a><div class="l-meta">r/${escapeHtml(p.subreddit)} &middot; ${fmt(p.score)} upvotes &middot; ${p.num_comments} comments</div></div>`;
+        }
+
+        function renderMediaSection(label, pillClass, items, renderFn, isGrid) {
+            if (!items || !items.length) return '';
             return `
-                <div class="list-item">
-                    <a href="${safeUrl(article.link)}" target="_blank" rel="noopener">${escapeHtml(article.title)}</a>
-                    <div class="item-meta">${escapeHtml(article.source || '')} &middot; ${escapeHtml(article.published || '')}</div>
-                </div>
-            `;
+                <div class="media-section">
+                    <h4 onclick="toggleMedia(this)"><span class="arrow">▸</span> <span class="pill ${pillClass}" style="cursor:pointer;">${label}</span> ${items.length} results</h4>
+                    <div class="media-body">
+                        ${isGrid ? `<div class="media-grid">${items.map(renderFn).join('')}</div>` : items.map(renderFn).join('')}
+                    </div>
+                </div>`;
         }
 
-        function renderHNItem(story) {
-            return `
-                <div class="list-item">
-                    <a href="${safeUrl(story.hn_link || story.url)}" target="_blank" rel="noopener">${escapeHtml(story.title)}</a>
-                    <div class="item-meta">${story.score} pts &middot; ${story.comments} comments &middot; by ${escapeHtml(story.author)}</div>
-                </div>
-            `;
-        }
-
-        function renderWebItem(result) {
-            return `
-                <div class="list-item">
-                    <a href="${safeUrl(result.url)}" target="_blank" rel="noopener">${escapeHtml(result.title)}</a>
-                    <div class="item-snippet">${escapeHtml(result.snippet || '')}</div>
-                </div>
-            `;
-        }
-
-        function renderRedditItem(post) {
-            return `
-                <div class="list-item">
-                    <a href="${safeUrl(post.url)}" target="_blank" rel="noopener">${escapeHtml(post.title)}</a>
-                    <div class="item-meta">r/${escapeHtml(post.subreddit)} &middot; ${formatCount(post.score)} upvotes &middot; ${post.num_comments} comments</div>
-                </div>
-            `;
-        }
-
-        function renderSourceSection(label, cssClass, items, renderFn, useGrid) {
-            if (!items || items.length === 0) return '';
-            const content = useGrid
-                ? `<div class="card-grid">${items.map(renderFn).join('')}</div>`
-                : items.map(renderFn).join('');
-            return `
-                <div class="source-section">
-                    <h4 class="collapsible-header" onclick="toggleCollapsible(this)">
-                        <span class="source-label ${cssClass}">${label}</span> ${items.length} results
-                    </h4>
-                    <div class="collapsible-body">${content}</div>
-                </div>
-            `;
-        }
-
-        function renderTrendGroup(ti) {
-            const ytHtml = renderSourceSection('YouTube', 'source-youtube', ti.example_videos, renderVideoCard, true);
-            const igHtml = renderSourceSection('Instagram', 'source-instagram', ti.instagram_posts, renderIgCard, true);
-            const ttHtml = renderSourceSection('TikTok', 'source-tiktok', ti.tiktok_videos, renderTtCard, true);
-            const newsHtml = renderSourceSection('News', 'source-news', ti.google_news, renderNewsItem, false);
-            const hnHtml = renderSourceSection('Hacker News', 'source-hn', ti.hackernews_stories, renderHNItem, false);
-            const webHtml = renderSourceSection('Web', 'source-web', ti.web_results, renderWebItem, false);
-            const redditHtml = renderSourceSection('Reddit', 'source-reddit', ti.reddit_posts, renderRedditItem, false);
+        function renderTrendCard(ti) {
+            let srcCount = 0;
+            const check = [ti.example_videos, ti.instagram_posts, ti.tiktok_videos, ti.google_news, ti.hackernews_stories, ti.web_results, ti.reddit_posts];
+            check.forEach(a => { if (a && a.length) srcCount++; });
+            const gd = ti.google_trends_data || {};
+            if ((gd.related_queries || []).length || (gd.trending_searches || []).length) srcCount++;
 
             let trendsHtml = '';
-            const gd = ti.google_trends_data || {};
-            const relatedQ = gd.related_queries || [];
-            const trendingS = gd.trending_searches || [];
-            if (relatedQ.length > 0 || trendingS.length > 0) {
-                const pills = relatedQ.map(q => `<span style="display:inline-block;padding:3px 8px;background:#0d0d0d;border:1px solid #222;border-radius:6px;font-size:0.72rem;color:#4285f4;margin:2px;">${escapeHtml(q.query)}</span>`).join('');
-                const trendPills = trendingS.map(t => `<span style="display:inline-block;padding:3px 8px;background:#0d0d0d;border:1px solid #222;border-radius:6px;font-size:0.72rem;color:#66bb6a;margin:2px;">${escapeHtml(t)}</span>`).join('');
+            const rq = gd.related_queries || [];
+            const ts = gd.trending_searches || [];
+            if (rq.length || ts.length) {
                 trendsHtml = `
-                    <div class="source-section">
-                        <h4 class="collapsible-header" onclick="toggleCollapsible(this)">
-                            <span class="source-label source-gtrends">Google Trends</span> Related searches
-                        </h4>
-                        <div class="collapsible-body">
-                            ${pills ? `<div style="margin-bottom:8px;">${pills}</div>` : ''}
-                            ${trendPills ? `<div style="margin-top:6px;"><span style="font-size:0.72rem;color:#666;">Also trending:</span> ${trendPills}</div>` : ''}
+                    <div class="media-section">
+                        <h4 onclick="toggleMedia(this)"><span class="arrow">▸</span> <span class="pill pill-gtrends">Google Trends</span> Related searches</h4>
+                        <div class="media-body">
+                            <div class="gtrends-pills">
+                                ${rq.map(q => `<span>${escapeHtml(q.query)}</span>`).join('')}
+                                ${ts.map(t => `<span style="background:#f0fff0;color:#27ae60;border-color:#c0f0c0;">${escapeHtml(t)}</span>`).join('')}
+                            </div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }
 
-            let sourceCount = 0;
-            if (ti.example_videos?.length) sourceCount++;
-            if (ti.instagram_posts?.length) sourceCount++;
-            if (ti.tiktok_videos?.length) sourceCount++;
-            if (ti.google_news?.length) sourceCount++;
-            if (ti.hackernews_stories?.length) sourceCount++;
-            if (ti.web_results?.length) sourceCount++;
-            if (ti.reddit_posts?.length) sourceCount++;
-            if (relatedQ.length || trendingS.length) sourceCount++;
-
             return `
-                <div class="trend-group">
-                    <h3>${escapeHtml(ti.trend)} <span class="badge">${ti.ideas.length} ideas</span> <span class="badge" style="background:#333;">${sourceCount} sources</span></h3>
-                    ${ti.ideas.map(renderIdeaCard).join('')}
-                    ${ytHtml}${igHtml}${ttHtml}${trendsHtml}${newsHtml}${hnHtml}${webHtml}${redditHtml}
-                </div>
-            `;
+                <div class="trend-card">
+                    <div class="trend-header">
+                        <div class="trend-title">${escapeHtml(ti.trend)}</div>
+                        <div class="trend-badges">
+                            <span class="badge badge-ideas">${ti.ideas.length} ideas</span>
+                            <span class="badge badge-sources">${srcCount} sources</span>
+                        </div>
+                    </div>
+                    <div class="trend-body">
+                        ${ti.ideas.map((idea, i) => renderIdea(idea, i)).join('')}
+                        ${renderMediaSection('YouTube', 'pill-youtube', ti.example_videos, renderYTCard, true)}
+                        ${renderMediaSection('TikTok', 'pill-tiktok', ti.tiktok_videos, renderTTCard, true)}
+                        ${renderMediaSection('Instagram', 'pill-instagram', ti.instagram_posts, renderIGCard, true)}
+                        ${trendsHtml}
+                        ${renderMediaSection('News', 'pill-news', ti.google_news, renderNewsItem, false)}
+                        ${renderMediaSection('Reddit', 'pill-reddit', ti.reddit_posts, renderRedditItem, false)}
+                        ${renderMediaSection('Hacker News', 'pill-hn', ti.hackernews_stories, renderHNItem, false)}
+                        ${renderMediaSection('Web', 'pill-web', ti.web_results, renderWebItem, false)}
+                    </div>
+                </div>`;
         }
 
         async function ingestReddit() {
@@ -755,41 +745,17 @@
                 const res = await fetch('/ingest/reddit', { method: 'POST' });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || 'Failed');
-                showStatus(`Ingested ${data.ingested || data.new_posts || 0} new posts (${data.skipped || 0} skipped)`, 'success');
-            } catch (e) {
-                showStatus('Error: ' + e.message, 'error');
-            }
+                showStatus(`Ingested ${data.ingested || 0} new posts (${data.skipped || 0} already stored)`, 'success');
+            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
         }
 
-        async function loadTrends() {
-            document.getElementById('trends-section').style.display = 'block';
-            showLoading('trends-grid');
-            showStatus('Analyzing trends...', 'info');
-            try {
-                const res = await fetch('/trends/');
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Failed');
-                document.getElementById('trends-grid').innerHTML = data.trends.map(t => `
-                    <div class="trend-pill">
-                        <div class="topic">${escapeHtml(t.topic)}</div>
-                        <div class="score">Score: ${t.score}</div>
-                    </div>
-                `).join('');
-                hideStatus();
-            } catch (e) {
-                showStatus('Error: ' + e.message, 'error');
-            }
-        }
-
-        async function loadTrendIdeas() {
-            document.getElementById('trends-section').style.display = 'block';
-            document.getElementById('ideas-section').style.display = 'block';
-            showLoading('trends-grid');
-            showLoading('ideas-list');
-            showStatus('Scanning 8+ sources and generating AI ideas... this may take 30-60 seconds.', 'info');
+        async function runFullAnalysis() {
+            const niche = getNiche();
+            const el = document.getElementById('results');
+            el.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>Scanning 8 sources and generating AI ideas...</div><div style="font-size:0.75rem;color:#aeaeb2;margin-top:4px;">This takes 15-30 seconds</div></div>';
+            showStatus('Analyzing trends across all sources...', 'info');
 
             try {
-                const niche = getNiche();
                 const res = await fetch('/trend-ideas/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -798,196 +764,72 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || 'Failed');
 
-                document.getElementById('trends-grid').innerHTML = data.trend_ideas.map(ti => `
-                    <div class="trend-pill">
-                        <div class="topic">${escapeHtml(ti.trend)}</div>
-                    </div>
-                `).join('');
+                if (!data.trend_ideas || !data.trend_ideas.length) {
+                    el.innerHTML = '<div class="empty-state">No trends found. Try clicking "Pull Reddit Posts" first to get data.</div>';
+                    hideStatus();
+                    return;
+                }
 
-                document.getElementById('ideas-list').innerHTML = data.trend_ideas.map(renderTrendGroup).join('');
+                el.innerHTML = data.trend_ideas.map(renderTrendCard).join('');
                 hideStatus();
             } catch (e) {
                 showStatus('Error: ' + e.message, 'error');
+                el.innerHTML = '';
             }
         }
 
-        async function generateIdeas() {
-            const topic = document.getElementById('topic-input').value.trim();
-            const niche = getNiche();
-            if (!topic) {
-                showStatus('Enter a topic to generate ideas for.', 'error');
-                return;
-            }
+        async function searchSingle(source) {
+            const query = getQuery();
+            const el = document.getElementById('results');
+            el.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>Searching...</div></div>';
+            showStatus(`Searching ${source}...`, 'info');
 
-            document.getElementById('ideas-section').style.display = 'block';
-            showLoading('ideas-list');
-            showStatus('Generating viral ideas...', 'info');
+            const endpoints = {
+                youtube: { url: '/youtube/search', body: { query, max_results: 6 }, render: (d) => d.videos?.length ? `<div class="media-grid">${d.videos.map(renderYTCard).join('')}</div>` : '<div class="empty-state">No results.</div>' },
+                tiktok: { url: '/tiktok/search', body: { query, max_results: 6 }, render: (d) => d.videos?.length ? `<div class="media-grid">${d.videos.map(renderTTCard).join('')}</div>` : '<div class="empty-state">No results.</div>' },
+                instagram: { url: '/instagram/search', body: { query, max_results: 6 }, render: (d) => d.posts?.length ? `<div class="media-grid">${d.posts.map(renderIGCard).join('')}</div>` : '<div class="empty-state">No Instagram results. Business account setup needed.</div>' },
+                news: { url: '/google-news/search', body: { query, max_results: 10 }, render: (d) => d.articles?.length ? d.articles.map(renderNewsItem).join('') : '<div class="empty-state">No news found.</div>' },
+                hn: { url: '/hackernews/search', body: { query, max_results: 10 }, render: (d) => d.stories?.length ? d.stories.map(renderHNItem).join('') : '<div class="empty-state">No stories found.</div>' },
+                web: { url: '/web-search/trending', body: { query, max_results: 10 }, render: (d) => d.results?.length ? d.results.map(renderWebItem).join('') : '<div class="empty-state">No web results.</div>' },
+                gtrends: {
+                    url: '/google-trends/search',
+                    body: { query },
+                    render: (d) => {
+                        let html = '';
+                        if (d.related_queries?.length) {
+                            html += '<h4 style="color:#4285f4;font-size:0.85rem;margin-bottom:8px;font-weight:600;">Related Searches</h4>';
+                            html += '<div class="gtrends-pills">' + d.related_queries.map(q => `<span>${escapeHtml(q.query)}</span>`).join('') + '</div>';
+                        }
+                        if (d.trending_searches?.length) {
+                            html += '<h4 style="color:#27ae60;font-size:0.85rem;margin:14px 0 8px;font-weight:600;">Currently Trending</h4>';
+                            html += '<div class="gtrends-pills">' + d.trending_searches.map(t => `<span style="background:#f0fff0;color:#27ae60;border-color:#c0f0c0;">${escapeHtml(t)}</span>`).join('') + '</div>';
+                        }
+                        return html || '<div class="empty-state">No trends data found.</div>';
+                    }
+                },
+            };
+
+            const cfg = endpoints[source];
+            if (!cfg) return;
 
             try {
-                const res = await fetch('/ideas/', {
+                const res = await fetch(cfg.url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: topic, niche })
+                    body: JSON.stringify(cfg.body)
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || 'Failed');
-                document.getElementById('ideas-list').innerHTML = data.ideas.map(renderIdeaCard).join('');
+                el.innerHTML = `<div class="trend-card"><div class="trend-header"><div class="trend-title">${escapeHtml(source.charAt(0).toUpperCase() + source.slice(1))} Results: ${escapeHtml(query)}</div></div><div style="padding:16px 22px;">${cfg.render(data)}</div></div>`;
                 hideStatus();
             } catch (e) {
                 showStatus('Error: ' + e.message, 'error');
+                el.innerHTML = '';
             }
-        }
-
-        function showResults(title, html) {
-            document.getElementById('results-section').style.display = 'block';
-            document.getElementById('results-title').textContent = title;
-            document.getElementById('results-grid').innerHTML = html;
-        }
-
-        async function searchYouTube() {
-            const query = document.getElementById('topic-input').value.trim() || getNiche();
-            showStatus('Searching YouTube...', 'info');
-            try {
-                const res = await fetch('/youtube/search', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query, max_results: 6 })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Failed');
-                showResults('YouTube Results', data.videos.length
-                    ? `<div class="card-grid">${data.videos.map(renderVideoCard).join('')}</div>`
-                    : '<div class="empty">No YouTube videos found.</div>');
-                hideStatus();
-            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
-        }
-
-        async function searchTikTok() {
-            const query = document.getElementById('topic-input').value.trim() || getNiche();
-            showStatus('Searching TikTok...', 'info');
-            try {
-                const res = await fetch('/tiktok/search', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query, max_results: 6 })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Failed');
-                showResults('TikTok Results', data.videos.length
-                    ? `<div class="card-grid">${data.videos.map(renderTtCard).join('')}</div>`
-                    : '<div class="empty">No TikTok results found.</div>');
-                hideStatus();
-            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
-        }
-
-        async function searchInstagram() {
-            const query = document.getElementById('topic-input').value.trim() || getNiche();
-            showStatus('Searching Instagram...', 'info');
-            try {
-                const res = await fetch('/instagram/search', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query, max_results: 6 })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Failed');
-                showResults('Instagram Results', data.posts.length
-                    ? `<div class="card-grid">${data.posts.map(renderIgCard).join('')}</div>`
-                    : '<div class="empty">No Instagram posts found. Business account setup may be needed.</div>');
-                hideStatus();
-            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
-        }
-
-        async function searchGoogleNews() {
-            const query = document.getElementById('topic-input').value.trim() || getNiche();
-            showStatus('Searching Google News...', 'info');
-            try {
-                const res = await fetch('/google-news/search', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query, max_results: 10 })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Failed');
-                showResults('Google News', data.articles.length
-                    ? data.articles.map(renderNewsItem).join('')
-                    : '<div class="empty">No news articles found.</div>');
-                hideStatus();
-            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
-        }
-
-        async function searchHN() {
-            const query = document.getElementById('topic-input').value.trim() || getNiche();
-            showStatus('Searching Hacker News...', 'info');
-            try {
-                const res = await fetch('/hackernews/search', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query, max_results: 10 })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Failed');
-                showResults('Hacker News', data.stories.length
-                    ? data.stories.map(renderHNItem).join('')
-                    : '<div class="empty">No Hacker News stories found.</div>');
-                hideStatus();
-            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
-        }
-
-        async function searchWeb() {
-            const query = document.getElementById('topic-input').value.trim() || getNiche();
-            showStatus('Searching the web...', 'info');
-            try {
-                const res = await fetch('/web-search/trending', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query, max_results: 10 })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Failed');
-                showResults('Web Search Results', data.results.length
-                    ? data.results.map(renderWebItem).join('')
-                    : '<div class="empty">No web results found.</div>');
-                hideStatus();
-            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
-        }
-
-        async function searchGoogleTrends() {
-            const query = document.getElementById('topic-input').value.trim() || getNiche();
-            showStatus('Fetching Google Trends...', 'info');
-            try {
-                const res = await fetch('/google-trends/search', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Failed');
-
-                let html = '';
-                if (data.related_queries.length) {
-                    html += '<h4 style="color:#4285f4;font-size:0.85rem;margin-bottom:8px;">Related Searches</h4>';
-                    html += data.related_queries.map(q => `
-                        <div class="list-item">
-                            <span style="color:#4285f4;font-size:0.82rem;">${escapeHtml(q.query)}</span>
-                            <span style="float:right;color:#666;font-size:0.72rem;">${q.value > 0 ? formatCount(q.value) + ' interest' : ''}</span>
-                        </div>
-                    `).join('');
-                }
-                if (data.trending_searches.length) {
-                    html += '<h4 style="color:#66bb6a;font-size:0.85rem;margin:12px 0 8px;">Currently Trending on Google</h4>';
-                    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
-                    html += data.trending_searches.map(t => `<span style="display:inline-block;padding:4px 10px;background:#141414;border:1px solid #2a2a2a;border-radius:8px;font-size:0.78rem;color:#66bb6a;">${escapeHtml(t)}</span>`).join('');
-                    html += '</div>';
-                }
-                if (!html) html = '<div class="empty">No Google Trends data found for this query.</div>';
-                showResults('Google Trends: ' + query, html);
-                hideStatus();
-            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
         }
 
         document.getElementById('topic-input').addEventListener('keydown', e => {
-            if (e.key === 'Enter') generateIdeas();
+            if (e.key === 'Enter') runFullAnalysis();
         });
     </script>
 </body>

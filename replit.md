@@ -49,7 +49,7 @@ artifacts/fastapi-server/
     ├── web_search_client.py    # DuckDuckGo web search
     ├── multi_reddit_client.py  # Multi-subreddit ingest (20+ niches mapped)
     ├── static/
-    │   └── index.html   # Frontend UI (dark-themed dashboard)
+    │   └── index.html   # Frontend UI (light-themed dashboard)
     └── routers/
         ├── items.py        # Example CRUD router
         ├── ingest.py       # POST /ingest/reddit — pull posts via RSS
@@ -98,13 +98,20 @@ artifacts/fastapi-server/
 ### Product Loop
 1. Ingest Reddit posts → 2. Detect trends → 3. Generate viral video ideas per trend → 4. Find example videos from YouTube, Instagram, TikTok
 
+### Performance
+- All 8 data sources fetched in parallel per trend using asyncio.gather
+- All trends processed in parallel (AI calls use semaphore limiting to 3 concurrent)
+- Per-trend fault isolation: one failed trend doesn't crash the whole response
+- Individual source timeouts (10s default, 15s for Google Trends) prevent slow sources from blocking
+
 ### Frontend
-- Dark-themed single-page app at `/`
-- Niche selector (fitness, dating, finance, etc. + custom input)
-- Buttons: Pull Reddit Posts, View Trends, Trends + Ideas + Videos, Search YouTube, Search Instagram, Search TikTok
-- Topic input for direct idea generation
+- Light-themed single-page app at `/` (Apple-inspired design)
+- Sticky top bar with niche selector (21 options + custom), topic input, and "Analyze" button
+- One-click full analysis: scans all 8 sources per trend, groups ideas + matching videos + sources together per trend card
+- Quick action buttons for individual source searches
+- Collapsible source sections per trend with color-coded pills
 - Video cards with thumbnails, inline YouTube playback, expandable scripts
-- Color-coded source labels: YouTube (red), Instagram (pink), TikTok (cyan)
+- Color-coded source labels: Reddit (orange), YouTube (red), TikTok (teal), Google Trends (blue), News (green), HN (orange), Web (purple), Instagram (pink)
 
 ### Instagram Notes
 - Instagram Graph API requires: Business/Creator account + Facebook Page + linked IG account

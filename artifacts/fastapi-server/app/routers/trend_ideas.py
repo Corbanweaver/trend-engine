@@ -1,6 +1,10 @@
 import os
 import json
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
+_ai_semaphore = asyncio.Semaphore(3)
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text as sql_text
@@ -65,29 +69,33 @@ def parse_ideas_json(raw: str) -> list[VideoIdea]:
     return [VideoIdea(hook=cleaned[:100], angle="", idea=cleaned, script="")]
 
 
+async def _safe_fetch(coro, default, timeout=10.0):
+    try:
+        return await asyncio.wait_for(coro, timeout=timeout)
+    except Exception as e:
+        logger.warning("Source fetch failed: %s", e)
+        return default
+
+
 async def gather_source_data(niche: str, topic: str) -> dict:
     search_query = f"{niche} {topic}"
     hashtag_query = f"{niche}{topic.replace(' ', '')}"
 
-    tasks = {
-        "youtube": youtube_search(search_query, max_results=3),
-        "instagram": search_instagram(hashtag_query, max_results=3),
-        "tiktok": tiktok_trending_search(search_query, max_results=3),
-        "google_news": google_news_search(search_query, max_results=5),
-        "google_trends": google_trends_search(topic),
-        "hackernews": hn_search(search_query, max_results=5),
-        "web_search": web_search(f"{search_query} trending viral", max_results=5),
-        "reddit_multi": multi_reddit_ingest(niche, max_per_sub=5),
-    }
+    keys = ["youtube", "instagram", "tiktok", "google_news", "google_trends", "hackernews", "web_search", "reddit_multi"]
 
-    results = {}
-    for key, coro in tasks.items():
-        try:
-            results[key] = await asyncio.wait_for(coro, timeout=15.0)
-        except Exception:
-            results[key] = [] if key != "google_trends" else {}
+    coros = [
+        _safe_fetch(youtube_search(search_query, max_results=3), []),
+        _safe_fetch(search_instagram(hashtag_query, max_results=3), []),
+        _safe_fetch(tiktok_trending_search(search_query, max_results=3), []),
+        _safe_fetch(google_news_search(search_query, max_results=5), []),
+        _safe_fetch(google_trends_search(topic), {}, timeout=15.0),
+        _safe_fetch(hn_search(search_query, max_results=5), []),
+        _safe_fetch(web_search(f"{search_query} trending viral", max_results=5), []),
+        _safe_fetch(multi_reddit_ingest(niche, max_per_sub=5), []),
+    ]
 
-    return results
+    values = await asyncio.gather(*coros)
+    return dict(zip(keys, values))
 
 
 def build_context_prompt(niche: str, topic: str, sources: dict) -> str:
@@ -129,6 +137,50 @@ def build_context_prompt(niche: str, topic: str, sources: dict) -> str:
     return "\n\n".join(parts)
 
 
+async def _process_trend(client, niche: str, trend_topic: str) -> TrendIdea:
+    try:
+        sources = await gather_source_data(niche, trend_topic)
+        context = build_context_prompt(niche, trend_topic, sources)
+
+        async with _ai_semaphore:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: client.chat.completions.create(
+                    model="gpt-5.2",
+                    max_completion_tokens=2048,
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": context},
+                    ],
+                ),
+            )
+        raw = response.choices[0].message.content or ""
+        ideas = parse_ideas_json(raw)
+
+        return TrendIdea(
+            trend=trend_topic,
+            ideas=ideas,
+            example_videos=sources.get("youtube", []),
+            instagram_posts=sources.get("instagram", []),
+            tiktok_videos=sources.get("tiktok", []),
+            google_news=sources.get("google_news", [])[:5],
+            google_trends_data=sources.get("google_trends", {}),
+            hackernews_stories=sources.get("hackernews", [])[:5],
+            web_results=sources.get("web_search", [])[:5],
+            reddit_posts=sources.get("reddit_multi", [])[:10],
+        )
+    except Exception as e:
+        logger.error("Failed to process trend '%s': %s", trend_topic, e)
+        return TrendIdea(
+            trend=trend_topic,
+            ideas=[VideoIdea(hook="Analysis unavailable", angle="", idea=f"Could not generate ideas for this trend: {e}", script="")],
+            example_videos=[],
+            instagram_posts=[],
+            tiktok_videos=[],
+        )
+
+
 @router.post("/", response_model=TrendIdeasResponse)
 async def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest(), db: Session = Depends(get_db)):
     rows = db.execute(
@@ -143,41 +195,8 @@ async def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest(), db: Ses
 
     client = get_openai_client()
     niche = body.niche or "fitness"
-    result: list[TrendIdea] = []
 
-    for trend in trends:
-        sources = await gather_source_data(niche, trend.topic)
+    trend_coros = [_process_trend(client, niche, t.topic) for t in trends]
+    result = await asyncio.gather(*trend_coros)
 
-        context = build_context_prompt(niche, trend.topic, sources)
-
-        response = client.chat.completions.create(
-            model="gpt-5.2",
-            max_completion_tokens=2048,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": context},
-            ],
-        )
-        raw = response.choices[0].message.content or ""
-        ideas = parse_ideas_json(raw)
-
-        news_items = sources.get("google_news", [])
-        trends_data = sources.get("google_trends", {})
-        hn_stories = sources.get("hackernews", [])
-        web_results = sources.get("web_search", [])
-        reddit_posts = sources.get("reddit_multi", [])
-
-        result.append(TrendIdea(
-            trend=trend.topic,
-            ideas=ideas,
-            example_videos=sources.get("youtube", []),
-            instagram_posts=sources.get("instagram", []),
-            tiktok_videos=sources.get("tiktok", []),
-            google_news=news_items[:5],
-            google_trends_data=trends_data,
-            hackernews_stories=hn_stories[:5],
-            web_results=web_results[:5],
-            reddit_posts=reddit_posts[:10],
-        ))
-
-    return TrendIdeasResponse(niche=niche, trend_ideas=result)
+    return TrendIdeasResponse(niche=niche, trend_ideas=list(result))
