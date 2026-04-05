@@ -40,27 +40,38 @@ artifacts/fastapi-server/
     ├── main.py          # FastAPI app + CORS + router registration + static files
     ├── database.py      # PostgreSQL connection + table init
     ├── models.py        # Pydantic request/response models
-    ├── youtube_client.py  # YouTube Data API v3 client (uses YOUTUBE_API_KEY)
-    ├── instagram_client.py # Instagram Graph API client (hashtag search via Business account)
-    ├── tiktok_client.py   # TikTok content discovery (public data + search links)
+    ├── youtube_client.py     # YouTube Data API v3 client
+    ├── instagram_client.py   # Instagram Graph API client
+    ├── tiktok_client.py      # TikTok content discovery
+    ├── google_trends_client.py # Google Trends via pytrends
+    ├── google_news_client.py   # Google News RSS
+    ├── hackernews_client.py    # Hacker News Algolia API
+    ├── web_search_client.py    # DuckDuckGo web search
+    ├── multi_reddit_client.py  # Multi-subreddit ingest (20+ niches mapped)
     ├── static/
     │   └── index.html   # Frontend UI (dark-themed dashboard)
     └── routers/
-        ├── items.py     # Example CRUD router (in-memory)
-        ├── ingest.py    # POST /ingest/reddit — pull fitness posts via RSS
-        ├── ideas.py     # POST /ideas/ — generate viral video ideas via OpenAI
-        ├── trends.py    # GET /trends/ — keyword-based trend detection
-        ├── trend_ideas.py # POST /trend-ideas/ — chain trends → AI ideas + multi-platform videos
-        ├── youtube.py   # POST /youtube/search — YouTube video search
-        ├── instagram.py # POST /instagram/search — Instagram hashtag search
-        └── tiktok.py    # POST /tiktok/search — TikTok content discovery
+        ├── items.py        # Example CRUD router
+        ├── ingest.py       # POST /ingest/reddit — pull posts via RSS
+        ├── ideas.py        # POST /ideas/ — generate viral video ideas
+        ├── trends.py       # GET /trends/ — keyword trend detection
+        ├── trend_ideas.py  # POST /trend-ideas/ — all-source trend analysis + AI ideas
+        ├── youtube.py      # POST /youtube/search
+        ├── instagram.py    # POST /instagram/search
+        ├── tiktok.py       # POST /tiktok/search
+        ├── google_trends.py # POST /google-trends/search + /interest
+        ├── google_news.py   # POST /google-news/search
+        ├── hackernews.py    # POST /hackernews/search + GET /top
+        ├── web_search.py    # POST /web-search/search + /trending
+        └── multi_reddit.py  # POST /reddit/multi-search
 ```
 
 ### Dependencies
-- feedparser — Reddit RSS parsing (no API key needed)
+- feedparser — Reddit RSS + Google News RSS parsing
 - openai — via Replit AI Integrations (no user key needed)
 - SQLAlchemy + psycopg2-binary — PostgreSQL
-- httpx — HTTP client for YouTube, Instagram, TikTok APIs
+- httpx — HTTP client for all external APIs
+- pytrends — Google Trends data (no API key needed)
 
 ### Environment Secrets
 - `YOUTUBE_API_KEY` — YouTube Data API v3 key

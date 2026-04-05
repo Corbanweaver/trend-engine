@@ -3,60 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Content Engine — Viral Video Ideas</title>
+    <title>Content Engine — AI-Powered Viral Video Ideas</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f0f0f;
+            background: #0a0a0a;
             color: #e0e0e0;
             min-height: 100vh;
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
-            padding: 32px 20px;
+            padding: 24px 20px;
         }
 
         header {
             text-align: center;
-            margin-bottom: 32px;
+            margin-bottom: 28px;
         }
 
         header h1 {
-            font-size: 2rem;
+            font-size: 1.8rem;
             color: #fff;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
         }
 
         header p {
-            color: #888;
-            font-size: 0.95rem;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .source-badges {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .source-badges span {
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 600;
         }
 
         .controls {
             display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 16px;
             flex-wrap: wrap;
             align-items: flex-end;
+        }
+
+        .controls label {
+            display: block;
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 4px;
         }
 
         .controls select,
         .controls input,
         .controls button {
-            padding: 10px 14px;
+            padding: 9px 12px;
             border-radius: 8px;
-            border: 1px solid #333;
-            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            background: #141414;
             color: #e0e0e0;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
-        .controls select { min-width: 140px; }
-        .controls input { flex: 1; min-width: 180px; }
+        .controls select { min-width: 130px; }
+        .controls input { flex: 1; min-width: 160px; }
 
         .btn-primary {
             background: #5b4cff !important;
@@ -64,10 +87,10 @@
             color: #fff !important;
             cursor: pointer;
             font-weight: 600;
-            padding: 10px 20px !important;
+            padding: 9px 18px !important;
             transition: background 0.2s;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .btn-primary:hover { background: #4a3de6 !important; }
@@ -75,363 +98,262 @@
 
         .actions {
             display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
+            gap: 6px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
         }
 
         .actions button {
-            padding: 8px 14px;
-            font-size: 0.82rem;
+            padding: 7px 12px;
             border-radius: 8px;
-            border: 1px solid #333;
-            background: #1a1a1a;
-            color: #e0e0e0;
+            border: 1px solid #2a2a2a;
+            background: #141414;
+            color: #ccc;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             transition: all 0.2s;
         }
 
-        .actions button:hover { background: #252525; border-color: #555; }
+        .actions button:hover { background: #1e1e1e; border-color: #444; }
 
         .status {
             padding: 10px 14px;
             border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
+            margin-bottom: 16px;
             font-size: 0.85rem;
+            display: none;
         }
 
-        .status.info { display: block; background: #1a2332; border: 1px solid #2a4a6b; color: #6db3f2; }
-        .status.success { display: block; background: #1a2e1a; border: 1px solid #2a6b2a; color: #6bf26d; }
-        .status.error { display: block; background: #2e1a1a; border: 1px solid #6b2a2a; color: #f26d6d; }
+        .status.info { display: block; background: #1a1a2e; color: #7b8cff; border: 1px solid #2a2a4e; }
+        .status.error { display: block; background: #2e1a1a; color: #ff6b6b; border: 1px solid #4e2a2a; }
+        .status.success { display: block; background: #1a2e1a; color: #6bff6b; border: 1px solid #2a4e2a; }
 
         .section-title {
-            font-size: 1.2rem;
-            color: #fff;
-            margin-bottom: 14px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #222;
-        }
-
-        .trends {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 10px;
-            margin-bottom: 32px;
-        }
-
-        .trend-card {
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 10px;
-            padding: 14px;
-            text-align: center;
-            transition: border-color 0.2s;
-        }
-
-        .trend-card:hover { border-color: #5b4cff; }
-
-        .trend-card .topic {
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 6px;
-            text-transform: capitalize;
-            font-size: 0.9rem;
-        }
-
-        .trend-card .meta {
-            font-size: 0.75rem;
-            color: #666;
-        }
-
-        .trend-group {
-            margin-bottom: 40px;
-            background: #141414;
-            border: 1px solid #222;
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .trend-group h3 {
             font-size: 1.1rem;
-            color: #5b4cff;
-            margin-bottom: 16px;
-            text-transform: capitalize;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: #fff;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .trend-group h3 .badge {
+        .badge {
+            background: #5b4cff;
+            color: #fff;
             font-size: 0.7rem;
-            background: #5b4cff22;
-            color: #8b7fff;
             padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .trend-group {
+            background: #111;
+            border: 1px solid #1e1e1e;
             border-radius: 12px;
-            font-weight: 500;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .trend-group h3 {
+            font-size: 1rem;
+            margin-bottom: 14px;
+            color: #fff;
         }
 
         .idea-card {
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
+            background: #0d0d0d;
+            border: 1px solid #222;
             border-radius: 10px;
             padding: 16px;
             margin-bottom: 10px;
-            transition: border-color 0.2s;
         }
 
-        .idea-card:hover { border-color: #444; }
-
         .idea-card .hook {
+            color: #ff4444;
             font-weight: 700;
-            color: #ff6b6b;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             margin-bottom: 6px;
         }
 
         .idea-card .angle {
-            color: #ffd93d;
-            font-size: 0.85rem;
+            color: #ffd700;
+            font-size: 0.82rem;
             margin-bottom: 6px;
-            font-style: italic;
         }
 
         .idea-card .idea-text {
-            color: #ccc;
-            font-size: 0.85rem;
-            line-height: 1.5;
+            color: #bbb;
+            font-size: 0.82rem;
             margin-bottom: 8px;
         }
 
         .script-toggle {
-            background: none;
-            border: 1px solid #333;
-            color: #888;
-            padding: 4px 12px;
+            font-size: 0.75rem;
+            padding: 4px 10px;
             border-radius: 6px;
+            border: 1px solid #333;
+            background: #1a1a1a;
+            color: #888;
             cursor: pointer;
-            font-size: 0.8rem;
-            transition: all 0.2s;
         }
 
-        .script-toggle:hover { border-color: #5b4cff; color: #5b4cff; }
+        .script-toggle:hover { border-color: #555; }
 
         .script-content {
             display: none;
             margin-top: 10px;
             padding: 12px;
-            background: #111;
-            border: 1px solid #2a2a2a;
+            background: #0a0a0a;
             border-radius: 8px;
-            font-size: 0.85rem;
+            border: 1px solid #1e1e1e;
+            font-size: 0.82rem;
             line-height: 1.6;
-            color: #bbb;
+            color: #ccc;
             white-space: pre-wrap;
         }
 
         .script-content.open { display: block; }
 
-        .videos-section {
+        .source-section {
             margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid #1e1e1e;
         }
 
-        .videos-section h4 {
-            font-size: 0.9rem;
-            color: #888;
+        .source-section h4 {
+            font-size: 0.85rem;
             margin-bottom: 10px;
-            font-weight: 500;
-        }
-
-        .video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 12px;
-        }
-
-        .video-card {
-            background: #111;
-            border: 1px solid #2a2a2a;
-            border-radius: 10px;
-            overflow: hidden;
-            transition: border-color 0.2s;
-        }
-
-        .video-card:hover { border-color: #5b4cff; }
-
-        .video-card .thumb-wrap {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 16/9;
-            background: #000;
-            cursor: pointer;
-        }
-
-        .video-card .thumb-wrap img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .video-card .thumb-wrap .play-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 48px;
-            height: 48px;
-            background: rgba(0,0,0,0.7);
-            border-radius: 50%;
+            color: #aaa;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 6px;
         }
-
-        .video-card .thumb-wrap .play-overlay::after {
-            content: "";
-            display: block;
-            width: 0;
-            height: 0;
-            border-style: solid;
-            border-width: 10px 0 10px 18px;
-            border-color: transparent transparent transparent #fff;
-            margin-left: 3px;
-        }
-
-        .video-card .video-info {
-            padding: 10px 12px;
-        }
-
-        .video-card .video-title {
-            font-size: 0.82rem;
-            color: #ddd;
-            margin-bottom: 4px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .video-card .video-channel {
-            font-size: 0.75rem;
-            color: #666;
-        }
-
-        .ig-card {
-            background: #111;
-            border: 1px solid #2a2a2a;
-            border-radius: 10px;
-            overflow: hidden;
-            transition: border-color 0.2s;
-        }
-
-        .ig-card:hover { border-color: #e1306c; }
-
-        .ig-card .ig-thumb {
-            width: 100%;
-            aspect-ratio: 1;
-            background: #000;
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        .ig-card .ig-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .ig-card .ig-info {
-            padding: 10px 12px;
-        }
-
-        .ig-card .ig-caption {
-            font-size: 0.8rem;
-            color: #ccc;
-            margin-bottom: 6px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .ig-card .ig-stats {
-            font-size: 0.75rem;
-            color: #888;
-            display: flex;
-            gap: 12px;
-        }
-
-        .ig-card .ig-stats span { color: #e1306c; }
 
         .source-label {
             display: inline-block;
-            font-size: 0.7rem;
-            padding: 2px 8px;
+            font-size: 0.65rem;
+            padding: 2px 7px;
             border-radius: 10px;
             font-weight: 600;
-            margin-right: 6px;
         }
 
-        .source-youtube { background: #ff000022; color: #ff4444; }
-        .source-instagram { background: #e1306c22; color: #e1306c; }
-        .source-tiktok { background: #00f2ea22; color: #00f2ea; }
+        .source-youtube { background: #ff000020; color: #ff4444; }
+        .source-instagram { background: #e1306c20; color: #e1306c; }
+        .source-tiktok { background: #00f2ea20; color: #00f2ea; }
+        .source-news { background: #4caf5020; color: #66bb6a; }
+        .source-gtrends { background: #4285f420; color: #4285f4; }
+        .source-hn { background: #ff660020; color: #ff6600; }
+        .source-web { background: #9c27b020; color: #ba68c8; }
+        .source-reddit { background: #ff450020; color: #ff6b35; }
 
-        .tt-card {
-            background: #111;
-            border: 1px solid #2a2a2a;
-            border-radius: 10px;
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .mini-card {
+            background: #0d0d0d;
+            border: 1px solid #222;
+            border-radius: 8px;
             overflow: hidden;
             transition: border-color 0.2s;
         }
 
-        .tt-card:hover { border-color: #00f2ea; }
+        .mini-card:hover { border-color: #444; }
 
-        .tt-card .tt-thumb {
+        .mini-card .thumb {
             width: 100%;
-            aspect-ratio: 9/16;
-            max-height: 200px;
+            aspect-ratio: 16/9;
             background: #000;
             overflow: hidden;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        .tt-card .tt-thumb img {
+        .mini-card .thumb img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .tt-card .tt-info {
-            padding: 10px 12px;
+        .mini-card .card-body {
+            padding: 8px 10px;
         }
 
-        .tt-card .tt-desc {
-            font-size: 0.8rem;
-            color: #ccc;
-            margin-bottom: 6px;
+        .mini-card .card-title {
+            font-size: 0.78rem;
+            color: #ddd;
+            margin-bottom: 3px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
-        .tt-card .tt-author {
+        .mini-card .card-meta {
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .list-item {
+            padding: 8px 12px;
+            background: #0d0d0d;
+            border: 1px solid #222;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            transition: border-color 0.2s;
+        }
+
+        .list-item:hover { border-color: #444; }
+
+        .list-item a {
+            color: #7b8cff;
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 500;
+        }
+
+        .list-item a:hover { color: #9ba8ff; }
+
+        .list-item .item-meta {
+            font-size: 0.72rem;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .list-item .item-snippet {
             font-size: 0.75rem;
-            color: #00f2ea;
+            color: #888;
+            margin-top: 3px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .trends {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .trend-pill {
+            background: #141414;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .trend-pill .topic {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #fff;
             margin-bottom: 4px;
         }
 
-        .tt-card .tt-stats {
-            font-size: 0.72rem;
-            color: #888;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
+        .trend-pill .score { font-size: 0.75rem; color: #5b4cff; }
 
         .video-embed-container {
             position: relative;
@@ -441,10 +363,8 @@
 
         .video-embed-container iframe {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             border: none;
         }
 
@@ -454,63 +374,67 @@
             color: #666;
         }
 
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         .spinner {
-            display: inline-block;
-            width: 28px;
-            height: 28px;
-            border: 3px solid #333;
+            width: 24px;
+            height: 24px;
+            border: 2px solid #333;
             border-top-color: #5b4cff;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-bottom: 10px;
+            animation: spin 0.6s linear infinite;
+            margin: 0 auto 10px;
         }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
 
         .empty {
             text-align: center;
-            padding: 32px;
+            padding: 20px;
             color: #555;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
-        label { font-size: 0.8rem; color: #888; margin-bottom: 4px; display: block; }
-
-        .tab-bar {
-            display: flex;
-            gap: 0;
-            margin-bottom: 24px;
-            border-bottom: 1px solid #222;
-        }
-
-        .tab-bar button {
-            padding: 10px 20px;
-            background: none;
-            border: none;
-            border-bottom: 2px solid transparent;
-            color: #888;
+        .collapsible-header {
             cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s;
+            user-select: none;
         }
 
-        .tab-bar button:hover { color: #ccc; }
-        .tab-bar button.active { color: #5b4cff; border-bottom-color: #5b4cff; }
+        .collapsible-header::before {
+            content: "▸";
+            display: inline-block;
+            margin-right: 6px;
+            transition: transform 0.2s;
+        }
 
-        .yt-search-bar {
+        .collapsible-header.open::before {
+            transform: rotate(90deg);
+        }
+
+        .collapsible-body {
+            display: none;
+        }
+
+        .collapsible-body.open {
+            display: block;
+        }
+
+        .data-source-count {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            padding: 10px 14px;
+            background: #111;
+            border-radius: 10px;
+            border: 1px solid #1e1e1e;
         }
 
-        .yt-search-bar input {
-            flex: 1;
-            padding: 10px 14px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            background: #1a1a1a;
-            color: #e0e0e0;
-            font-size: 0.9rem;
+        .data-source-count .ds-item {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .data-source-count .ds-item span {
+            font-weight: 700;
         }
     </style>
 </head>
@@ -518,7 +442,17 @@
     <div class="container">
         <header>
             <h1>Content Engine</h1>
-            <p>Turn trending Reddit topics into viral video ideas with AI</p>
+            <p>AI-powered viral video ideas from 8+ data sources</p>
+            <div class="source-badges">
+                <span class="source-label source-reddit">Reddit</span>
+                <span class="source-label source-youtube">YouTube</span>
+                <span class="source-label source-instagram">Instagram</span>
+                <span class="source-label source-tiktok">TikTok</span>
+                <span class="source-label source-gtrends">Google Trends</span>
+                <span class="source-label source-news">Google News</span>
+                <span class="source-label source-hn">Hacker News</span>
+                <span class="source-label source-web">Web Search</span>
+            </div>
         </header>
 
         <div class="controls">
@@ -532,12 +466,26 @@
                     <option value="nutrition">Nutrition</option>
                     <option value="mental health">Mental Health</option>
                     <option value="tech">Tech</option>
+                    <option value="cooking">Cooking</option>
+                    <option value="gaming">Gaming</option>
+                    <option value="fashion">Fashion</option>
+                    <option value="music">Music</option>
+                    <option value="travel">Travel</option>
+                    <option value="beauty">Beauty</option>
+                    <option value="entrepreneurship">Entrepreneurship</option>
+                    <option value="photography">Photography</option>
+                    <option value="parenting">Parenting</option>
+                    <option value="pets">Pets</option>
+                    <option value="education">Education</option>
+                    <option value="sports">Sports</option>
+                    <option value="diy">DIY</option>
+                    <option value="motivation">Motivation</option>
                     <option value="custom">Custom...</option>
                 </select>
             </div>
             <div style="flex:1; display:none;" id="custom-niche-wrap">
                 <label for="custom-niche">Your niche</label>
-                <input type="text" id="custom-niche" placeholder="e.g. crypto, cooking, parenting">
+                <input type="text" id="custom-niche" placeholder="e.g. crypto, gardening, cars">
             </div>
             <div style="flex:1;">
                 <label for="topic-input">Topic (optional)</label>
@@ -551,10 +499,14 @@
         <div class="actions">
             <button onclick="ingestReddit()">Pull Reddit Posts</button>
             <button onclick="loadTrends()">View Trends</button>
-            <button onclick="loadTrendIdeas()">Trends + Ideas + Videos</button>
-            <button onclick="searchYouTube()">Search YouTube</button>
-            <button onclick="searchInstagram()">Search Instagram</button>
-            <button onclick="searchTikTok()">Search TikTok</button>
+            <button onclick="loadTrendIdeas()">Full Analysis (All Sources)</button>
+            <button onclick="searchYouTube()">YouTube</button>
+            <button onclick="searchTikTok()">TikTok</button>
+            <button onclick="searchInstagram()">Instagram</button>
+            <button onclick="searchGoogleNews()">News</button>
+            <button onclick="searchHN()">Hacker News</button>
+            <button onclick="searchWeb()">Web Search</button>
+            <button onclick="searchGoogleTrends()">Google Trends</button>
         </div>
 
         <div class="status" id="status"></div>
@@ -564,9 +516,9 @@
             <div class="trends" id="trends-grid"></div>
         </div>
 
-        <div id="youtube-section" style="display:none;">
-            <div class="section-title">YouTube Examples</div>
-            <div class="video-grid" id="youtube-grid"></div>
+        <div id="results-section" style="display:none;">
+            <div class="section-title" id="results-title">Results</div>
+            <div id="results-grid"></div>
         </div>
 
         <div id="ideas-section" style="display:none;">
@@ -600,7 +552,7 @@
 
         function showLoading(containerId) {
             const container = document.getElementById(containerId);
-            container.innerHTML = '<div class="loading"><div class="spinner"></div><div>Working on it...</div></div>';
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><div>Scanning sources...</div></div>';
         }
 
         function toggleScript(btn) {
@@ -609,112 +561,9 @@
             btn.textContent = content.classList.contains('open') ? 'Hide Script' : 'View Script';
         }
 
-        function playVideo(el, embedUrl) {
-            el.innerHTML = `<div class="video-embed-container"><iframe src="${embedUrl}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>`;
-        }
-
-        function renderIdeaCard(idea) {
-            const scriptSection = idea.script ? `
-                <button class="script-toggle" onclick="toggleScript(this)">View Script</button>
-                <div class="script-content">${idea.script}</div>
-            ` : '';
-
-            return `
-                <div class="idea-card">
-                    <div class="hook">${escapeHtml(idea.hook)}</div>
-                    ${idea.angle ? `<div class="angle">${escapeHtml(idea.angle)}</div>` : ''}
-                    <div class="idea-text">${escapeHtml(idea.idea)}</div>
-                    ${scriptSection}
-                </div>
-            `;
-        }
-
-        function renderVideoCard(video) {
-            if (video.quota_exceeded) {
-                return `
-                    <div class="video-card" style="border-color: #ffd93d33;">
-                        <div class="video-info" style="padding: 20px;">
-                            <div class="video-title" style="color: #ffd93d; margin-bottom: 8px;">YouTube API quota exceeded</div>
-                            <div class="video-channel" style="margin-bottom: 10px;">Quota resets daily at midnight Pacific time.</div>
-                            <a href="${video.url}" target="_blank" style="color: #5b4cff; text-decoration: none; font-size: 0.85rem;">Search YouTube manually &rarr;</a>
-                        </div>
-                    </div>
-                `;
-            }
-
-            const thumbHtml = video.thumbnail
-                ? `<img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">`
-                : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#666;font-size:0.8rem;">No thumbnail</div>`;
-
-            const clickAction = video.embed_url
-                ? `onclick="playVideo(this, '${video.embed_url}')"`
-                : `onclick="window.open('${video.url}', '_blank')"`;
-
-            return `
-                <div class="video-card">
-                    <div class="thumb-wrap" ${clickAction}>
-                        ${thumbHtml}
-                        <div class="play-overlay"></div>
-                    </div>
-                    <div class="video-info">
-                        <div class="video-title">${escapeHtml(video.title)}</div>
-                        <div class="video-channel">${escapeHtml(video.channel)}</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function formatCount(n) {
-            if (n >= 1000000000) return (n / 1000000000).toFixed(1) + 'B';
-            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-            return String(n);
-        }
-
-        function renderTtCard(video) {
-            const thumbHtml = video.cover
-                ? `<img src="${video.cover}" alt="${escapeHtml(video.description || '')}" loading="lazy">`
-                : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#666;font-size:2rem;">&#9654;</div>`;
-
-            return `
-                <div class="tt-card">
-                    <a href="${safeUrl(video.url)}" target="_blank" rel="noopener" class="tt-thumb">
-                        ${thumbHtml}
-                    </a>
-                    <div class="tt-info">
-                        <div class="tt-author">@${escapeHtml(video.author)}</div>
-                        <div class="tt-desc">${escapeHtml(video.description || 'No description')}</div>
-                        <div class="tt-stats">
-                            <span>${formatCount(video.play_count || 0)} plays</span>
-                            <span>${formatCount(video.like_count || 0)} likes</span>
-                            <span>${formatCount(video.comment_count || 0)} comments</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderIgCard(post) {
-            const thumb = post.thumbnail_url || post.media_url || '';
-            const thumbHtml = thumb
-                ? `<img src="${thumb}" alt="${escapeHtml(post.caption || '')}" loading="lazy">`
-                : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#666;">No preview</div>`;
-
-            return `
-                <div class="ig-card">
-                    <a href="${safeUrl(post.permalink)}" target="_blank" rel="noopener" class="ig-thumb">
-                        ${thumbHtml}
-                    </a>
-                    <div class="ig-info">
-                        <div class="ig-caption">${escapeHtml(post.caption || 'No caption')}</div>
-                        <div class="ig-stats">
-                            <span>${post.like_count || 0} likes</span>
-                            <span>${post.comments_count || 0} comments</span>
-                            <span>${post.media_type}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
+        function toggleCollapsible(header) {
+            header.classList.toggle('open');
+            header.nextElementSibling.classList.toggle('open');
         }
 
         function escapeHtml(text) {
@@ -732,13 +581,181 @@
             return '#';
         }
 
+        function formatCount(n) {
+            if (n >= 1000000000) return (n / 1000000000).toFixed(1) + 'B';
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+            return String(n || 0);
+        }
+
+        function renderIdeaCard(idea) {
+            return `
+                <div class="idea-card">
+                    <div class="hook">${escapeHtml(idea.hook)}</div>
+                    <div class="angle">${escapeHtml(idea.angle)}</div>
+                    <div class="idea-text">${escapeHtml(idea.idea)}</div>
+                    ${idea.script ? `
+                        <button class="script-toggle" onclick="toggleScript(this)">View Script</button>
+                        <div class="script-content">${escapeHtml(idea.script)}</div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function renderVideoCard(video) {
+            const thumbUrl = video.thumbnail || '';
+            const vidId = video.video_id || video.videoId || '';
+            const channel = video.channel || video.channelTitle || '';
+
+            return `
+                <div class="mini-card" onclick="this.querySelector('.thumb').innerHTML='<div class=\\'video-embed-container\\'><iframe src=\\'https://www.youtube.com/embed/${vidId}?autoplay=1\\' allow=\\'autoplay\\' allowfullscreen></iframe></div>'">
+                    <div class="thumb" style="position:relative;">
+                        ${thumbUrl ? `<img src="${thumbUrl}" loading="lazy">` : ''}
+                        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;background:rgba(0,0,0,0.7);border-radius:50%;display:flex;align-items:center;justify-content:center;"><div style="width:0;height:0;border-style:solid;border-width:8px 0 8px 14px;border-color:transparent transparent transparent #fff;margin-left:2px;"></div></div>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-title">${escapeHtml(video.title || '')}</div>
+                        <div class="card-meta">${escapeHtml(channel)}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderIgCard(post) {
+            const thumb = post.thumbnail_url || post.media_url || '';
+            return `
+                <div class="mini-card">
+                    <a href="${safeUrl(post.permalink)}" target="_blank" rel="noopener">
+                        <div class="thumb" style="aspect-ratio:1;">${thumb ? `<img src="${thumb}" loading="lazy">` : ''}</div>
+                    </a>
+                    <div class="card-body">
+                        <div class="card-title">${escapeHtml(post.caption || 'No caption')}</div>
+                        <div class="card-meta">${formatCount(post.like_count)} likes &middot; ${post.media_type}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTtCard(video) {
+            return `
+                <div class="mini-card">
+                    <a href="${safeUrl(video.url)}" target="_blank" rel="noopener">
+                        <div class="thumb" style="aspect-ratio:9/16;max-height:160px;">${video.cover ? `<img src="${video.cover}" loading="lazy">` : '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#00f2ea;font-size:1.5rem;">TikTok</div>'}</div>
+                    </a>
+                    <div class="card-body">
+                        <div class="card-title">${escapeHtml(video.description || '')}</div>
+                        <div class="card-meta">@${escapeHtml(video.author)} &middot; ${formatCount(video.play_count)} plays</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderNewsItem(article) {
+            return `
+                <div class="list-item">
+                    <a href="${safeUrl(article.link)}" target="_blank" rel="noopener">${escapeHtml(article.title)}</a>
+                    <div class="item-meta">${escapeHtml(article.source || '')} &middot; ${escapeHtml(article.published || '')}</div>
+                </div>
+            `;
+        }
+
+        function renderHNItem(story) {
+            return `
+                <div class="list-item">
+                    <a href="${safeUrl(story.hn_link || story.url)}" target="_blank" rel="noopener">${escapeHtml(story.title)}</a>
+                    <div class="item-meta">${story.score} pts &middot; ${story.comments} comments &middot; by ${escapeHtml(story.author)}</div>
+                </div>
+            `;
+        }
+
+        function renderWebItem(result) {
+            return `
+                <div class="list-item">
+                    <a href="${safeUrl(result.url)}" target="_blank" rel="noopener">${escapeHtml(result.title)}</a>
+                    <div class="item-snippet">${escapeHtml(result.snippet || '')}</div>
+                </div>
+            `;
+        }
+
+        function renderRedditItem(post) {
+            return `
+                <div class="list-item">
+                    <a href="${safeUrl(post.url)}" target="_blank" rel="noopener">${escapeHtml(post.title)}</a>
+                    <div class="item-meta">r/${escapeHtml(post.subreddit)} &middot; ${formatCount(post.score)} upvotes &middot; ${post.num_comments} comments</div>
+                </div>
+            `;
+        }
+
+        function renderSourceSection(label, cssClass, items, renderFn, useGrid) {
+            if (!items || items.length === 0) return '';
+            const content = useGrid
+                ? `<div class="card-grid">${items.map(renderFn).join('')}</div>`
+                : items.map(renderFn).join('');
+            return `
+                <div class="source-section">
+                    <h4 class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <span class="source-label ${cssClass}">${label}</span> ${items.length} results
+                    </h4>
+                    <div class="collapsible-body">${content}</div>
+                </div>
+            `;
+        }
+
+        function renderTrendGroup(ti) {
+            const ytHtml = renderSourceSection('YouTube', 'source-youtube', ti.example_videos, renderVideoCard, true);
+            const igHtml = renderSourceSection('Instagram', 'source-instagram', ti.instagram_posts, renderIgCard, true);
+            const ttHtml = renderSourceSection('TikTok', 'source-tiktok', ti.tiktok_videos, renderTtCard, true);
+            const newsHtml = renderSourceSection('News', 'source-news', ti.google_news, renderNewsItem, false);
+            const hnHtml = renderSourceSection('Hacker News', 'source-hn', ti.hackernews_stories, renderHNItem, false);
+            const webHtml = renderSourceSection('Web', 'source-web', ti.web_results, renderWebItem, false);
+            const redditHtml = renderSourceSection('Reddit', 'source-reddit', ti.reddit_posts, renderRedditItem, false);
+
+            let trendsHtml = '';
+            const gd = ti.google_trends_data || {};
+            const relatedQ = gd.related_queries || [];
+            const trendingS = gd.trending_searches || [];
+            if (relatedQ.length > 0 || trendingS.length > 0) {
+                const pills = relatedQ.map(q => `<span style="display:inline-block;padding:3px 8px;background:#0d0d0d;border:1px solid #222;border-radius:6px;font-size:0.72rem;color:#4285f4;margin:2px;">${escapeHtml(q.query)}</span>`).join('');
+                const trendPills = trendingS.map(t => `<span style="display:inline-block;padding:3px 8px;background:#0d0d0d;border:1px solid #222;border-radius:6px;font-size:0.72rem;color:#66bb6a;margin:2px;">${escapeHtml(t)}</span>`).join('');
+                trendsHtml = `
+                    <div class="source-section">
+                        <h4 class="collapsible-header" onclick="toggleCollapsible(this)">
+                            <span class="source-label source-gtrends">Google Trends</span> Related searches
+                        </h4>
+                        <div class="collapsible-body">
+                            ${pills ? `<div style="margin-bottom:8px;">${pills}</div>` : ''}
+                            ${trendPills ? `<div style="margin-top:6px;"><span style="font-size:0.72rem;color:#666;">Also trending:</span> ${trendPills}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            let sourceCount = 0;
+            if (ti.example_videos?.length) sourceCount++;
+            if (ti.instagram_posts?.length) sourceCount++;
+            if (ti.tiktok_videos?.length) sourceCount++;
+            if (ti.google_news?.length) sourceCount++;
+            if (ti.hackernews_stories?.length) sourceCount++;
+            if (ti.web_results?.length) sourceCount++;
+            if (ti.reddit_posts?.length) sourceCount++;
+            if (relatedQ.length || trendingS.length) sourceCount++;
+
+            return `
+                <div class="trend-group">
+                    <h3>${escapeHtml(ti.trend)} <span class="badge">${ti.ideas.length} ideas</span> <span class="badge" style="background:#333;">${sourceCount} sources</span></h3>
+                    ${ti.ideas.map(renderIdeaCard).join('')}
+                    ${ytHtml}${igHtml}${ttHtml}${trendsHtml}${newsHtml}${hnHtml}${webHtml}${redditHtml}
+                </div>
+            `;
+        }
+
         async function ingestReddit() {
             showStatus('Pulling posts from Reddit...', 'info');
             try {
                 const res = await fetch('/ingest/reddit', { method: 'POST' });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || 'Failed');
-                showStatus(`Done! Ingested ${data.ingested} new posts, skipped ${data.skipped} duplicates.`, 'success');
+                showStatus(`Ingested ${data.ingested || data.new_posts || 0} new posts (${data.skipped || 0} skipped)`, 'success');
             } catch (e) {
                 showStatus('Error: ' + e.message, 'error');
             }
@@ -747,22 +764,18 @@
         async function loadTrends() {
             document.getElementById('trends-section').style.display = 'block';
             showLoading('trends-grid');
-            hideStatus();
+            showStatus('Analyzing trends...', 'info');
             try {
                 const res = await fetch('/trends/');
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || 'Failed');
-                const grid = document.getElementById('trends-grid');
-                if (data.trends.length === 0) {
-                    grid.innerHTML = '<div class="empty">No trends yet. Pull Reddit posts first.</div>';
-                    return;
-                }
-                grid.innerHTML = data.trends.map(t => `
-                    <div class="trend-card">
+                document.getElementById('trends-grid').innerHTML = data.trends.map(t => `
+                    <div class="trend-pill">
                         <div class="topic">${escapeHtml(t.topic)}</div>
-                        <div class="meta">${t.count} mentions</div>
+                        <div class="score">Score: ${t.score}</div>
                     </div>
                 `).join('');
+                hideStatus();
             } catch (e) {
                 showStatus('Error: ' + e.message, 'error');
             }
@@ -773,7 +786,8 @@
             document.getElementById('ideas-section').style.display = 'block';
             showLoading('trends-grid');
             showLoading('ideas-list');
-            showStatus('Generating ideas from trends with YouTube examples... this may take a moment.', 'info');
+            showStatus('Scanning 8+ sources and generating AI ideas... this may take 30-60 seconds.', 'info');
+
             try {
                 const niche = getNiche();
                 const res = await fetch('/trend-ideas/', {
@@ -784,53 +798,13 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || 'Failed');
 
-                const trendsGrid = document.getElementById('trends-grid');
-                trendsGrid.innerHTML = data.trend_ideas.map(ti => `
-                    <div class="trend-card">
+                document.getElementById('trends-grid').innerHTML = data.trend_ideas.map(ti => `
+                    <div class="trend-pill">
                         <div class="topic">${escapeHtml(ti.trend)}</div>
                     </div>
                 `).join('');
 
-                const ideasList = document.getElementById('ideas-list');
-                ideasList.innerHTML = data.trend_ideas.map(ti => {
-                    const videosHtml = (ti.example_videos && ti.example_videos.length > 0) ? `
-                        <div class="videos-section">
-                            <h4><span class="source-label source-youtube">YouTube</span> Example Videos</h4>
-                            <div class="video-grid">
-                                ${ti.example_videos.map(renderVideoCard).join('')}
-                            </div>
-                        </div>
-                    ` : '';
-
-                    const igHtml = (ti.instagram_posts && ti.instagram_posts.length > 0) ? `
-                        <div class="videos-section">
-                            <h4><span class="source-label source-instagram">Instagram</span> Top Posts</h4>
-                            <div class="video-grid">
-                                ${ti.instagram_posts.map(renderIgCard).join('')}
-                            </div>
-                        </div>
-                    ` : '';
-
-                    const ttHtml = (ti.tiktok_videos && ti.tiktok_videos.length > 0) ? `
-                        <div class="videos-section">
-                            <h4><span class="source-label source-tiktok">TikTok</span> Trending Videos</h4>
-                            <div class="video-grid">
-                                ${ti.tiktok_videos.map(renderTtCard).join('')}
-                            </div>
-                        </div>
-                    ` : '';
-
-                    return `
-                        <div class="trend-group">
-                            <h3>${escapeHtml(ti.trend)} <span class="badge">${ti.ideas.length} ideas</span></h3>
-                            ${ti.ideas.map(renderIdeaCard).join('')}
-                            ${videosHtml}
-                            ${igHtml}
-                            ${ttHtml}
-                        </div>
-                    `;
-                }).join('');
-
+                document.getElementById('ideas-list').innerHTML = data.trend_ideas.map(renderTrendGroup).join('');
                 hideStatus();
             } catch (e) {
                 showStatus('Error: ' + e.message, 'error');
@@ -839,157 +813,177 @@
 
         async function generateIdeas() {
             const topic = document.getElementById('topic-input').value.trim();
+            const niche = getNiche();
             if (!topic) {
-                showStatus('Enter a topic to generate ideas.', 'error');
+                showStatus('Enter a topic to generate ideas for.', 'error');
                 return;
             }
 
             document.getElementById('ideas-section').style.display = 'block';
             showLoading('ideas-list');
-            showStatus('Generating viral ideas with scripts...', 'info');
-            document.getElementById('generate-btn').disabled = true;
+            showStatus('Generating viral ideas...', 'info');
 
             try {
-                const niche = getNiche();
-
-                const [ideasRes, ytRes] = await Promise.all([
-                    fetch('/ideas/', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: topic, niche })
-                    }),
-                    fetch('/youtube/search', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ query: `${niche} ${topic}`, max_results: 4 })
-                    }).catch(() => null)
-                ]);
-
-                const ideasData = await ideasRes.json();
-                if (!ideasRes.ok) throw new Error(ideasData.detail || 'Failed');
-
-                let videosHtml = '';
-                if (ytRes && ytRes.ok) {
-                    const ytData = await ytRes.json();
-                    if (ytData.videos && ytData.videos.length > 0) {
-                        videosHtml = `
-                            <div class="videos-section">
-                                <h4>Example Videos from YouTube</h4>
-                                <div class="video-grid">
-                                    ${ytData.videos.map(renderVideoCard).join('')}
-                                </div>
-                            </div>
-                        `;
-                    }
-                }
-
-                const ideasList = document.getElementById('ideas-list');
-                ideasList.innerHTML = `
-                    <div class="trend-group">
-                        <h3>${escapeHtml(topic)} <span class="badge">${ideasData.ideas.length} ideas</span></h3>
-                        ${ideasData.ideas.map(renderIdeaCard).join('')}
-                        ${videosHtml}
-                    </div>
-                `;
-
+                const res = await fetch('/ideas/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: topic, niche })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Failed');
+                document.getElementById('ideas-list').innerHTML = data.ideas.map(renderIdeaCard).join('');
                 hideStatus();
             } catch (e) {
                 showStatus('Error: ' + e.message, 'error');
-            } finally {
-                document.getElementById('generate-btn').disabled = false;
             }
         }
 
+        function showResults(title, html) {
+            document.getElementById('results-section').style.display = 'block';
+            document.getElementById('results-title').textContent = title;
+            document.getElementById('results-grid').innerHTML = html;
+        }
+
         async function searchYouTube() {
-            const topic = document.getElementById('topic-input').value.trim();
-            const niche = getNiche();
-            const query = topic || niche;
-
-            document.getElementById('youtube-section').style.display = 'block';
-            showLoading('youtube-grid');
+            const query = document.getElementById('topic-input').value.trim() || getNiche();
             showStatus('Searching YouTube...', 'info');
-
             try {
                 const res = await fetch('/youtube/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: `${query} short form video`, max_results: 6 })
+                    body: JSON.stringify({ query, max_results: 6 })
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || 'Failed');
-
-                const grid = document.getElementById('youtube-grid');
-                if (data.videos.length === 0) {
-                    grid.innerHTML = '<div class="empty">No videos found.</div>';
-                } else {
-                    grid.innerHTML = data.videos.map(renderVideoCard).join('');
-                }
+                showResults('YouTube Results', data.videos.length
+                    ? `<div class="card-grid">${data.videos.map(renderVideoCard).join('')}</div>`
+                    : '<div class="empty">No YouTube videos found.</div>');
                 hideStatus();
-            } catch (e) {
-                showStatus('Error: ' + e.message, 'error');
-            }
+            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
         }
 
         async function searchTikTok() {
-            const topic = document.getElementById('topic-input').value.trim();
-            const niche = getNiche();
-            const query = topic || niche;
-
-            document.getElementById('youtube-section').style.display = 'block';
-            document.getElementById('youtube-section').querySelector('.section-title').textContent = 'TikTok Results';
-            showLoading('youtube-grid');
+            const query = document.getElementById('topic-input').value.trim() || getNiche();
             showStatus('Searching TikTok...', 'info');
-
             try {
                 const res = await fetch('/tiktok/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: query, max_results: 6 })
+                    body: JSON.stringify({ query, max_results: 6 })
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || 'Failed');
-
-                const grid = document.getElementById('youtube-grid');
-                if (data.videos.length === 0) {
-                    grid.innerHTML = '<div class="empty">No TikTok videos found for this query.</div>';
-                } else {
-                    grid.innerHTML = data.videos.map(renderTtCard).join('');
-                }
+                showResults('TikTok Results', data.videos.length
+                    ? `<div class="card-grid">${data.videos.map(renderTtCard).join('')}</div>`
+                    : '<div class="empty">No TikTok results found.</div>');
                 hideStatus();
-            } catch (e) {
-                showStatus('Error: ' + e.message, 'error');
-            }
+            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
         }
 
         async function searchInstagram() {
-            const topic = document.getElementById('topic-input').value.trim();
-            const niche = getNiche();
-            const query = topic || niche;
-
-            document.getElementById('youtube-section').style.display = 'block';
-            document.getElementById('youtube-section').querySelector('.section-title').textContent = 'Instagram Results';
-            showLoading('youtube-grid');
+            const query = document.getElementById('topic-input').value.trim() || getNiche();
             showStatus('Searching Instagram...', 'info');
-
             try {
                 const res = await fetch('/instagram/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: query, max_results: 6 })
+                    body: JSON.stringify({ query, max_results: 6 })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Failed');
+                showResults('Instagram Results', data.posts.length
+                    ? `<div class="card-grid">${data.posts.map(renderIgCard).join('')}</div>`
+                    : '<div class="empty">No Instagram posts found. Business account setup may be needed.</div>');
+                hideStatus();
+            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
+        }
+
+        async function searchGoogleNews() {
+            const query = document.getElementById('topic-input').value.trim() || getNiche();
+            showStatus('Searching Google News...', 'info');
+            try {
+                const res = await fetch('/google-news/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, max_results: 10 })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Failed');
+                showResults('Google News', data.articles.length
+                    ? data.articles.map(renderNewsItem).join('')
+                    : '<div class="empty">No news articles found.</div>');
+                hideStatus();
+            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
+        }
+
+        async function searchHN() {
+            const query = document.getElementById('topic-input').value.trim() || getNiche();
+            showStatus('Searching Hacker News...', 'info');
+            try {
+                const res = await fetch('/hackernews/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, max_results: 10 })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Failed');
+                showResults('Hacker News', data.stories.length
+                    ? data.stories.map(renderHNItem).join('')
+                    : '<div class="empty">No Hacker News stories found.</div>');
+                hideStatus();
+            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
+        }
+
+        async function searchWeb() {
+            const query = document.getElementById('topic-input').value.trim() || getNiche();
+            showStatus('Searching the web...', 'info');
+            try {
+                const res = await fetch('/web-search/trending', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, max_results: 10 })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Failed');
+                showResults('Web Search Results', data.results.length
+                    ? data.results.map(renderWebItem).join('')
+                    : '<div class="empty">No web results found.</div>');
+                hideStatus();
+            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
+        }
+
+        async function searchGoogleTrends() {
+            const query = document.getElementById('topic-input').value.trim() || getNiche();
+            showStatus('Fetching Google Trends...', 'info');
+            try {
+                const res = await fetch('/google-trends/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || 'Failed');
 
-                const grid = document.getElementById('youtube-grid');
-                if (data.posts.length === 0) {
-                    grid.innerHTML = '<div class="empty">No Instagram posts found. Make sure your Instagram Business account is connected.</div>';
-                } else {
-                    grid.innerHTML = data.posts.map(renderIgCard).join('');
+                let html = '';
+                if (data.related_queries.length) {
+                    html += '<h4 style="color:#4285f4;font-size:0.85rem;margin-bottom:8px;">Related Searches</h4>';
+                    html += data.related_queries.map(q => `
+                        <div class="list-item">
+                            <span style="color:#4285f4;font-size:0.82rem;">${escapeHtml(q.query)}</span>
+                            <span style="float:right;color:#666;font-size:0.72rem;">${q.value > 0 ? formatCount(q.value) + ' interest' : ''}</span>
+                        </div>
+                    `).join('');
                 }
+                if (data.trending_searches.length) {
+                    html += '<h4 style="color:#66bb6a;font-size:0.85rem;margin:12px 0 8px;">Currently Trending on Google</h4>';
+                    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+                    html += data.trending_searches.map(t => `<span style="display:inline-block;padding:4px 10px;background:#141414;border:1px solid #2a2a2a;border-radius:8px;font-size:0.78rem;color:#66bb6a;">${escapeHtml(t)}</span>`).join('');
+                    html += '</div>';
+                }
+                if (!html) html = '<div class="empty">No Google Trends data found for this query.</div>';
+                showResults('Google Trends: ' + query, html);
                 hideStatus();
-            } catch (e) {
-                showStatus('Error: ' + e.message, 'error');
-            }
+            } catch (e) { showStatus('Error: ' + e.message, 'error'); }
         }
 
         document.getElementById('topic-input').addEventListener('keydown', e => {
