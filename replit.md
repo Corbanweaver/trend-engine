@@ -104,14 +104,19 @@ artifacts/fastapi-server/
 - Per-trend fault isolation: one failed trend doesn't crash the whole response
 - Individual source timeouts (10s default, 15s for Google Trends) prevent slow sources from blocking
 
+### Trend Discovery
+- Trends are discovered LIVE from the selected niche (not from stored Reddit posts)
+- Uses Google Trends, Google News, web search, and Reddit to find real trending topics
+- AI extracts top 3 viral-worthy topics from the live data
+- Each topic gets its own idea generation with matching videos/sources
+
 ### Frontend
-- Light-themed single-page app at `/` (Apple-inspired design)
-- Sticky top bar with niche selector (21 options + custom), topic input, and "Analyze" button
-- One-click full analysis: scans all 8 sources per trend, groups ideas + matching videos + sources together per trend card
-- Quick action buttons for individual source searches
-- Collapsible source sections per trend with color-coded pills
+- Orange-themed professional single-page app at `/` (Inter font, gradient accents)
+- Sticky header with niche selector (21 options + custom), topic input, and orange "Analyze" button
+- One-click full analysis: discovers trends live, generates AI ideas with scripts, finds matching videos per trend
+- Quick action chips for individual source searches (YouTube, TikTok, News, HN, Web, Trends)
+- Collapsible media sections per trend with color-coded dots
 - Video cards with thumbnails, inline YouTube playback, expandable scripts
-- Color-coded source labels: Reddit (orange), YouTube (red), TikTok (teal), Google Trends (blue), News (green), HN (orange), Web (purple), Instagram (pink)
 
 ### Instagram Notes
 - Instagram Graph API requires: Business/Creator account + Facebook Page + linked IG account

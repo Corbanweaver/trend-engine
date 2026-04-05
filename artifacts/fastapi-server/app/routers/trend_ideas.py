@@ -5,14 +5,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 _ai_semaphore = asyncio.Semaphore(3)
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import text as sql_text
+
+from fastapi import APIRouter, HTTPException
 from openai import OpenAI
 
-from app.database import get_db
 from app.models import TrendIdeasRequest, TrendIdeasResponse, TrendIdea, VideoIdea
-from app.routers.trends import extract_topics
 from app.youtube_client import youtube_search
 from app.instagram_client import search_instagram
 from app.tiktok_client import tiktok_trending_search
@@ -26,16 +23,25 @@ router = APIRouter(prefix="/trend-ideas", tags=["trend-ideas"])
 
 SYSTEM_PROMPT = """You are an elite viral content strategist who has generated millions of views on TikTok, Instagram Reels, and YouTube Shorts.
 
-Given a trending topic, a niche, and real-time data from multiple sources (Reddit, Google Trends, Google News, Hacker News, web articles), generate exactly 3 viral short-form video ideas.
+Given a trending topic, a niche, and real-time data from multiple sources, generate exactly 3 viral short-form video ideas.
 
 Rules for EVERY idea:
-- The HOOK must stop the scroll in under 2 seconds. Use curiosity gaps, bold claims, or pattern interrupts. Never start generic.
-- The ANGLE must be contrarian, surprising, or counterintuitive. Challenge common beliefs. Avoid generic advice.
+- The HOOK must stop the scroll in under 2 seconds. Use curiosity gaps, bold claims, or pattern interrupts.
+- The ANGLE must be contrarian, surprising, or counterintuitive. Challenge common beliefs.
 - The IDEA should be specific enough to film immediately — include the format (POV, listicle, story, reaction, experiment, etc.)
 - The SCRIPT should be a complete 30-60 second video script with the hook opening line, 3-4 talking points, and a call-to-action. Write it in first person as if the creator is speaking to camera. Keep it punchy and conversational.
-- Use the real data provided to make ideas timely and specific. Reference actual trends, news, or discussions when possible.
+- Use the real data provided to make ideas timely and specific.
 
 Return your response as a JSON array with exactly 3 objects, each having "hook", "angle", "idea", and "script" keys. Return ONLY the JSON array, no other text."""
+
+TOPIC_DISCOVERY_PROMPT = """You are a trend analyst. Given the following real-time data about the "{niche}" niche, identify the TOP 3 most viral-worthy trending topics right now.
+
+For each topic, return a short 2-5 word topic name that a content creator could make a video about.
+
+Return ONLY a JSON array of 3 strings. Example: ["topic one", "topic two", "topic three"]
+
+Real-time data:
+{context}"""
 
 
 def get_openai_client() -> OpenAI:
@@ -69,6 +75,21 @@ def parse_ideas_json(raw: str) -> list[VideoIdea]:
     return [VideoIdea(hook=cleaned[:100], angle="", idea=cleaned, script="")]
 
 
+def parse_topics_json(raw: str) -> list[str]:
+    cleaned = raw.strip()
+    if cleaned.startswith("```"):
+        lines = cleaned.splitlines()
+        lines = [l for l in lines if not l.strip().startswith("```")]
+        cleaned = "\n".join(lines)
+    try:
+        data = json.loads(cleaned)
+        if isinstance(data, list):
+            return [str(t) for t in data[:3]]
+    except json.JSONDecodeError:
+        pass
+    return [cleaned[:50]]
+
+
 async def _safe_fetch(coro, default, timeout=10.0):
     try:
         return await asyncio.wait_for(coro, timeout=timeout)
@@ -77,70 +98,77 @@ async def _safe_fetch(coro, default, timeout=10.0):
         return default
 
 
-async def gather_source_data(niche: str, topic: str) -> dict:
-    search_query = f"{niche} {topic}"
-    hashtag_query = f"{niche}{topic.replace(' ', '')}"
-
-    keys = ["youtube", "instagram", "tiktok", "google_news", "google_trends", "hackernews", "web_search", "reddit_multi"]
-
+async def discover_trends(niche: str) -> tuple[list[str], dict]:
     coros = [
-        _safe_fetch(youtube_search(search_query, max_results=3), []),
-        _safe_fetch(search_instagram(hashtag_query, max_results=3), []),
-        _safe_fetch(tiktok_trending_search(search_query, max_results=3), []),
-        _safe_fetch(google_news_search(search_query, max_results=5), []),
-        _safe_fetch(google_trends_search(topic), {}, timeout=15.0),
-        _safe_fetch(hn_search(search_query, max_results=5), []),
-        _safe_fetch(web_search(f"{search_query} trending viral", max_results=5), []),
+        _safe_fetch(google_news_search(niche, max_results=8), []),
+        _safe_fetch(google_trends_search(niche), {}, timeout=15.0),
+        _safe_fetch(web_search(f"{niche} trending viral 2026", max_results=8), []),
         _safe_fetch(multi_reddit_ingest(niche, max_per_sub=5), []),
     ]
+    news, trends_data, web_results, reddit_posts = await asyncio.gather(*coros)
 
-    values = await asyncio.gather(*coros)
-    return dict(zip(keys, values))
-
-
-def build_context_prompt(niche: str, topic: str, sources: dict) -> str:
-    parts = [f"Niche: {niche}\nTrending topic: {topic}\n"]
-
-    news = sources.get("google_news", [])
+    context_parts = []
     if news:
-        headlines = [f"- {a['title']} ({a.get('source', '')})" for a in news[:5]]
-        parts.append(f"Recent news:\n" + "\n".join(headlines))
+        context_parts.append("News headlines:\n" + "\n".join(f"- {a['title']}" for a in news[:8]))
+    rq = (trends_data or {}).get("related_queries", [])
+    ts = (trends_data or {}).get("trending_searches", [])
+    if rq:
+        context_parts.append("Google Trends related:\n" + "\n".join(f"- {q['query']}" for q in rq[:8]))
+    if ts:
+        context_parts.append("Currently trending: " + ", ".join(ts[:8]))
+    if web_results:
+        context_parts.append("Web articles:\n" + "\n".join(f"- {r['title']}" for r in web_results[:8]))
+    if reddit_posts:
+        context_parts.append("Reddit discussions:\n" + "\n".join(f"- r/{p['subreddit']}: {p['title']}" for p in reddit_posts[:8]))
 
-    trends = sources.get("google_trends", {})
-    related = trends.get("related_queries", [])
-    if related:
-        queries = [f"- {q['query']}" for q in related[:8]]
-        parts.append(f"Google Trends related searches:\n" + "\n".join(queries))
+    raw_sources = {
+        "google_news": news,
+        "google_trends": trends_data,
+        "web_search": web_results,
+        "reddit_multi": reddit_posts,
+    }
 
-    trending = trends.get("trending_searches", [])
-    if trending:
-        parts.append(f"Currently trending on Google: {', '.join(trending[:5])}")
+    return context_parts, raw_sources
 
-    hn = sources.get("hackernews", [])
-    if hn:
-        titles = [f"- {s['title']} ({s['score']} pts)" for s in hn[:5]]
-        parts.append(f"Hacker News discussions:\n" + "\n".join(titles))
 
-    web = sources.get("web_search", [])
-    if web:
-        articles = [f"- {r['title']}: {r['snippet'][:80]}" for r in web[:5]]
-        parts.append(f"Web articles:\n" + "\n".join(articles))
+async def gather_topic_media(niche: str, topic: str) -> dict:
+    search_query = f"{niche} {topic}"
+    coros = [
+        _safe_fetch(youtube_search(search_query, max_results=4), []),
+        _safe_fetch(tiktok_trending_search(search_query, max_results=3), []),
+        _safe_fetch(google_news_search(search_query, max_results=4), []),
+        _safe_fetch(hn_search(search_query, max_results=3), []),
+        _safe_fetch(web_search(f"{search_query} trending", max_results=4), []),
+    ]
+    youtube, tiktok, news, hn, web = await asyncio.gather(*coros)
+    return {
+        "youtube": youtube,
+        "tiktok": tiktok,
+        "google_news": news,
+        "hackernews": hn,
+        "web_search": web,
+    }
 
-    reddit = sources.get("reddit_multi", [])
-    relevant = [p for p in reddit if topic.lower() in p.get("title", "").lower()][:5]
-    if not relevant:
-        relevant = reddit[:5]
-    if relevant:
-        posts = [f"- r/{p['subreddit']}: {p['title']} ({p['score']} upvotes)" for p in relevant]
-        parts.append(f"Reddit discussions:\n" + "\n".join(posts))
+
+def build_context_prompt(niche: str, topic: str, discovery_context: list[str], topic_media: dict) -> str:
+    parts = [f"Niche: {niche}\nTrending topic: {topic}\n"]
+    parts.extend(discovery_context)
+
+    yt = topic_media.get("youtube", [])
+    if yt:
+        parts.append("Popular YouTube videos:\n" + "\n".join(f"- {v.get('title', '')}" for v in yt[:4]))
+
+    news = topic_media.get("google_news", [])
+    if news:
+        parts.append("Topic news:\n" + "\n".join(f"- {a['title']}" for a in news[:4]))
 
     return "\n\n".join(parts)
 
 
-async def _process_trend(client, niche: str, trend_topic: str) -> TrendIdea:
+async def _process_topic(client, niche: str, topic: str, discovery_context: list[str]) -> TrendIdea:
     try:
-        sources = await gather_source_data(niche, trend_topic)
-        context = build_context_prompt(niche, trend_topic, sources)
+        media = await gather_topic_media(niche, topic)
+        context = build_context_prompt(niche, topic, discovery_context, media)
 
         async with _ai_semaphore:
             loop = asyncio.get_event_loop()
@@ -159,22 +187,22 @@ async def _process_trend(client, niche: str, trend_topic: str) -> TrendIdea:
         ideas = parse_ideas_json(raw)
 
         return TrendIdea(
-            trend=trend_topic,
+            trend=topic,
             ideas=ideas,
-            example_videos=sources.get("youtube", []),
-            instagram_posts=sources.get("instagram", []),
-            tiktok_videos=sources.get("tiktok", []),
-            google_news=sources.get("google_news", [])[:5],
-            google_trends_data=sources.get("google_trends", {}),
-            hackernews_stories=sources.get("hackernews", [])[:5],
-            web_results=sources.get("web_search", [])[:5],
-            reddit_posts=sources.get("reddit_multi", [])[:10],
+            example_videos=media.get("youtube", [])[:4],
+            instagram_posts=[],
+            tiktok_videos=media.get("tiktok", [])[:3],
+            google_news=media.get("google_news", [])[:4],
+            google_trends_data={},
+            hackernews_stories=media.get("hackernews", [])[:3],
+            web_results=media.get("web_search", [])[:4],
+            reddit_posts=[],
         )
     except Exception as e:
-        logger.error("Failed to process trend '%s': %s", trend_topic, e)
+        logger.error("Failed to process topic '%s': %s", topic, e)
         return TrendIdea(
-            trend=trend_topic,
-            ideas=[VideoIdea(hook="Analysis unavailable", angle="", idea=f"Could not generate ideas for this trend: {e}", script="")],
+            trend=topic,
+            ideas=[VideoIdea(hook="Analysis unavailable", angle="", idea=f"Could not generate ideas: {e}", script="")],
             example_videos=[],
             instagram_posts=[],
             tiktok_videos=[],
@@ -182,21 +210,37 @@ async def _process_trend(client, niche: str, trend_topic: str) -> TrendIdea:
 
 
 @router.post("/", response_model=TrendIdeasResponse)
-async def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest(), db: Session = Depends(get_db)):
-    rows = db.execute(
-        sql_text("SELECT title, engagement FROM reddit_posts WHERE title != '' ORDER BY created_at DESC LIMIT 200")
-    ).fetchall()
-
-    texts = [(row[0], row[1]) for row in rows]
-    trends = extract_topics(texts)
-
-    if not trends:
-        raise HTTPException(status_code=404, detail="No trends found. Try ingesting posts first.")
-
-    client = get_openai_client()
+async def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest()):
     niche = body.niche or "fitness"
+    client = get_openai_client()
 
-    trend_coros = [_process_trend(client, niche, t.topic) for t in trends]
-    result = await asyncio.gather(*trend_coros)
+    discovery_context, raw_sources = await discover_trends(niche)
 
-    return TrendIdeasResponse(niche=niche, trend_ideas=list(result))
+    if not any(discovery_context):
+        raise HTTPException(status_code=404, detail="Could not discover trends for this niche. Try again.")
+
+    context_text = "\n\n".join(discovery_context)
+    prompt = TOPIC_DISCOVERY_PROMPT.format(niche=niche, context=context_text)
+
+    loop = asyncio.get_event_loop()
+    topic_response = await loop.run_in_executor(
+        None,
+        lambda: client.chat.completions.create(
+            model="gpt-5.2",
+            max_completion_tokens=256,
+            messages=[{"role": "user", "content": prompt}],
+        ),
+    )
+    topics = parse_topics_json(topic_response.choices[0].message.content or "")
+
+    topic_coros = [_process_topic(client, niche, t, discovery_context) for t in topics]
+    results = await asyncio.gather(*topic_coros)
+
+    for r, src_key in [(raw_sources.get("reddit_multi", []), "reddit_posts"), (raw_sources.get("google_trends", {}), "google_trends_data")]:
+        for res in results:
+            if src_key == "reddit_posts" and not res.reddit_posts:
+                res.reddit_posts = (r if isinstance(r, list) else [])[:6]
+            elif src_key == "google_trends_data" and not res.google_trends_data:
+                res.google_trends_data = r if isinstance(r, dict) else {}
+
+    return TrendIdeasResponse(niche=niche, trend_ideas=list(results))
