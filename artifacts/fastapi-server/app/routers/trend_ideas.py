@@ -32,9 +32,12 @@ Rules for EVERY idea:
 - The ANGLE must be contrarian, surprising, or counterintuitive. Challenge common beliefs.
 - The IDEA should be specific enough to film immediately — include the format (POV, listicle, story, reaction, experiment, etc.)
 - The SCRIPT should be a complete 30-60 second video script with the hook opening line, 3-4 talking points, and a call-to-action. Write it in first person as if the creator is speaking to camera. Keep it punchy and conversational.
+- HASHTAGS: Include 5-8 viral hashtags optimized for TikTok/Instagram/YouTube Shorts discovery. Mix trending and niche-specific tags.
+- OPTIMIZED_TITLE: A click-worthy video title under 60 characters that maximizes CTR.
+- SEO_DESCRIPTION: A 1-2 sentence description optimized for search discovery.
 - Use the real data provided to make ideas timely and specific.
 
-Return your response as a JSON array with exactly 3 objects, each having "hook", "angle", "idea", and "script" keys. Return ONLY the JSON array, no other text."""
+Return your response as a JSON array with exactly 3 objects, each having "hook", "angle", "idea", "script", "hashtags" (array of strings), "optimized_title", and "seo_description" keys. Return ONLY the JSON array, no other text."""
 
 TOPIC_DISCOVERY_PROMPT = """You are a trend analyst. Given the following real-time data about the "{niche}" niche, identify the TOP 3 most viral-worthy trending topics right now.
 
@@ -69,6 +72,9 @@ def parse_ideas_json(raw: str) -> list[VideoIdea]:
                     angle=item.get("angle", ""),
                     idea=item.get("idea", ""),
                     script=item.get("script", ""),
+                    hashtags=item.get("hashtags", []),
+                    optimized_title=item.get("optimized_title", ""),
+                    seo_description=item.get("seo_description", ""),
                 )
                 for item in data[:3]
             ]

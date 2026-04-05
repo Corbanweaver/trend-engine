@@ -719,6 +719,172 @@
             font-weight: 600;
         }
 
+        .seo-section {
+            margin-top: 10px;
+            padding: 12px 14px;
+            background: var(--orange-bg);
+            border-radius: 12px;
+            border: 1px solid var(--orange-bg2);
+        }
+
+        .seo-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--orange);
+            margin-bottom: 4px;
+        }
+
+        .seo-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .hashtag-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .hashtag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--surface);
+            border: 1px solid var(--orange-bg2);
+            border-radius: 16px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--orange);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .hashtag:hover {
+            background: var(--orange);
+            color: #fff;
+        }
+
+        .idea-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 20px;
+            border: 2px solid var(--border);
+            background: var(--surface);
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .action-btn:hover {
+            border-color: var(--orange);
+            color: var(--orange);
+            background: var(--orange-bg);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .action-btn.active {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            background: #F0FDF4;
+        }
+
+        .action-btn .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--border);
+            border-top-color: var(--orange);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+
+        .refine-result {
+            display: none;
+            margin-top: 12px;
+            padding: 16px 18px;
+            background: #F5F0FF;
+            border-radius: var(--radius);
+            border: 1px solid #E0D4F5;
+        }
+
+        .refine-result.open { display: block; }
+
+        .refine-result .label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent-purple);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .refine-result .script-text {
+            font-size: 0.9rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+        }
+
+        .refine-result .improvements {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #E0D4F5;
+        }
+
+        .refine-result .improvements li {
+            font-size: 0.82rem;
+            color: var(--accent-purple);
+            margin-bottom: 4px;
+            margin-left: 16px;
+        }
+
+        .thumbnail-result {
+            display: none;
+            margin-top: 12px;
+        }
+
+        .thumbnail-result.open { display: block; }
+
+        .thumbnail-result img {
+            width: 100%;
+            max-width: 300px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+        }
+
+        .copy-toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--text-primary);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            z-index: 999;
+            animation: toastIn 0.3s ease;
+            pointer-events: none;
+        }
+
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(16px); }
             to { opacity: 1; transform: translateY(0); }
@@ -832,10 +998,121 @@
             return String(n);
         }
 
+        let ideaStore = {};
+
         function toggleScript(btn) {
             const box = btn.nextElementSibling;
             box.classList.toggle('open');
             btn.textContent = box.classList.contains('open') ? 'Hide Script' : 'Read Script';
+        }
+
+        function copyHashtags(id) {
+            const idea = ideaStore[id];
+            if (!idea || !idea.hashtags) return;
+            const text = idea.hashtags.map(h => h.startsWith('#') ? h : '#' + h).join(' ');
+            navigator.clipboard.writeText(text).then(() => {
+                const t = document.createElement('div');
+                t.className = 'copy-toast';
+                t.textContent = 'Hashtags copied!';
+                document.body.appendChild(t);
+                setTimeout(() => t.remove(), 1800);
+            });
+        }
+
+        async function refineScript(id) {
+            const idea = ideaStore[id];
+            if (!idea || !idea.script) return;
+            const btn = document.getElementById('refine-btn-' + id);
+            const box = document.getElementById('refine-box-' + id);
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Refining...';
+            try {
+                const res = await fetch('/ai/refine-script', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        script: idea.script,
+                        niche: getNiche(),
+                        hook: idea.hook,
+                        idea: idea.idea,
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Failed');
+                let html = `<div class="label">Refined by ${esc(data.model)}</div>`;
+                html += `<div class="script-text">${esc(data.refined_script)}</div>`;
+                if (data.improvements && data.improvements.length) {
+                    html += '<div class="improvements"><ul>';
+                    data.improvements.forEach(imp => { html += `<li>${esc(imp)}</li>`; });
+                    html += '</ul></div>';
+                }
+                box.innerHTML = html;
+                box.classList.add('open');
+                btn.innerHTML = 'Refined';
+                btn.classList.add('active');
+            } catch (e) {
+                btn.innerHTML = 'Refine Failed';
+                setTimeout(() => { btn.innerHTML = 'Refine with Claude'; btn.disabled = false; }, 2000);
+            }
+        }
+
+        async function generateThumbnail(id) {
+            const idea = ideaStore[id];
+            if (!idea) return;
+            const btn = document.getElementById('thumb-btn-' + id);
+            const box = document.getElementById('thumb-box-' + id);
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Generating...';
+            try {
+                const res = await fetch('/ai/generate-thumbnail', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        idea: idea.idea,
+                        hook: idea.hook,
+                        niche: getNiche(),
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Failed');
+                box.innerHTML = `<img src="data:image/png;base64,${data.image_b64}" alt="AI Thumbnail">`;
+                box.classList.add('open');
+                btn.innerHTML = 'Generated';
+                btn.classList.add('active');
+            } catch (e) {
+                btn.innerHTML = 'Generation Failed';
+                setTimeout(() => { btn.innerHTML = 'AI Thumbnail'; btn.disabled = false; }, 2000);
+            }
+        }
+
+        let currentUtterance = null;
+        function voicePreview(id) {
+            if (!('speechSynthesis' in window)) return;
+            const idea = ideaStore[id];
+            if (!idea || !idea.script) return;
+            const btn = document.getElementById('voice-btn-' + id);
+
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+                currentUtterance = null;
+                btn.innerHTML = 'Voice Preview';
+                btn.classList.remove('active');
+                return;
+            }
+
+            const utter = new SpeechSynthesisUtterance(idea.script);
+            utter.rate = 1.05;
+            utter.pitch = 1;
+            currentUtterance = utter;
+            btn.innerHTML = 'Stop';
+            btn.classList.add('active');
+
+            utter.onend = () => {
+                btn.innerHTML = 'Voice Preview';
+                btn.classList.remove('active');
+                currentUtterance = null;
+            };
+            speechSynthesis.speak(utter);
         }
 
         function toggleMedia(el) {
@@ -849,7 +1126,23 @@
             'linear-gradient(135deg, #F0FDF4, #D1FAE5)',
         ];
 
+        let ideaCounter = 0;
         function renderIdea(idea, i) {
+            const uid = 'idea-' + (ideaCounter++);
+            ideaStore[uid] = idea;
+
+            const hashtagsHtml = (idea.hashtags && idea.hashtags.length)
+                ? `<div class="hashtag-wrap">${idea.hashtags.map(h => `<span class="hashtag">${esc(h.startsWith('#') ? h : '#' + h)}</span>`).join('')}</div>`
+                : '';
+
+            const seoHtml = (idea.optimized_title || idea.seo_description || hashtagsHtml)
+                ? `<div class="seo-section">
+                    ${idea.optimized_title ? `<div class="seo-title">${esc(idea.optimized_title)}</div>` : ''}
+                    ${idea.seo_description ? `<div class="seo-desc">${esc(idea.seo_description)}</div>` : ''}
+                    ${hashtagsHtml}
+                    ${(idea.hashtags && idea.hashtags.length) ? `<button class="action-btn" style="margin-top:8px;font-size:0.75rem;padding:5px 12px;" onclick="copyHashtags('${uid}')">Copy Hashtags</button>` : ''}
+                </div>` : '';
+
             return `
                 <div class="idea-item">
                     <div class="idea-num-row">
@@ -858,10 +1151,18 @@
                             <div class="idea-hook">${esc(idea.hook)}</div>
                             ${idea.angle ? `<div class="idea-angle">${esc(idea.angle)}</div>` : ''}
                             <div class="idea-desc">${esc(idea.idea)}</div>
+                            ${seoHtml}
                             ${idea.script ? `
                                 <button class="script-toggle" onclick="toggleScript(this)">Read Script</button>
                                 <div class="script-box">${esc(idea.script)}</div>
                             ` : ''}
+                            <div class="idea-actions">
+                                ${idea.script ? `<button class="action-btn" id="refine-btn-${uid}" onclick="refineScript('${uid}')">Refine with Claude</button>` : ''}
+                                <button class="action-btn" id="thumb-btn-${uid}" onclick="generateThumbnail('${uid}')">AI Thumbnail</button>
+                                ${idea.script ? `<button class="action-btn" id="voice-btn-${uid}" onclick="voicePreview('${uid}')">Voice Preview</button>` : ''}
+                            </div>
+                            <div class="refine-result" id="refine-box-${uid}"></div>
+                            <div class="thumbnail-result" id="thumb-box-${uid}"></div>
                         </div>
                     </div>
                 </div>`;
@@ -1033,6 +1334,8 @@
                     return;
                 }
 
+                ideaStore = {};
+                ideaCounter = 0;
                 el.innerHTML = '<div class="masonry">' + data.trend_ideas.map((ti, i) => renderTrendCard(ti, i)).join('') + '</div>';
                 hideToast();
             } catch (e) {

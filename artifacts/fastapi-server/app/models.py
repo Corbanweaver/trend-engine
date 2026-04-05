@@ -28,6 +28,9 @@ class VideoIdea(BaseModel):
     angle: str
     idea: str
     script: str = ""
+    hashtags: list[str] = []
+    optimized_title: str = ""
+    seo_description: str = ""
 
 
 class IdeasResponse(BaseModel):
