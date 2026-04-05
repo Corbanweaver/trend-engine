@@ -48,8 +48,10 @@ artifacts/fastapi-server/
     ├── hackernews_client.py    # Hacker News Algolia API
     ├── web_search_client.py    # DuckDuckGo web search
     ├── multi_reddit_client.py  # Multi-subreddit ingest (20+ niches mapped)
+    ├── pinterest_client.py     # Pinterest pin search (scrape + fallback)
+    ├── medium_client.py        # Medium article search (tag feed + scrape + fallback)
     ├── static/
-    │   └── index.html   # Frontend UI (light-themed dashboard)
+    │   └── index.html   # Frontend UI (Pinterest-style masonry layout)
     └── routers/
         ├── items.py        # Example CRUD router
         ├── ingest.py       # POST /ingest/reddit — pull posts via RSS
@@ -63,7 +65,9 @@ artifacts/fastapi-server/
         ├── google_news.py   # POST /google-news/search
         ├── hackernews.py    # POST /hackernews/search + GET /top
         ├── web_search.py    # POST /web-search/search + /trending
-        └── multi_reddit.py  # POST /reddit/multi-search
+        ├── multi_reddit.py  # POST /reddit/multi-search
+        ├── pinterest.py     # POST /pinterest/search
+        └── medium.py        # POST /medium/search
 ```
 
 ### Dependencies
@@ -89,17 +93,19 @@ artifacts/fastapi-server/
 - `POST /ingest/reddit` — pull 50 hot posts from r/fitness, store in DB, skip duplicates
 - `GET /trends/` — top 5 trending topics from stored post titles
 - `POST /ideas/` — accepts `{"text": "...", "niche": "fitness"}`, returns 5 viral video ideas with hook/angle/idea/script
-- `POST /trend-ideas/` — accepts `{"niche": "fitness"}`, chains trends → 3 AI ideas per trend + YouTube + Instagram + TikTok examples
+- `POST /trend-ideas/` — accepts `{"niche": "fitness"}`, chains trends → 3 AI ideas per trend + YouTube + Instagram + TikTok + Pinterest + Medium examples
 - `POST /youtube/search` — search YouTube for short-form videos by query
 - `POST /instagram/search` — search Instagram top posts by hashtag
 - `POST /tiktok/search` — search TikTok trending content
+- `POST /pinterest/search` — search Pinterest pins by query
+- `POST /medium/search` — search Medium articles by query
 - `GET /docs` — Swagger UI (interactive API docs)
 
 ### Product Loop
 1. Ingest Reddit posts → 2. Detect trends → 3. Generate viral video ideas per trend → 4. Find example videos from YouTube, Instagram, TikTok
 
 ### Performance
-- All 8 data sources fetched in parallel per trend using asyncio.gather
+- All 10 data sources fetched in parallel per trend using asyncio.gather
 - All trends processed in parallel (AI calls use semaphore limiting to 3 concurrent)
 - Per-trend fault isolation: one failed trend doesn't crash the whole response
 - Individual source timeouts (10s default, 15s for Google Trends) prevent slow sources from blocking
@@ -114,9 +120,12 @@ artifacts/fastapi-server/
 - Orange-themed professional single-page app at `/` (Inter font, gradient accents)
 - Sticky header with niche selector (21 options + custom), topic input, and orange "Analyze" button
 - One-click full analysis: discovers trends live, generates AI ideas with scripts, finds matching videos per trend
-- Quick action chips for individual source searches (YouTube, TikTok, News, HN, Web, Trends)
+- Pinterest-style masonry card layout (CSS columns, 3 cols desktop, 2 tablet, 1 mobile)
+- Quick action chips for individual source searches (YouTube, TikTok, Pinterest, Medium, News, HN, Web, Trends)
 - Collapsible media sections per trend with color-coded dots
 - Video cards with thumbnails, inline YouTube playback, expandable scripts
+- Pinterest pin grid and Medium article cards with images
+- Rounded corners, soft shadows, hover effects, fade-in animations
 
 ### Instagram Notes
 - Instagram Graph API requires: Business/Creator account + Facebook Page + linked IG account

@@ -55,6 +55,8 @@ class TrendIdea(BaseModel):
     hackernews_stories: list[dict] = []
     web_results: list[dict] = []
     reddit_posts: list[dict] = []
+    pinterest_pins: list[dict] = []
+    medium_articles: list[dict] = []
 
 
 class TrendIdeasRequest(BaseModel):

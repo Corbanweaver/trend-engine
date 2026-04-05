@@ -8,6 +8,7 @@ from app.routers import (
     items, ingest, ideas, trends, trend_ideas,
     youtube, instagram, tiktok,
     google_trends, google_news, hackernews, web_search, multi_reddit,
+    pinterest, medium,
 )
 
 app = FastAPI(
@@ -37,6 +38,8 @@ app.include_router(google_news.router)
 app.include_router(hackernews.router)
 app.include_router(web_search.router)
 app.include_router(multi_reddit.router)
+app.include_router(pinterest.router)
+app.include_router(medium.router)
 
 STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

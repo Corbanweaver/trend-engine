@@ -18,6 +18,8 @@ from app.google_trends_client import google_trends_search
 from app.hackernews_client import hn_search
 from app.web_search_client import web_search
 from app.multi_reddit_client import multi_reddit_ingest
+from app.pinterest_client import pinterest_search
+from app.medium_client import medium_search
 
 router = APIRouter(prefix="/trend-ideas", tags=["trend-ideas"])
 
@@ -139,14 +141,18 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
         _safe_fetch(google_news_search(search_query, max_results=4), []),
         _safe_fetch(hn_search(search_query, max_results=3), []),
         _safe_fetch(web_search(f"{search_query} trending", max_results=4), []),
+        _safe_fetch(pinterest_search(search_query, max_results=4), []),
+        _safe_fetch(medium_search(search_query, max_results=4), []),
     ]
-    youtube, tiktok, news, hn, web = await asyncio.gather(*coros)
+    youtube, tiktok, news, hn, web, pins, articles = await asyncio.gather(*coros)
     return {
         "youtube": youtube,
         "tiktok": tiktok,
         "google_news": news,
         "hackernews": hn,
         "web_search": web,
+        "pinterest": pins,
+        "medium": articles,
     }
 
 
@@ -161,6 +167,14 @@ def build_context_prompt(niche: str, topic: str, discovery_context: list[str], t
     news = topic_media.get("google_news", [])
     if news:
         parts.append("Topic news:\n" + "\n".join(f"- {a['title']}" for a in news[:4]))
+
+    pins = topic_media.get("pinterest", [])
+    if pins:
+        parts.append("Pinterest pins:\n" + "\n".join(f"- {p.get('title', '')}" for p in pins[:4]))
+
+    articles = topic_media.get("medium", [])
+    if articles:
+        parts.append("Medium articles:\n" + "\n".join(f"- {a.get('title', '')}" for a in articles[:4]))
 
     return "\n\n".join(parts)
 
@@ -197,6 +211,8 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
             hackernews_stories=media.get("hackernews", [])[:3],
             web_results=media.get("web_search", [])[:4],
             reddit_posts=[],
+            pinterest_pins=media.get("pinterest", [])[:4],
+            medium_articles=media.get("medium", [])[:4],
         )
     except Exception as e:
         logger.error("Failed to process topic '%s': %s", topic, e)
