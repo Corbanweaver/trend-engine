@@ -132,11 +132,25 @@ function TrendCard({
   const heat = engagementHeat(raw);
   const platformBadges = getPlatformBadges(trend);
   const visual = getCardVisual(trend);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+
+  const handleCardMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    const rotateY = (px - 0.5) * 5;
+    const rotateX = (0.5 - py) * 5;
+    setTilt({ x: rotateX, y: rotateY });
+  };
+
+  const resetCardTilt = () => setTilt({ x: 0, y: 0 });
 
   return (
     <button
       type="button"
       onClick={onSelect}
+      onMouseMove={handleCardMove}
+      onMouseLeave={resetCardTilt}
       style={{ animationDelay: `${Math.min(index, 10) * 70}ms` }}
       className={cn(
         "mb-4 w-full break-inside-avoid text-left transition-all duration-200 motion-safe:animate-card-in",
@@ -145,11 +159,18 @@ function TrendCard({
     >
       <Card
         className={cn(
-          "group cursor-pointer overflow-hidden border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-950/95 text-slate-100 shadow-lg shadow-black/30",
+          "group relative cursor-pointer overflow-hidden border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-950/95 text-slate-100 shadow-lg shadow-black/30",
           "transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:border-cyan-300/40 hover:shadow-cyan-500/20",
-          selected && "ring-2 ring-cyan-300/80",
+          selected &&
+            "ring-2 ring-cyan-300/80 shadow-[0_0_0_1px_rgba(56,189,248,0.5),0_0_36px_rgba(56,189,248,0.28)]",
         )}
+        style={{
+          transform: `perspective(900px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+        }}
       >
+        {selected ? (
+          <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_20%_15%,rgba(34,211,238,0.22),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(99,102,241,0.18),transparent_55%)]" />
+        ) : null}
         <div className="relative h-32 overflow-hidden border-b border-white/10">
           {visual ? (
             // Using API-provided thumbnails when available.
@@ -260,6 +281,45 @@ function LoadingState({ niche }: { niche: string }) {
         ))}
       </div>
     </div>
+  );
+}
+
+function FilterChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: PlatformChip;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  const handleMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    setOffset({ x: px * 8, y: py * 8 });
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseMove={handleMove}
+      onMouseLeave={() => setOffset({ x: 0, y: 0 })}
+      className={cn(
+        "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
+        active
+          ? "border-cyan-300/70 bg-cyan-400/20 text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.25)]"
+          : "border-white/10 bg-white/5 text-slate-300 hover:border-white/25 hover:text-white",
+      )}
+      style={{
+        transform: `translate(${offset.x}px, ${offset.y}px)`,
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -417,19 +477,12 @@ export function TrendDashboard() {
             {PLATFORM_CHIPS.map((chip) => {
               const active = platformFilter === chip;
               return (
-                <button
+                <FilterChip
                   key={chip}
-                  type="button"
+                  label={chip}
+                  active={active}
                   onClick={() => setPlatformFilter(chip)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
-                    active
-                      ? "border-cyan-300/70 bg-cyan-400/20 text-cyan-100"
-                      : "border-white/10 bg-white/5 text-slate-300 hover:border-white/25 hover:text-white",
-                  )}
-                >
-                  {chip}
-                </button>
+                />
               );
             })}
           </div>
