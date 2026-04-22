@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Loader2, Sparkles, Wand2 } from "lucide-react";
+import { ChevronRight, Loader2, Search, Sparkles } from "lucide-react";
 
 import { IdeaPanel } from "@/components/idea-panel";
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,7 @@ import {
 import { getApiBaseUrl } from "@/lib/api";
 import { NICHE_OPTIONS } from "@/lib/niches";
 import type { TrendIdea, TrendIdeasResponse } from "@/lib/trend-ideas-types";
-import {
-  computeEngagementRaw,
-  engagementHeat,
-  primaryPlatform,
-} from "@/lib/trend-metrics";
+import { computeEngagementRaw, engagementHeat } from "@/lib/trend-metrics";
 import { cn } from "@/lib/utils";
 
 function useIsMobile(breakpoint = 1023) {
@@ -71,11 +67,31 @@ async function fetchTrendIdeas(niche: string): Promise<TrendIdeasResponse> {
   return res.json() as Promise<TrendIdeasResponse>;
 }
 
-const platformBadgeStyles: Record<string, string> = {
-  TikTok: "border-pink-400/40 bg-pink-500/10 text-pink-200",
-  YouTube: "border-red-400/40 bg-red-500/10 text-red-200",
-  Reddit: "border-orange-400/40 bg-orange-500/10 text-orange-200",
-  Instagram: "border-purple-400/40 bg-purple-500/10 text-purple-200",
+type PlatformChip = "All" | "TikTok" | "YouTube" | "Reddit" | "Instagram" | "Twitter";
+
+const PLATFORM_CHIPS: PlatformChip[] = [
+  "All",
+  "TikTok",
+  "YouTube",
+  "Reddit",
+  "Instagram",
+  "Twitter",
+];
+
+const platformIconStyles: Record<string, string> = {
+  TikTok: "bg-pink-500/20 text-pink-200 border-pink-400/40",
+  YouTube: "bg-red-500/20 text-red-200 border-red-400/40",
+  Reddit: "bg-orange-500/20 text-orange-200 border-orange-400/40",
+  Instagram: "bg-purple-500/20 text-purple-200 border-purple-400/40",
+  Twitter: "bg-sky-500/20 text-sky-200 border-sky-400/40",
+};
+
+const platformGlyph: Record<string, string> = {
+  TikTok: "♪",
+  YouTube: "▶",
+  Reddit: "R",
+  Instagram: "◎",
+  Twitter: "X",
 };
 
 function getPlatformBadges(trend: TrendIdea): string[] {
@@ -84,39 +100,83 @@ function getPlatformBadges(trend: TrendIdea): string[] {
   if (trend.example_videos.length > 0) badges.push("YouTube");
   if (trend.reddit_posts.length > 0) badges.push("Reddit");
   if (trend.instagram_posts.length > 0) badges.push("Instagram");
+  if (trend.web_results.length > 0 || trend.hackernews_stories.length > 0) {
+    badges.push("Twitter");
+  }
   if (badges.length === 0) badges.push("Reddit");
-  return badges.slice(0, 4);
+  return [...new Set(badges)].slice(0, 5);
+}
+
+function getCardVisual(trend: TrendIdea) {
+  const youtubeThumb = trend.example_videos.find(
+    (v) => typeof v.thumbnail === "string" && v.thumbnail,
+  )?.thumbnail as string | undefined;
+  const tiktokCover = trend.tiktok_videos.find(
+    (v) => typeof v.cover === "string" && v.cover,
+  )?.cover as string | undefined;
+  return youtubeThumb || tiktokCover || null;
 }
 
 function TrendCard({
   trend,
+  index,
   selected,
   onSelect,
 }: {
   trend: TrendIdea;
+  index: number;
   selected: boolean;
   onSelect: () => void;
 }) {
   const raw = computeEngagementRaw(trend);
   const heat = engagementHeat(raw);
-  const { label: platformLabel } = primaryPlatform(trend);
   const platformBadges = getPlatformBadges(trend);
+  const visual = getCardVisual(trend);
 
   return (
     <button
       type="button"
       onClick={onSelect}
+      style={{ animationDelay: `${Math.min(index, 10) * 70}ms` }}
       className={cn(
-        "mb-4 w-full break-inside-avoid text-left transition-all duration-200",
+        "mb-4 w-full break-inside-avoid text-left transition-all duration-200 motion-safe:animate-card-in",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300",
       )}
     >
       <Card
         className={cn(
-          "cursor-pointer border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-950/95 text-slate-100 shadow-lg shadow-black/30 hover:-translate-y-0.5 hover:border-cyan-300/40 hover:shadow-cyan-500/20",
+          "group cursor-pointer overflow-hidden border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-950/95 text-slate-100 shadow-lg shadow-black/30",
+          "transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:border-cyan-300/40 hover:shadow-cyan-500/20",
           selected && "ring-2 ring-cyan-300/80",
         )}
       >
+        <div className="relative h-32 overflow-hidden border-b border-white/10">
+          {visual ? (
+            // Using API-provided thumbnails when available.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={visual}
+              alt={trend.trend}
+              className="h-full w-full object-cover opacity-80 transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.35),transparent_40%),radial-gradient(circle_at_80%_20%,rgba(244,114,182,0.3),transparent_35%),radial-gradient(circle_at_50%_100%,rgba(99,102,241,0.25),transparent_40%)]" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+          <div className="absolute bottom-2 left-2 flex flex-wrap gap-1.5">
+            {platformBadges.slice(0, 3).map((badge) => (
+              <span
+                key={`${trend.trend}-${badge}-glyph`}
+                className={cn(
+                  "inline-flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold",
+                  platformIconStyles[badge],
+                )}
+              >
+                {platformGlyph[badge]}
+              </span>
+            ))}
+          </div>
+        </div>
         <CardHeader className="space-y-3 pb-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-1.5">
@@ -125,7 +185,7 @@ function TrendCard({
                   key={`${trend.trend}-${badge}`}
                   className={cn(
                     "rounded-full border px-2.5 py-1 text-[11px] font-medium",
-                    platformBadgeStyles[badge],
+                    platformIconStyles[badge],
                   )}
                 >
                   {badge}
@@ -154,9 +214,6 @@ function TrendCard({
           <CardTitle className="text-base leading-snug text-slate-100">
             {trend.trend}
           </CardTitle>
-          <p className="text-xs text-slate-400">
-            Primary signal: {platformLabel}
-          </p>
         </CardHeader>
         <CardContent className="pb-2">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
@@ -169,7 +226,7 @@ function TrendCard({
         <CardFooter className="pt-0 text-xs text-slate-400">
           {trend.ideas.length} AI idea{trend.ideas.length === 1 ? "" : "s"} ·
           Click for details
-          <ChevronRight className="ml-1 size-3" />
+          <ChevronRight className="ml-1 size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
         </CardFooter>
       </Card>
     </button>
@@ -182,7 +239,7 @@ function LoadingState({ niche }: { niche: string }) {
       <div className="relative flex items-center justify-center">
         <div className="absolute size-20 animate-ping rounded-full bg-cyan-500/20" />
         <div className="relative rounded-full border border-cyan-400/40 bg-slate-900/80 p-5">
-          <Wand2 className="size-8 text-cyan-300" />
+          <Sparkles className="size-8 text-cyan-300" />
         </div>
       </div>
       <div className="space-y-2">
@@ -214,6 +271,8 @@ export function TrendDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<TrendIdeasResponse | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [query, setQuery] = useState("");
+  const [platformFilter, setPlatformFilter] = useState<PlatformChip>("All");
 
   const effectiveNiche =
     nicheKey === "custom"
@@ -226,6 +285,23 @@ export function TrendDashboard() {
       : null;
 
   const sheetOpen = isMobile && selectedIndex !== null;
+
+  const filteredTrends = (data?.trend_ideas ?? []).filter((trend) => {
+    const labels = getPlatformBadges(trend);
+    const matchesPlatform =
+      platformFilter === "All" || labels.includes(platformFilter);
+    const q = query.trim().toLowerCase();
+    const matchesQuery =
+      q.length === 0 ||
+      trend.trend.toLowerCase().includes(q) ||
+      trend.ideas.some(
+        (idea) =>
+          idea.idea.toLowerCase().includes(q) ||
+          idea.hook.toLowerCase().includes(q) ||
+          (idea.optimized_title ?? "").toLowerCase().includes(q),
+      );
+    return matchesPlatform && matchesQuery;
+  });
 
   const runAnalysis = useCallback(async () => {
     setLoading(true);
@@ -243,7 +319,14 @@ export function TrendDashboard() {
   }, [effectiveNiche]);
 
   return (
-    <div className="flex min-h-svh flex-col bg-slate-950 text-slate-100">
+    <div className="relative flex min-h-svh flex-col overflow-hidden bg-slate-950 text-slate-100">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-50"
+        style={{
+          background:
+            "radial-gradient(circle at 10% 10%, rgba(34,211,238,0.14), transparent 40%), radial-gradient(circle at 85% 18%, rgba(244,114,182,0.14), transparent 36%), radial-gradient(circle at 50% 90%, rgba(99,102,241,0.12), transparent 42%)",
+        }}
+      />
       <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-3">
           <Link
@@ -320,6 +403,37 @@ export function TrendDashboard() {
             </Button>
           </div>
         </div>
+        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-3 px-4 pb-4">
+          <div className="relative max-w-xl">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search trends, hooks, or idea titles..."
+              className="h-10 w-full rounded-xl border border-white/10 bg-slate-900/80 pl-9 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-300/60"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {PLATFORM_CHIPS.map((chip) => {
+              const active = platformFilter === chip;
+              return (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => setPlatformFilter(chip)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
+                    active
+                      ? "border-cyan-300/70 bg-cyan-400/20 text-cyan-100"
+                      : "border-white/10 bg-white/5 text-slate-300 hover:border-white/25 hover:text-white",
+                  )}
+                >
+                  {chip}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </header>
 
       {error ? (
@@ -328,7 +442,7 @@ export function TrendDashboard() {
         </div>
       ) : null}
 
-      <div className="flex min-h-0 flex-1">
+      <div className="relative z-10 flex min-h-0 flex-1">
         <div className="min-w-0 flex-1 overflow-y-auto p-4">
           {loading && !data ? (
             <LoadingState niche={effectiveNiche} />
@@ -346,20 +460,45 @@ export function TrendDashboard() {
           ) : null}
 
           {data ? (
-            <div className="mx-auto max-w-[1100px] columns-1 gap-4 sm:columns-2 xl:columns-3">
-              {data.trend_ideas.map((trend, index) => (
-                <TrendCard
-                  key={`${trend.trend}-${index}`}
-                  trend={trend}
-                  selected={selectedIndex === index}
-                  onSelect={() => setSelectedIndex(index)}
-                />
-              ))}
-            </div>
+            filteredTrends.length > 0 ? (
+              <div className="mx-auto max-w-[1100px] columns-1 gap-4 sm:columns-2 xl:columns-3">
+                {filteredTrends.map((trend, index) => {
+                  const realIndex = data.trend_ideas.findIndex(
+                    (t) => t.trend === trend.trend,
+                  );
+                  return (
+                    <TrendCard
+                      key={`${trend.trend}-${index}`}
+                      trend={trend}
+                      index={index}
+                      selected={selectedIndex === realIndex}
+                      onSelect={() => setSelectedIndex(realIndex)}
+                    />
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+                <p className="text-sm font-medium text-slate-200">
+                  No trends match this filter
+                </p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Try another platform chip or clear your search terms.
+                </p>
+              </div>
+            )
           ) : null}
         </div>
 
-        <aside className="hidden w-[min(420px,40vw)] shrink-0 border-l border-white/10 bg-slate-900/70 lg:block">
+        <aside
+          className={cn(
+            "hidden w-[min(420px,40vw)] shrink-0 border-l border-white/10 bg-slate-900/70 lg:block",
+            "transition-all duration-300",
+            selectedTrend
+              ? "translate-x-0 opacity-100"
+              : "translate-x-2 opacity-90",
+          )}
+        >
           <ScrollArea className="h-[calc(100vh-57px)]">
             <IdeaPanel trend={selectedTrend} />
           </ScrollArea>

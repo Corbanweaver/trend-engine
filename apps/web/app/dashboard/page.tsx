@@ -4,7 +4,8 @@ import { TrendDashboard } from "@/components/trend-dashboard";
 
 export const metadata: Metadata = {
   title: "Content Idea Maker",
-  description: "Premium AI trend dashboard for short-form content creators",
+  description:
+    "Pinterest-style trend intelligence dashboard with AI-generated video ideas",
 };
 
 export default function DashboardPage() {
