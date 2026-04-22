@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { TrendDashboard } from "@/components/trend-dashboard";
 
 export const metadata: Metadata = {
-  title: "Trend dashboard",
-  description: "Live trends and AI video ideas from the Content Engine API",
+  title: "Content Idea Maker",
+  description: "Premium AI trend dashboard for short-form content creators",
 };
 
 export default function DashboardPage() {
