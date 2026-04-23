@@ -8,7 +8,7 @@ function getSupabaseConfig() {
 }
 
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next({ request });
+  let response = NextResponse.next({ request });
   const { url, anonKey } = getSupabaseConfig();
 
   if (!url || !anonKey) {
@@ -21,6 +21,7 @@ export async function middleware(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
+        response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) => {
           request.cookies.set(name, value);
           response.cookies.set(name, value, options);
@@ -42,14 +43,22 @@ export async function middleware(request: NextRequest) {
     redirectUrl.pathname = "/login";
     redirectUrl.search = "";
     redirectUrl.searchParams.set("next", pathname + search);
-    return NextResponse.redirect(redirectUrl);
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    return redirectResponse;
   }
 
   if (isAuthPage && user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
     redirectUrl.search = "";
-    return NextResponse.redirect(redirectUrl);
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    return redirectResponse;
   }
 
   return response;
