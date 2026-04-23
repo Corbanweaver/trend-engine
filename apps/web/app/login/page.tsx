@@ -10,22 +10,22 @@ import { getSupabaseClient } from "@/lib/supabase";
 
 function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const next = searchParams.get("next") || "/dashboard";
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    setStatus(null);
     setLoading(true);
 
     try {
       const supabase = getSupabaseClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -33,10 +33,21 @@ function LoginForm() {
         setError(authError.message);
         return;
       }
-      router.replace(next);
+
+      if (!data.session) {
+        setError("Sign in did not create a session. Please try again.");
+        return;
+      }
+
+      setStatus("Login successful. Redirecting to dashboard...");
+      router.replace("/dashboard");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed.");
+      setError(
+        err instanceof Error
+          ? `Login failed: ${err.message}`
+          : "Login failed due to an unexpected error.",
+      );
     } finally {
       setLoading(false);
     }
@@ -74,6 +85,11 @@ function LoginForm() {
           {error ? (
             <p className="rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
               {error}
+            </p>
+          ) : null}
+          {status ? (
+            <p className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+              {status}
             </p>
           ) : null}
 
