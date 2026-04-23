@@ -1,3 +1,5 @@
+"use client";
+
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 let browserClient: SupabaseClient | null = null;
@@ -16,6 +18,10 @@ function getSupabaseConfig() {
 }
 
 export function getSupabaseClient(): SupabaseClient {
+  if (typeof window === "undefined") {
+    throw new Error("Supabase browser client must only be initialized on the client.");
+  }
+
   if (browserClient) return browserClient;
 
   const { url, anonKey } = getSupabaseConfig();
