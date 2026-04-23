@@ -1,4 +1,7 @@
+ "use client";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,9 +9,44 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { TrendIdea } from "@/lib/trend-ideas-types";
+import { useEffect, useState } from "react";
 
-export function IdeaPanel({ trend }: { trend: TrendIdea | null }) {
+import type { TrendIdea, VideoIdea } from "@/lib/trend-ideas-types";
+
+export function IdeaPanel({
+  trend,
+  onSaveIdea,
+}: {
+  trend: TrendIdea | null;
+  onSaveIdea?: (payload: { trend: string; idea: VideoIdea }) => Promise<void>;
+}) {
+  const [savingIndex, setSavingIndex] = useState<number | null>(null);
+  const [savedIndexes, setSavedIndexes] = useState<Record<number, boolean>>({});
+  const [errorByIndex, setErrorByIndex] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    setSavingIndex(null);
+    setSavedIndexes({});
+    setErrorByIndex({});
+  }, [trend?.trend]);
+
+  const handleSaveIdea = async (idea: VideoIdea, index: number) => {
+    if (!trend || !onSaveIdea) return;
+    setErrorByIndex((prev) => ({ ...prev, [index]: "" }));
+    setSavingIndex(index);
+    try {
+      await onSaveIdea({ trend: trend.trend, idea });
+      setSavedIndexes((prev) => ({ ...prev, [index]: true }));
+    } catch (err) {
+      setErrorByIndex((prev) => ({
+        ...prev,
+        [index]: err instanceof Error ? err.message : "Failed to save idea.",
+      }));
+    } finally {
+      setSavingIndex(null);
+    }
+  };
+
   if (!trend) {
     return (
       <div className="flex h-full min-h-[220px] flex-col items-center justify-center gap-2 p-6 text-center">
@@ -91,6 +129,25 @@ export function IdeaPanel({ trend }: { trend: TrendIdea | null }) {
                       {tag.startsWith("#") ? tag : `#${tag}`}
                     </Badge>
                   ))}
+                </div>
+              ) : null}
+              {onSaveIdea ? (
+                <div className="space-y-2 pt-1">
+                  <Button
+                    type="button"
+                    disabled={savingIndex === i || savedIndexes[i]}
+                    onClick={() => void handleSaveIdea(idea, i)}
+                    className="h-8 bg-cyan-400 px-3 text-xs font-semibold text-slate-950 hover:opacity-90 disabled:opacity-60"
+                  >
+                    {savedIndexes[i]
+                      ? "Saved"
+                      : savingIndex === i
+                        ? "Saving..."
+                        : "Save Idea"}
+                  </Button>
+                  {errorByIndex[i] ? (
+                    <p className="text-xs text-red-300">{errorByIndex[i]}</p>
+                  ) : null}
                 </div>
               ) : null}
             </CardContent>

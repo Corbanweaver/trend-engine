@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Loader2, LogOut, Search, Sparkles } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 
 import { IdeaPanel } from "@/components/idea-panel";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,11 @@ import {
 import { getApiBaseUrl } from "@/lib/api";
 import { NICHE_OPTIONS } from "@/lib/niches";
 import { getSupabaseClient } from "@/lib/supabase";
-import type { TrendIdea, TrendIdeasResponse } from "@/lib/trend-ideas-types";
+import type {
+  TrendIdea,
+  TrendIdeasResponse,
+  VideoIdea,
+} from "@/lib/trend-ideas-types";
 import { computeEngagementRaw, engagementHeat } from "@/lib/trend-metrics";
 import { cn } from "@/lib/utils";
 
@@ -337,6 +342,8 @@ export function TrendDashboard() {
   const [query, setQuery] = useState("");
   const [platformFilter, setPlatformFilter] = useState<PlatformChip>("All");
   const [signingOut, setSigningOut] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [userAvatar, setUserAvatar] = useState("");
 
   const effectiveNiche =
     nicheKey === "custom"
@@ -394,6 +401,62 @@ export function TrendDashboard() {
     }
   }, [router]);
 
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    const setUserState = (user: User | null) => {
+      setUserEmail(user?.email ?? "");
+      setUserAvatar((user?.user_metadata?.avatar_url as string | undefined) ?? "");
+    };
+
+    const loadUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUserState(user);
+    };
+
+    void loadUser();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserState(session?.user ?? null);
+    });
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const saveIdea = useCallback(
+    async ({ trend, idea }: { trend: string; idea: VideoIdea }) => {
+      const supabase = getSupabaseClient();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("You must be logged in to save ideas.");
+      }
+
+      const { error: insertError } = await supabase.from("saved_ideas").insert({
+        user_id: user.id,
+        niche: effectiveNiche,
+        trend,
+        hook: idea.hook,
+        angle: idea.angle,
+        idea: idea.idea,
+        script: idea.script ?? "",
+        hashtags: idea.hashtags ?? [],
+        optimized_title: idea.optimized_title ?? "",
+        seo_description: idea.seo_description ?? "",
+      });
+
+      if (insertError) {
+        throw new Error(insertError.message);
+      }
+    },
+    [effectiveNiche],
+  );
+
   return (
     <div className="relative flex min-h-svh flex-col overflow-hidden bg-slate-950 text-slate-100">
       <div
@@ -427,6 +490,27 @@ export function TrendDashboard() {
           </div>
           <div className="ml-auto rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
             API: {getApiBaseUrl()}
+          </div>
+          <Link
+            href="/saved"
+            className="rounded-md border border-white/15 bg-slate-900/70 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
+          >
+            Saved Ideas
+          </Link>
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-200">
+            {userAvatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={userAvatar}
+                alt="User avatar"
+                className="size-6 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex size-6 items-center justify-center rounded-full bg-cyan-400/20 text-[10px] font-semibold text-cyan-200">
+                {userEmail ? userEmail.slice(0, 1).toUpperCase() : "U"}
+              </div>
+            )}
+            <span className="max-w-[180px] truncate">{userEmail || "Logged in user"}</span>
           </div>
           <Button
             type="button"
@@ -592,7 +676,7 @@ export function TrendDashboard() {
           )}
         >
           <ScrollArea className="h-[calc(100vh-57px)]">
-            <IdeaPanel trend={selectedTrend} />
+            <IdeaPanel trend={selectedTrend} onSaveIdea={saveIdea} />
           </ScrollArea>
         </aside>
       </div>
@@ -607,7 +691,7 @@ export function TrendDashboard() {
           <SheetHeader className="border-b border-white/10 px-4 py-3 text-left">
             <SheetTitle className="text-base">Video ideas</SheetTitle>
           </SheetHeader>
-          <IdeaPanel trend={selectedTrend} />
+          <IdeaPanel trend={selectedTrend} onSaveIdea={saveIdea} />
         </SheetContent>
       </Sheet>
     </div>

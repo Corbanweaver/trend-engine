@@ -1,9 +1,12 @@
 import os
 import json
+import asyncio
 from fastapi import APIRouter, HTTPException
 from openai import OpenAI
 
 from app.models import IdeasRequest, IdeasResponse, VideoIdea
+from app.pinterest_client import pinterest_search
+from app.google_trends_client import google_trends_search
 
 router = APIRouter(prefix="/ideas", tags=["ideas"])
 
@@ -62,23 +65,48 @@ def parse_ideas(raw: str) -> list[VideoIdea]:
 
 
 @router.post("/", response_model=IdeasResponse)
-def generate_ideas(body: IdeasRequest):
+async def generate_ideas(body: IdeasRequest):
     if not body.text.strip():
         raise HTTPException(status_code=422, detail="text must not be empty.")
 
     client = get_openai_client()
     niche = body.niche or "fitness"
+    topic = body.text.strip()
 
-    response = client.chat.completions.create(
-        model="gpt-5.2",
-        max_completion_tokens=4096,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": f"Niche: {niche}\nTopic: {body.text}",
-            },
-        ],
+    trends_task = google_trends_search(f"{niche} {topic}")
+    pinterest_task = pinterest_search(f"{niche} {topic}", max_results=5)
+    trends_data, pinterest_data = await asyncio.gather(trends_task, pinterest_task)
+
+    context_parts = [f"Niche: {niche}", f"Topic: {topic}"]
+    trending_searches = (trends_data or {}).get("trending_searches", [])
+    related_queries = (trends_data or {}).get("related_queries", [])
+    if trending_searches:
+        context_parts.append(
+            "Google Trends (US trending): " + ", ".join(str(s) for s in trending_searches[:10])
+        )
+    if related_queries:
+        context_parts.append(
+            "Google Trends (related queries): "
+            + ", ".join(str(q.get("query", "")) for q in related_queries[:10] if q.get("query"))
+        )
+    if pinterest_data:
+        context_parts.append(
+            "Pinterest pin topics: "
+            + ", ".join(str(pin.get("title", "")) for pin in pinterest_data[:5] if pin.get("title"))
+        )
+    user_prompt = "\n".join(context_parts)
+
+    loop = asyncio.get_event_loop()
+    response = await loop.run_in_executor(
+        None,
+        lambda: client.chat.completions.create(
+            model="gpt-5.2",
+            max_completion_tokens=4096,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+        ),
     )
 
     raw = response.choices[0].message.content or ""
