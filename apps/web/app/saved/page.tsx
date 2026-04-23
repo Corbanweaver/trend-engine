@@ -139,9 +139,9 @@ export default function SavedIdeasPage() {
                 </button>
               </div>
               {item.idea_content ? (
-                <pre className="mt-3 whitespace-pre-wrap rounded-md border border-white/10 bg-slate-950 p-3 text-xs text-slate-200">
+                <div className="mt-3 whitespace-pre-wrap rounded-md border border-white/10 bg-slate-950 p-3 font-sans text-sm leading-relaxed text-slate-200">
                   {item.idea_content}
-                </pre>
+                </div>
               ) : null}
             </article>
           ))}

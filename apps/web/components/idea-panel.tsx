@@ -47,9 +47,9 @@ function renderMarkdownLikeContent(text: string): React.ReactNode {
   const flushList = () => {
     if (!listBuffer.length) return;
     blocks.push(
-      <ul key={`list-${key++}`} className="list-disc space-y-1 pl-5">
+      <ul key={`list-${key++}`} className="list-disc space-y-1 pl-5 font-sans">
         {listBuffer.map((item, idx) => (
-          <li key={`item-${idx}`} className="text-xs leading-relaxed text-slate-200">
+          <li key={`item-${idx}`} className="font-sans text-xs leading-relaxed text-slate-200">
             {renderInlineMarkdown(item)}
           </li>
         ))}
@@ -74,14 +74,14 @@ function renderMarkdownLikeContent(text: string): React.ReactNode {
     }
 
     blocks.push(
-      <p key={`p-${key++}`} className="text-xs leading-relaxed text-slate-200">
+      <p key={`p-${key++}`} className="font-sans text-xs leading-relaxed text-slate-200">
         {renderInlineMarkdown(line)}
       </p>,
     );
   }
 
   flushList();
-  return <div className="space-y-1">{blocks}</div>;
+  return <div className="space-y-1 font-sans">{blocks}</div>;
 }
 
 export function IdeaPanel({
@@ -180,7 +180,7 @@ export function IdeaPanel({
                 </p>
               ) : null}
               {idea.script ? (
-                <div className="rounded-md border border-white/10 bg-slate-800/50 p-3">
+                <div className="rounded-md border border-white/10 bg-slate-800/50 p-3 font-sans">
                   <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
                     Script
                   </p>
