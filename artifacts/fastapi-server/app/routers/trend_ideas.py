@@ -108,7 +108,9 @@ def _extract_replicate_output_url(output) -> str:
 
 async def generate_idea_thumbnail(niche: str, topic: str, idea: VideoIdea) -> str:
     token = os.environ.get("REPLICATE_API_TOKEN", "").strip()
+    logger.info("Replicate token found: %s", "yes" if bool(token) else "no")
     if not token:
+        logger.warning("Skipping Replicate thumbnail generation because REPLICATE_API_TOKEN is missing.")
         return ""
 
     title = (idea.optimized_title or "").strip() or (idea.hook or "").strip() or "viral short-form video"
@@ -136,27 +138,57 @@ async def generate_idea_thumbnail(niche: str, topic: str, idea: VideoIdea) -> st
     try:
         async with httpx.AsyncClient(timeout=45.0) as client:
             create_resp = await client.post(create_url, headers=headers, json=payload)
-            create_resp.raise_for_status()
+            if create_resp.status_code >= 400:
+                logger.error(
+                    "Replicate create prediction failed (%s): %s",
+                    create_resp.status_code,
+                    create_resp.text,
+                )
+                return ""
             prediction = create_resp.json()
+            logger.info(
+                "Replicate prediction created for topic '%s' with status '%s' and id '%s'",
+                topic,
+                prediction.get("status"),
+                prediction.get("id"),
+            )
 
             status = prediction.get("status")
             output = prediction.get("output")
             get_url = (prediction.get("urls") or {}).get("get")
+            if not get_url and status not in {"succeeded", "failed", "canceled"}:
+                logger.error("Replicate prediction missing polling URL: %s", prediction)
+                return ""
 
             poll_tries = 0
             while status not in {"succeeded", "failed", "canceled"} and get_url and poll_tries < 10:
                 await asyncio.sleep(1.5)
                 poll_resp = await client.get(get_url, headers={"Authorization": f"Token {token}"})
-                poll_resp.raise_for_status()
+                if poll_resp.status_code >= 400:
+                    logger.error(
+                        "Replicate polling failed (%s): %s",
+                        poll_resp.status_code,
+                        poll_resp.text,
+                    )
+                    return ""
                 prediction = poll_resp.json()
                 status = prediction.get("status")
                 output = prediction.get("output")
                 poll_tries += 1
+                logger.info(
+                    "Replicate poll #%s for prediction '%s' status='%s'",
+                    poll_tries,
+                    prediction.get("id"),
+                    status,
+                )
 
             if status == "succeeded":
-                return _extract_replicate_output_url(output)
+                url = _extract_replicate_output_url(output)
+                logger.info("Replicate thumbnail generated successfully for topic '%s': %s", topic, bool(url))
+                return url
+            logger.error("Replicate prediction did not succeed. Final status='%s', body=%s", status, prediction)
     except Exception as e:
-        logger.warning("Replicate thumbnail generation failed: %s", e)
+        logger.exception("Replicate thumbnail generation failed with exception: %s", e)
 
     return ""
 
@@ -290,6 +322,13 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
                 ideas[idx].thumbnail_url = result
             elif isinstance(result, Exception):
                 logger.warning("Thumbnail generation error for topic '%s': %s", topic, result)
+        generated_count = sum(1 for idea in ideas if (idea.thumbnail_url or "").strip())
+        logger.info(
+            "Replicate thumbnails generated for topic '%s': %s/%s",
+            topic,
+            generated_count,
+            len(ideas),
+        )
 
         return TrendIdea(
             trend=topic,
