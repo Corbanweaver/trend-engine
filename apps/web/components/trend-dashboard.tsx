@@ -428,7 +428,11 @@ export function TrendDashboard() {
               )}
             >
               {NICHE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
+                <option
+                  key={o.value}
+                  value={o.value}
+                  disabled={o.value.startsWith("__group_")}
+                >
                   {o.label}
                 </option>
               ))}

@@ -1,108 +1,101 @@
 import os
 import httpx
 
-GRAPH_API_BASE = "https://graph.facebook.com/v21.0"
+APIFY_API_BASE = "https://api.apify.com/v2"
+INSTAGRAM_ACTOR_ID = "apify/instagram-scraper"
 
 
-async def _get_instagram_user_id(token: str) -> str:
-    stored_id = os.environ.get("INSTAGRAM_BUSINESS_ACCOUNT_ID", "")
+async def _run_apify_instagram_actor(query: str, max_results: int) -> list[dict]:
+    token = os.environ.get("APIFY_API_TOKEN", "").strip()
+    if not token:
+        return []
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        if stored_id and stored_id != "unknown":
-            resp = await client.get(
-                f"{GRAPH_API_BASE}/{stored_id}",
-                params={"access_token": token, "fields": "id,username"},
-            )
-            if resp.status_code == 200:
-                return stored_id
+    # Keep payload schema-flexible across actor versions.
+    actor_input = {
+        "search": query,
+        "query": query,
+        "searchType": "hashtag",
+        "resultsLimit": max_results,
+        "maxItems": max_results,
+        "addParentData": False,
+    }
+    url = f"{APIFY_API_BASE}/acts/{INSTAGRAM_ACTOR_ID}/run-sync-get-dataset-items"
+    params = {"token": token, "limit": max_results}
 
-        resp = await client.get(
-            f"{GRAPH_API_BASE}/me/accounts",
-            params={
-                "access_token": token,
-                "fields": "id,name,instagram_business_account",
-            },
-        )
-        resp.raise_for_status()
-        pages = resp.json().get("data", [])
+    try:
+        async with httpx.AsyncClient(timeout=45.0) as client:
+            resp = await client.post(url, params=params, json=actor_input)
+            resp.raise_for_status()
+            data = resp.json()
+            return data if isinstance(data, list) else []
+    except Exception:
+        return []
 
-        for page in pages:
-            ig = page.get("instagram_business_account")
-            if ig:
-                return ig["id"]
 
-    raise RuntimeError(
-        "No Instagram Business account found. Make sure your Instagram is a Business/Creator account linked to a Facebook Page."
+def _to_int(value: object) -> int:
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _map_apify_instagram_item(item: dict) -> dict:
+    media_type_raw = str(item.get("type") or item.get("mediaType") or "").upper()
+    if media_type_raw in ("VIDEO", "REEL", "REELS"):
+        media_type = "VIDEO"
+    elif media_type_raw in ("CAROUSEL", "SIDECAR", "CAROUSEL_ALBUM"):
+        media_type = "CAROUSEL_ALBUM"
+    else:
+        media_type = "IMAGE"
+
+    caption = str(item.get("caption") or item.get("text") or "")
+    if len(caption) > 200:
+        caption = caption[:200] + "..."
+
+    media_url = (
+        item.get("displayUrl")
+        or item.get("imageUrl")
+        or item.get("videoUrl")
+        or item.get("url")
+        or ""
     )
+    permalink = item.get("url") or item.get("postUrl") or ""
+    thumbnail_url = item.get("displayUrl") or item.get("thumbnailUrl") or ""
+
+    return {
+        "id": str(item.get("id") or item.get("shortCode") or ""),
+        "caption": caption,
+        "media_type": media_type,
+        "media_url": str(media_url),
+        "permalink": str(permalink),
+        "thumbnail_url": str(thumbnail_url),
+        "timestamp": str(item.get("timestamp") or item.get("takenAtTimestamp") or ""),
+        "like_count": _to_int(item.get("likesCount") or item.get("likes")),
+        "comments_count": _to_int(item.get("commentsCount") or item.get("comments")),
+    }
 
 
-async def instagram_hashtag_search(hashtag: str, ig_user_id: str, token: str, max_results: int = 5) -> list[dict]:
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        resp = await client.get(
-            f"{GRAPH_API_BASE}/ig_hashtag_search",
-            params={
-                "q": hashtag.strip("#").lower(),
-                "user_id": ig_user_id,
-                "access_token": token,
-            },
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        hashtag_ids = data.get("data", [])
-
-        if not hashtag_ids:
-            return []
-
-        hashtag_id = hashtag_ids[0]["id"]
-
-        resp2 = await client.get(
-            f"{GRAPH_API_BASE}/{hashtag_id}/top_media",
-            params={
-                "user_id": ig_user_id,
-                "fields": "id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,like_count,comments_count",
-                "access_token": token,
-            },
-        )
-        resp2.raise_for_status()
-        media_items = resp2.json().get("data", [])
-
+async def instagram_hashtag_search(hashtag: str, max_results: int = 5) -> list[dict]:
+    media_items = await _run_apify_instagram_actor(hashtag.strip("#").lower(), max_results)
     results = []
     for item in media_items[:max_results]:
-        media_type = item.get("media_type", "")
-        if media_type not in ("VIDEO", "CAROUSEL_ALBUM", "IMAGE"):
+        if not isinstance(item, dict):
             continue
-
-        caption = item.get("caption", "")
-        if len(caption) > 200:
-            caption = caption[:200] + "..."
-
-        results.append({
-            "id": item.get("id", ""),
-            "caption": caption,
-            "media_type": media_type,
-            "media_url": item.get("media_url", ""),
-            "permalink": item.get("permalink", ""),
-            "thumbnail_url": item.get("thumbnail_url", ""),
-            "timestamp": item.get("timestamp", ""),
-            "like_count": item.get("like_count", 0),
-            "comments_count": item.get("comments_count", 0),
-        })
+        mapped = _map_apify_instagram_item(item)
+        if not mapped["id"] and not mapped["permalink"]:
+            continue
+        results.append(mapped)
 
     return results
 
 
 async def search_instagram(query: str, max_results: int = 5) -> list[dict]:
-    token = os.environ.get("INSTAGRAM_ACCESS_TOKEN", "")
+    token = os.environ.get("APIFY_API_TOKEN", "").strip()
     if not token:
-        return []
-
-    try:
-        ig_user_id = await _get_instagram_user_id(token)
-    except RuntimeError:
         return []
 
     hashtag = query.replace(" ", "").lower()
     try:
-        return await instagram_hashtag_search(hashtag, ig_user_id, token, max_results)
+        return await instagram_hashtag_search(hashtag, max_results)
     except Exception:
         return []
