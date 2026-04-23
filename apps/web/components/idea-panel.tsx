@@ -13,6 +13,77 @@ import { useEffect, useState } from "react";
 
 import type { TrendIdea, VideoIdea } from "@/lib/trend-ideas-types";
 
+function renderInlineMarkdown(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  const regex = /\*\*(.+?)\*\*/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null = regex.exec(text);
+  let key = 0;
+
+  while (match) {
+    const start = match.index;
+    const end = regex.lastIndex;
+    if (start > lastIndex) {
+      nodes.push(<span key={`text-${key++}`}>{text.slice(lastIndex, start)}</span>);
+    }
+    nodes.push(<strong key={`bold-${key++}`}>{match[1]}</strong>);
+    lastIndex = end;
+    match = regex.exec(text);
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(<span key={`text-${key++}`}>{text.slice(lastIndex)}</span>);
+  }
+
+  return nodes.length ? nodes : [text];
+}
+
+function renderMarkdownLikeContent(text: string): React.ReactNode {
+  const lines = text.split(/\r?\n/);
+  const blocks: React.ReactNode[] = [];
+  let listBuffer: string[] = [];
+  let key = 0;
+
+  const flushList = () => {
+    if (!listBuffer.length) return;
+    blocks.push(
+      <ul key={`list-${key++}`} className="list-disc space-y-1 pl-5">
+        {listBuffer.map((item, idx) => (
+          <li key={`item-${idx}`} className="text-xs leading-relaxed text-slate-200">
+            {renderInlineMarkdown(item)}
+          </li>
+        ))}
+      </ul>,
+    );
+    listBuffer = [];
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    const bulletMatch = line.match(/^[-*]\s+(.*)$/);
+
+    if (bulletMatch) {
+      listBuffer.push(bulletMatch[1]);
+      continue;
+    }
+
+    flushList();
+    if (!line) {
+      blocks.push(<div key={`spacer-${key++}`} className="h-2" />);
+      continue;
+    }
+
+    blocks.push(
+      <p key={`p-${key++}`} className="text-xs leading-relaxed text-slate-200">
+        {renderInlineMarkdown(line)}
+      </p>,
+    );
+  }
+
+  flushList();
+  return <div className="space-y-1">{blocks}</div>;
+}
+
 export function IdeaPanel({
   trend,
   onSaveIdea,
@@ -113,9 +184,7 @@ export function IdeaPanel({
                   <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
                     Script
                   </p>
-                  <p className="whitespace-pre-wrap text-xs leading-relaxed text-slate-200">
-                    {idea.script}
-                  </p>
+                  {renderMarkdownLikeContent(idea.script)}
                 </div>
               ) : null}
               {idea.hashtags && idea.hashtags.length > 0 ? (
