@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Loader2, Search, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronRight, Loader2, LogOut, Search, Sparkles } from "lucide-react";
 
 import { IdeaPanel } from "@/components/idea-panel";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/sheet";
 import { getApiBaseUrl } from "@/lib/api";
 import { NICHE_OPTIONS } from "@/lib/niches";
+import { getSupabaseClient } from "@/lib/supabase";
 import type { TrendIdea, TrendIdeasResponse } from "@/lib/trend-ideas-types";
 import { computeEngagementRaw, engagementHeat } from "@/lib/trend-metrics";
 import { cn } from "@/lib/utils";
@@ -324,6 +326,7 @@ function FilterChip({
 }
 
 export function TrendDashboard() {
+  const router = useRouter();
   const isMobile = useIsMobile();
   const [nicheKey, setNicheKey] = useState("fitness");
   const [customNiche, setCustomNiche] = useState("");
@@ -333,6 +336,7 @@ export function TrendDashboard() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [query, setQuery] = useState("");
   const [platformFilter, setPlatformFilter] = useState<PlatformChip>("All");
+  const [signingOut, setSigningOut] = useState(false);
 
   const effectiveNiche =
     nicheKey === "custom"
@@ -378,6 +382,18 @@ export function TrendDashboard() {
     }
   }, [effectiveNiche]);
 
+  const signOut = useCallback(async () => {
+    setSigningOut(true);
+    try {
+      const supabase = getSupabaseClient();
+      await supabase.auth.signOut();
+      router.replace("/login");
+      router.refresh();
+    } finally {
+      setSigningOut(false);
+    }
+  }, [router]);
+
   return (
     <div className="relative flex min-h-svh flex-col overflow-hidden bg-slate-950 text-slate-100">
       <div
@@ -412,6 +428,25 @@ export function TrendDashboard() {
           <div className="ml-auto rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
             API: {getApiBaseUrl()}
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={signingOut}
+            onClick={signOut}
+            className="h-9 border-white/20 bg-slate-900/70 text-slate-100 hover:bg-slate-800"
+          >
+            {signingOut ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Signing out...
+              </>
+            ) : (
+              <>
+                <LogOut className="size-4" />
+                Logout
+              </>
+            )}
+          </Button>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-slate-400">Niche</span>
             <label className="sr-only" htmlFor="niche-select">
