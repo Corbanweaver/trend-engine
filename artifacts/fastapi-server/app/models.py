@@ -31,6 +31,7 @@ class VideoIdea(BaseModel):
     hashtags: list[str] = []
     optimized_title: str = ""
     seo_description: str = ""
+    thumbnail_url: str = ""
 
 
 class IdeasResponse(BaseModel):

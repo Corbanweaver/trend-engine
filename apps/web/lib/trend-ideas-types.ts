@@ -8,6 +8,7 @@ export interface VideoIdea {
   hashtags?: string[];
   optimized_title?: string;
   seo_description?: string;
+  thumbnail_url?: string;
 }
 
 export interface TrendIdea {

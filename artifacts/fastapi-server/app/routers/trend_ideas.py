@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 import logging
+import httpx
 
 logger = logging.getLogger(__name__)
 _ai_semaphore = asyncio.Semaphore(3)
@@ -22,6 +23,7 @@ from app.pinterest_client import pinterest_search
 from app.medium_client import medium_search
 
 router = APIRouter(prefix="/trend-ideas", tags=["trend-ideas"])
+REPLICATE_MODEL = "black-forest-labs/flux-schnell"
 
 SYSTEM_PROMPT = """You are a world-class short-form content creator and strategist known for making ideas feel human, bold, and impossible to scroll past.
 
@@ -86,12 +88,77 @@ def parse_ideas_json(raw: str) -> list[VideoIdea]:
                     hashtags=item.get("hashtags", []),
                     optimized_title=item.get("optimized_title", ""),
                     seo_description=item.get("seo_description", ""),
+                    thumbnail_url=item.get("thumbnail_url", ""),
                 )
                 for item in data[:3]
             ]
     except json.JSONDecodeError:
         pass
     return [VideoIdea(hook=cleaned[:100], angle="", idea=cleaned, script="")]
+
+
+def _extract_replicate_output_url(output) -> str:
+    if isinstance(output, str):
+        return output
+    if isinstance(output, list) and output:
+        first = output[0]
+        return str(first) if first else ""
+    return ""
+
+
+async def generate_idea_thumbnail(niche: str, topic: str, idea: VideoIdea) -> str:
+    token = os.environ.get("REPLICATE_API_TOKEN", "").strip()
+    if not token:
+        return ""
+
+    title = (idea.optimized_title or "").strip() or (idea.hook or "").strip() or "viral short-form video"
+    concept = (idea.idea or "").strip()
+    prompt = (
+        f"Cinematic social media thumbnail for a short-form video. "
+        f"Niche: {niche}. Topic: {topic}. Title: {title}. Concept: {concept}. "
+        "Bold composition, high contrast lighting, modern creator aesthetic, vibrant colors, clean background, no text, no watermark."
+    )
+    payload = {
+        "input": {
+            "prompt": prompt,
+            "aspect_ratio": "16:9",
+            "output_format": "jpg",
+            "output_quality": 85,
+        }
+    }
+    headers = {
+        "Authorization": f"Token {token}",
+        "Content-Type": "application/json",
+        "Prefer": "wait=20",
+    }
+    create_url = f"https://api.replicate.com/v1/models/{REPLICATE_MODEL}/predictions"
+
+    try:
+        async with httpx.AsyncClient(timeout=45.0) as client:
+            create_resp = await client.post(create_url, headers=headers, json=payload)
+            create_resp.raise_for_status()
+            prediction = create_resp.json()
+
+            status = prediction.get("status")
+            output = prediction.get("output")
+            get_url = (prediction.get("urls") or {}).get("get")
+
+            poll_tries = 0
+            while status not in {"succeeded", "failed", "canceled"} and get_url and poll_tries < 10:
+                await asyncio.sleep(1.5)
+                poll_resp = await client.get(get_url, headers={"Authorization": f"Token {token}"})
+                poll_resp.raise_for_status()
+                prediction = poll_resp.json()
+                status = prediction.get("status")
+                output = prediction.get("output")
+                poll_tries += 1
+
+            if status == "succeeded":
+                return _extract_replicate_output_url(output)
+    except Exception as e:
+        logger.warning("Replicate thumbnail generation failed: %s", e)
+
+    return ""
 
 
 def parse_topics_json(raw: str) -> list[str]:
@@ -216,6 +283,13 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
             )
         raw = response.choices[0].message.content or ""
         ideas = parse_ideas_json(raw)
+        thumbnail_coros = [generate_idea_thumbnail(niche, topic, idea) for idea in ideas]
+        thumbnail_results = await asyncio.gather(*thumbnail_coros, return_exceptions=True)
+        for idx, result in enumerate(thumbnail_results):
+            if isinstance(result, str):
+                ideas[idx].thumbnail_url = result
+            elif isinstance(result, Exception):
+                logger.warning("Thumbnail generation error for topic '%s': %s", topic, result)
 
         return TrendIdea(
             trend=topic,
@@ -235,7 +309,7 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
         logger.error("Failed to process topic '%s': %s", topic, e)
         return TrendIdea(
             trend=topic,
-            ideas=[VideoIdea(hook="Analysis unavailable", angle="", idea=f"Could not generate ideas: {e}", script="")],
+            ideas=[VideoIdea(hook="Analysis unavailable", angle="", idea=f"Could not generate ideas: {e}", script="", thumbnail_url="")],
             example_videos=[],
             instagram_posts=[],
             tiktok_videos=[],
