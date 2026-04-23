@@ -33,6 +33,8 @@ import type {
 import { computeEngagementRaw, engagementHeat } from "@/lib/trend-metrics";
 import { cn } from "@/lib/utils";
 
+const TREND_RESULTS_STORAGE_KEY = "trend_dashboard:last_results";
+
 function useIsMobile(breakpoint = 1023) {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -345,6 +347,19 @@ export function TrendDashboard() {
   const [userEmail, setUserEmail] = useState("");
   const [userAvatar, setUserAvatar] = useState("");
 
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(TREND_RESULTS_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as TrendIdeasResponse;
+      if (parsed?.trend_ideas && Array.isArray(parsed.trend_ideas)) {
+        setData(parsed);
+      }
+    } catch {
+      /* ignore malformed cache */
+    }
+  }, []);
+
   const effectiveNiche =
     nicheKey === "custom"
       ? (customNiche.trim() || "fitness")
@@ -382,12 +397,23 @@ export function TrendDashboard() {
       const res = await fetchTrendIdeas(effectiveNiche);
       setData(res);
     } catch (e) {
-      setData(null);
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   }, [effectiveNiche]);
+
+  useEffect(() => {
+    try {
+      if (data) {
+        window.localStorage.setItem(TREND_RESULTS_STORAGE_KEY, JSON.stringify(data));
+      } else {
+        window.localStorage.removeItem(TREND_RESULTS_STORAGE_KEY);
+      }
+    } catch {
+      /* ignore storage errors */
+    }
+  }, [data]);
 
   const signOut = useCallback(async () => {
     setSigningOut(true);
@@ -439,15 +465,9 @@ export function TrendDashboard() {
 
       const { error: insertError } = await supabase.from("saved_ideas").insert({
         user_id: user.id,
+        idea_title: idea.optimized_title?.trim() || idea.hook || trend || "Saved idea",
+        idea_content: idea.script?.trim() || idea.idea,
         niche: effectiveNiche,
-        trend,
-        hook: idea.hook,
-        angle: idea.angle,
-        idea: idea.idea,
-        script: idea.script ?? "",
-        hashtags: idea.hashtags ?? [],
-        optimized_title: idea.optimized_title ?? "",
-        seo_description: idea.seo_description ?? "",
       });
 
       if (insertError) {
@@ -584,6 +604,11 @@ export function TrendDashboard() {
                 "Analyze trends"
               )}
             </Button>
+            {loading ? (
+              <p className="w-full text-xs text-slate-400 sm:w-auto">
+                This may take a moment while we scan live trends across platforms.
+              </p>
+            ) : null}
           </div>
         </div>
         <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-3 px-4 pb-4">

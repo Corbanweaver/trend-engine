@@ -10,15 +10,9 @@ import { getSupabaseClient } from "@/lib/supabase";
 type SavedIdea = {
   id: string;
   created_at: string;
+  idea_title: string;
+  idea_content: string;
   niche: string;
-  trend: string;
-  hook: string;
-  angle: string;
-  idea: string;
-  script: string;
-  hashtags: string[] | null;
-  optimized_title: string | null;
-  seo_description: string | null;
 };
 
 export default function SavedIdeasPage() {
@@ -45,9 +39,7 @@ export default function SavedIdeasPage() {
 
         const { data, error: fetchError } = await supabase
           .from("saved_ideas")
-          .select(
-            "id, created_at, niche, trend, hook, angle, idea, script, hashtags, optimized_title, seo_description",
-          )
+          .select("id, created_at, idea_title, idea_content, niche")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
@@ -133,12 +125,9 @@ export default function SavedIdeasPage() {
             >
               <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-slate-400">
                 <span className="rounded bg-white/5 px-2 py-1">{item.niche}</span>
-                <span className="rounded bg-white/5 px-2 py-1">{item.trend}</span>
                 <span>{new Date(item.created_at).toLocaleString()}</span>
               </div>
-              <h2 className="text-base font-semibold text-slate-100">
-                {item.optimized_title?.trim() || item.hook || "Saved idea"}
-              </h2>
+              <h2 className="text-base font-semibold text-slate-100">{item.idea_title || "Saved idea"}</h2>
               <div className="mt-2">
                 <button
                   type="button"
@@ -149,12 +138,9 @@ export default function SavedIdeasPage() {
                   {deletingId === item.id ? "Removing..." : "Remove"}
                 </button>
               </div>
-              {item.hook ? <p className="mt-1 text-sm text-slate-300">Hook: {item.hook}</p> : null}
-              {item.angle ? <p className="mt-1 text-sm text-slate-400">Angle: {item.angle}</p> : null}
-              <p className="mt-2 text-sm text-slate-300">{item.idea}</p>
-              {item.script ? (
+              {item.idea_content ? (
                 <pre className="mt-3 whitespace-pre-wrap rounded-md border border-white/10 bg-slate-950 p-3 text-xs text-slate-200">
-                  {item.script}
+                  {item.idea_content}
                 </pre>
               ) : null}
             </article>

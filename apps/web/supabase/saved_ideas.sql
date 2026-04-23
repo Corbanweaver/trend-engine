@@ -1,15 +1,9 @@
 create table if not exists public.saved_ideas (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
+  idea_title text not null default '',
+  idea_content text not null default '',
   niche text not null default '',
-  trend text not null default '',
-  hook text not null default '',
-  angle text not null default '',
-  idea text not null default '',
-  script text not null default '',
-  hashtags jsonb not null default '[]'::jsonb,
-  optimized_title text not null default '',
-  seo_description text not null default '',
   created_at timestamptz not null default now()
 );
 
