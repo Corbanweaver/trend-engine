@@ -1,4 +1,6 @@
 import os
+from urllib.parse import quote
+
 import httpx
 
 
@@ -7,9 +9,14 @@ async def search_instagram(query: str, max_results: int = 5) -> list[dict]:
     if not token:
         return []
     try:
+        tag = query.strip().lstrip("#").lower()
+        if not tag:
+            return []
+        tag_in_url = quote(tag, safe="")
         actor_input = {
-            "searchType": "hashtag",
-            "search": query.strip().lower(),
+            "directUrls": [
+                f"https://www.instagram.com/explore/tags/{tag_in_url}/",
+            ],
             "resultsType": "posts",
             "resultsLimit": max_results,
             "addParentData": False,
