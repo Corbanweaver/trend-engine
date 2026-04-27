@@ -218,10 +218,11 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
     print(f"INSTAGRAM RESULTS: {len(instagram_results)} items")
     youtube_tagged = [{**item, "platform": "youtube"} for item in youtube if isinstance(item, dict)]
     instagram_tagged = [{**item, "platform": "instagram"} for item in instagram_results if isinstance(item, dict)]
+    tiktok_tagged = [{**item, "platform": "tiktok"} for item in tiktok if isinstance(item, dict)]
     return {
         "youtube": youtube_tagged,
         "instagram": instagram_tagged,
-        "tiktok": tiktok,
+        "tiktok": tiktok_tagged,
         "google_news": news,
         "hackernews": hn,
         "web_search": web,
@@ -347,7 +348,11 @@ async def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest()):
     for r, src_key in [(raw_sources.get("reddit_multi", []), "reddit_posts"), (raw_sources.get("google_trends", {}), "google_trends_data")]:
         for res in results:
             if src_key == "reddit_posts" and not res.reddit_posts:
-                res.reddit_posts = (r if isinstance(r, list) else [])[:6]
+                raw_reddit = (r if isinstance(r, list) else [])[:6]
+                res.reddit_posts = [
+                    ({**post, "platform": "reddit"} if isinstance(post, dict) else post)
+                    for post in raw_reddit
+                ]
             elif src_key == "google_trends_data" and not res.google_trends_data:
                 res.google_trends_data = r if isinstance(r, dict) else {}
 

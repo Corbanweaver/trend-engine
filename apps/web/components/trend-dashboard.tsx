@@ -103,22 +103,41 @@ const platformGlyph: Record<string, string> = {
   Twitter: "X",
 };
 
+function hasPlatform(trend: TrendIdea, platform: Exclude<PlatformChip, "All">): boolean {
+  if (platform === "TikTok") {
+    return (
+      trend.tiktok_videos.length > 0 ||
+      trend.tiktok_videos.some((v) => (v as { platform?: string }).platform === "tiktok")
+    );
+  }
+  if (platform === "YouTube") {
+    return (
+      trend.example_videos.length > 0 ||
+      trend.example_videos.some((v) => (v as { platform?: string }).platform === "youtube")
+    );
+  }
+  if (platform === "Reddit") {
+    return (
+      trend.reddit_posts.length > 0 ||
+      trend.reddit_posts.some((p) => (p as { platform?: string }).platform === "reddit")
+    );
+  }
+  if (platform === "Instagram") {
+    return (
+      trend.instagram_posts.length > 0 ||
+      trend.instagram_posts.some((p) => (p as { platform?: string }).platform === "instagram")
+    );
+  }
+  return trend.web_results.length > 0 || trend.hackernews_stories.length > 0;
+}
+
 function getPlatformBadges(trend: TrendIdea): string[] {
   const badges: string[] = [];
-  const hasTaggedInstagram = trend.instagram_posts.some(
-    (p) => (p as { platform?: string }).platform === "instagram",
-  );
-  const hasTaggedYoutube = trend.example_videos.some(
-    (v) => (v as { platform?: string }).platform === "youtube",
-  );
-  if (trend.tiktok_videos.length > 0) badges.push("TikTok");
-  if (trend.example_videos.length > 0 || hasTaggedYoutube) badges.push("YouTube");
-  if (trend.reddit_posts.length > 0) badges.push("Reddit");
-  if (trend.instagram_posts.length > 0 || hasTaggedInstagram) badges.push("Instagram");
-  if (trend.web_results.length > 0 || trend.hackernews_stories.length > 0) {
-    badges.push("Twitter");
-  }
-  if (badges.length === 0) badges.push("Reddit");
+  if (hasPlatform(trend, "TikTok")) badges.push("TikTok");
+  if (hasPlatform(trend, "YouTube")) badges.push("YouTube");
+  if (hasPlatform(trend, "Reddit")) badges.push("Reddit");
+  if (hasPlatform(trend, "Instagram")) badges.push("Instagram");
+  if (hasPlatform(trend, "Twitter")) badges.push("Twitter");
   return [...new Set(badges)].slice(0, 5);
 }
 
@@ -379,9 +398,8 @@ export function TrendDashboard() {
   const sheetOpen = isMobile && selectedIndex !== null;
 
   const filteredTrends = (data?.trend_ideas ?? []).filter((trend) => {
-    const labels = getPlatformBadges(trend);
     const matchesPlatform =
-      platformFilter === "All" || labels.includes(platformFilter);
+      platformFilter === "All" || hasPlatform(trend, platformFilter);
     const q = query.trim().toLowerCase();
     const matchesQuery =
       q.length === 0 ||
