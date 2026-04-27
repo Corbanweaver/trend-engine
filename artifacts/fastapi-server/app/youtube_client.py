@@ -1,12 +1,16 @@
 import os
 import httpx
+import logging
 
 YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
+logger = logging.getLogger(__name__)
 
 
 async def youtube_search(query: str, max_results: int = 5) -> list[dict]:
     api_key = YOUTUBE_API_KEY or os.environ.get("YOUTUBE_API_KEY", "")
+    logger.info("YouTube API key found: %s", "yes" if bool(api_key) else "no")
     if not api_key:
+        logger.warning("YouTube search skipped: YOUTUBE_API_KEY missing.")
         return []
 
     async with httpx.AsyncClient(timeout=10.0) as client:
@@ -27,9 +31,13 @@ async def youtube_search(query: str, max_results: int = 5) -> list[dict]:
             error_data = resp.json()
             errors = error_data.get("error", {}).get("errors", [])
             if any(e.get("reason") == "quotaExceeded" for e in errors):
+                logger.warning("YouTube API quota exceeded for query '%s'.", query)
                 return _quota_exceeded_placeholder(query)
+            logger.error("YouTube API 403 for query '%s': %s", query, resp.text)
             resp.raise_for_status()
 
+        if resp.status_code >= 400:
+            logger.error("YouTube API call failed (%s) for query '%s': %s", resp.status_code, query, resp.text)
         resp.raise_for_status()
         data = resp.json()
 
@@ -47,6 +55,7 @@ async def youtube_search(query: str, max_results: int = 5) -> list[dict]:
             "embed_url": f"https://www.youtube.com/embed/{video_id}",
         })
 
+    logger.info("YouTube results for query '%s': %s", query, len(results))
     return results
 
 

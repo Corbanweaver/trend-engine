@@ -253,6 +253,7 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
     search_query = f"{niche} {topic}"
     coros = [
         _safe_fetch(youtube_search(search_query, max_results=4), []),
+        _safe_fetch(search_instagram(search_query, max_results=4), []),
         _safe_fetch(tiktok_trending_search(search_query, max_results=3), []),
         _safe_fetch(google_news_search(search_query, max_results=4), []),
         _safe_fetch(hn_search(search_query, max_results=3), []),
@@ -260,9 +261,10 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
         _safe_fetch(pinterest_search(search_query, max_results=4), []),
         _safe_fetch(medium_search(search_query, max_results=4), []),
     ]
-    youtube, tiktok, news, hn, web, pins, articles = await asyncio.gather(*coros)
+    youtube, instagram, tiktok, news, hn, web, pins, articles = await asyncio.gather(*coros)
     return {
         "youtube": youtube,
+        "instagram": instagram,
         "tiktok": tiktok,
         "google_news": news,
         "hackernews": hn,
@@ -279,6 +281,10 @@ def build_context_prompt(niche: str, topic: str, discovery_context: list[str], t
     yt = topic_media.get("youtube", [])
     if yt:
         parts.append("Popular YouTube videos:\n" + "\n".join(f"- {v.get('title', '')}" for v in yt[:4]))
+
+    ig = topic_media.get("instagram", [])
+    if ig:
+        parts.append("Popular Instagram posts:\n" + "\n".join(f"- {p.get('caption', '')}" for p in ig[:4]))
 
     news = topic_media.get("google_news", [])
     if news:
@@ -334,7 +340,7 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
             trend=topic,
             ideas=ideas,
             example_videos=media.get("youtube", [])[:4],
-            instagram_posts=[],
+            instagram_posts=media.get("instagram", [])[:4],
             tiktok_videos=media.get("tiktok", [])[:3],
             google_news=media.get("google_news", [])[:4],
             google_trends_data={},

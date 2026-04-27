@@ -1,13 +1,17 @@
 import os
 import httpx
+import logging
 
 APIFY_API_BASE = "https://api.apify.com/v2"
 INSTAGRAM_ACTOR_ID = "apify/instagram-scraper"
+logger = logging.getLogger(__name__)
 
 
 async def _run_apify_instagram_actor(query: str, max_results: int) -> list[dict]:
     token = os.environ.get("APIFY_API_TOKEN", "").strip()
+    logger.info("Instagram Apify token found: %s", "yes" if bool(token) else "no")
     if not token:
+        logger.warning("Instagram search skipped: APIFY_API_TOKEN missing.")
         return []
 
     # Keep payload schema-flexible across actor versions.
@@ -25,10 +29,19 @@ async def _run_apify_instagram_actor(query: str, max_results: int) -> list[dict]
     try:
         async with httpx.AsyncClient(timeout=45.0) as client:
             resp = await client.post(url, params=params, json=actor_input)
+            if resp.status_code >= 400:
+                logger.error("Instagram Apify call failed (%s): %s", resp.status_code, resp.text)
+                return []
             resp.raise_for_status()
             data = resp.json()
+            logger.info(
+                "Instagram Apify call succeeded for query '%s'. Items returned: %s",
+                query,
+                len(data) if isinstance(data, list) else 0,
+            )
             return data if isinstance(data, list) else []
-    except Exception:
+    except Exception as e:
+        logger.exception("Instagram Apify call exception: %s", e)
         return []
 
 
@@ -96,6 +109,9 @@ async def search_instagram(query: str, max_results: int = 5) -> list[dict]:
 
     hashtag = query.replace(" ", "").lower()
     try:
-        return await instagram_hashtag_search(hashtag, max_results)
-    except Exception:
+        results = await instagram_hashtag_search(hashtag, max_results)
+        logger.info("Instagram mapped results for query '%s': %s", query, len(results))
+        return results
+    except Exception as e:
+        logger.exception("Instagram search failed for query '%s': %s", query, e)
         return []
