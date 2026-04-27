@@ -15,20 +15,13 @@ async def _run_apify_instagram_actor(query: str, max_results: int) -> list[dict]
         return []
 
     normalized = query.strip().strip("#").lower()
-    # Use hashtag search input format that matches the Apify actor schema.
     actor_input = {
-        "addParentData": False,
         "searchType": "hashtag",
-        "searchLimit": max_results,
-        "resultsType": "posts",
-        "resultsLimit": max_results,
         "search": normalized,
-    }
-    # Keep these aliases for compatibility with actor variants.
-    actor_input.update({
-        "maxItems": max_results,
+        "resultsLimit": 10,
+        "resultsType": "posts",
         "addParentData": False,
-    })
+    }
     url = f"{APIFY_API_BASE}/acts/{INSTAGRAM_ACTOR_ID}/run-sync-get-dataset-items?token={token}"
     params = {"limit": max_results}
     logger.info("Instagram Apify payload for '%s': %s", query, actor_input)
@@ -41,14 +34,13 @@ async def _run_apify_instagram_actor(query: str, max_results: int) -> list[dict]
                 return []
             resp.raise_for_status()
             data = resp.json()
+            print(f"Instagram Apify raw response for query '{query}': {data}")
             if isinstance(data, list) and len(data) == 0:
                 logger.warning(
                     "Instagram Apify returned 0 items for query '%s'. Full response body: %s",
                     query,
                     resp.text,
                 )
-            if isinstance(data, list) and len(data) > 0:
-                print(f"Instagram Apify raw first item for query '{query}': {data[0]}")
             logger.info(
                 "Instagram Apify call succeeded for query '%s'. Items returned: %s",
                 query,
