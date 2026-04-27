@@ -34,6 +34,12 @@ async def _run_apify_instagram_actor(query: str, max_results: int) -> list[dict]
                 return []
             resp.raise_for_status()
             data = resp.json()
+            if isinstance(data, list) and len(data) == 0:
+                logger.warning(
+                    "Instagram Apify returned 0 items for query '%s'. Full response body: %s",
+                    query,
+                    resp.text,
+                )
             logger.info(
                 "Instagram Apify call succeeded for query '%s'. Items returned: %s",
                 query,
@@ -98,6 +104,13 @@ async def instagram_hashtag_search(hashtag: str, max_results: int = 5) -> list[d
         if not mapped["id"] and not mapped["permalink"]:
             continue
         results.append(mapped)
+
+    if media_items and not results:
+        logger.warning(
+            "Instagram mapping produced 0 usable items for hashtag '%s'. Raw items: %s",
+            hashtag,
+            media_items,
+        )
 
     return results
 
