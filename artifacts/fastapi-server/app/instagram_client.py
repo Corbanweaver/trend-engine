@@ -28,7 +28,12 @@ async def _run_apify_instagram_actor(query: str, max_results: int) -> list[dict]
 
     try:
         async with httpx.AsyncClient(timeout=45.0) as client:
-            resp = await client.post(url, params=params, json=actor_input)
+            resp = await client.post(
+                url,
+                params=params,
+                json=actor_input,
+                headers={"Authorization": f"Bearer {token}"},
+            )
             if resp.status_code >= 400:
                 logger.error("Instagram Apify call failed (%s): %s", resp.status_code, resp.text)
                 return []
