@@ -40,6 +40,8 @@ async def _run_apify_instagram_actor(query: str, max_results: int) -> list[dict]
                     query,
                     resp.text,
                 )
+            if isinstance(data, list) and len(data) > 0:
+                print(f"Instagram Apify raw first item for query '{query}': {data[0]}")
             logger.info(
                 "Instagram Apify call succeeded for query '%s'. Items returned: %s",
                 query,
