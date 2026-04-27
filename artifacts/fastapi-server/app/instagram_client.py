@@ -3,7 +3,7 @@ import httpx
 import logging
 
 APIFY_API_BASE = "https://api.apify.com/v2"
-INSTAGRAM_ACTOR_ID = "apify/instagram-scraper"
+INSTAGRAM_ACTOR_ID = "apify~instagram-scraper"
 logger = logging.getLogger(__name__)
 
 
