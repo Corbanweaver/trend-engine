@@ -251,6 +251,7 @@ async def discover_trends(niche: str) -> tuple[list[str], dict]:
 
 async def gather_topic_media(niche: str, topic: str) -> dict:
     search_query = f"{niche} {topic}"
+    print(f"Calling Instagram search for: {search_query}")
     coros = [
         _safe_fetch(youtube_search(search_query, max_results=4), []),
         _safe_fetch(search_instagram(search_query, max_results=4), []),
