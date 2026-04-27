@@ -2,7 +2,10 @@ import os
 import json
 import asyncio
 import logging
-import replicate
+try:
+    import replicate
+except ModuleNotFoundError:
+    replicate = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 _ai_semaphore = asyncio.Semaphore(3)
@@ -107,6 +110,10 @@ def _extract_replicate_output_url(output) -> str:
 
 
 async def generate_idea_thumbnail(niche: str, topic: str, idea: VideoIdea) -> str:
+    if replicate is None:
+        logger.warning("Replicate package not installed; skipping thumbnail generation.")
+        return ""
+
     token = os.environ.get("REPLICATE_API_TOKEN", "").strip()
     logger.info("Replicate token found: %s", "yes" if bool(token) else "no")
     if not token:
