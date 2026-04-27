@@ -2,7 +2,7 @@ import os
 import json
 import asyncio
 import logging
-import httpx
+import replicate
 
 logger = logging.getLogger(__name__)
 _ai_semaphore = asyncio.Semaphore(3)
@@ -120,73 +120,24 @@ async def generate_idea_thumbnail(niche: str, topic: str, idea: VideoIdea) -> st
         f"Niche: {niche}. Topic: {topic}. Title: {title}. Concept: {concept}. "
         "Bold composition, high contrast lighting, modern creator aesthetic, vibrant colors, clean background, no text, no watermark."
     )
-    payload = {
-        "input": {
-            "prompt": prompt,
-            "aspect_ratio": "16:9",
-            "output_format": "jpg",
-            "output_quality": 85,
-        }
-    }
-    headers = {
-        "Authorization": f"Token {token}",
-        "Content-Type": "application/json",
-        "Prefer": "wait=20",
-    }
-    create_url = f"https://api.replicate.com/v1/models/{REPLICATE_MODEL}/predictions"
-
     try:
-        async with httpx.AsyncClient(timeout=45.0) as client:
-            create_resp = await client.post(create_url, headers=headers, json=payload)
-            if create_resp.status_code >= 400:
-                logger.error(
-                    "Replicate create prediction failed (%s): %s",
-                    create_resp.status_code,
-                    create_resp.text,
-                )
-                return ""
-            prediction = create_resp.json()
-            logger.info(
-                "Replicate prediction created for topic '%s' with status '%s' and id '%s'",
-                topic,
-                prediction.get("status"),
-                prediction.get("id"),
+        def _run_replicate() -> str:
+            os.environ["REPLICATE_API_TOKEN"] = token
+            output = replicate.run(
+                REPLICATE_MODEL,
+                input={
+                    "prompt": prompt,
+                    "aspect_ratio": "16:9",
+                    "output_format": "jpg",
+                    "output_quality": 85,
+                },
             )
+            return _extract_replicate_output_url(output)
 
-            status = prediction.get("status")
-            output = prediction.get("output")
-            get_url = (prediction.get("urls") or {}).get("get")
-            if not get_url and status not in {"succeeded", "failed", "canceled"}:
-                logger.error("Replicate prediction missing polling URL: %s", prediction)
-                return ""
-
-            poll_tries = 0
-            while status not in {"succeeded", "failed", "canceled"} and get_url and poll_tries < 10:
-                await asyncio.sleep(1.5)
-                poll_resp = await client.get(get_url, headers={"Authorization": f"Token {token}"})
-                if poll_resp.status_code >= 400:
-                    logger.error(
-                        "Replicate polling failed (%s): %s",
-                        poll_resp.status_code,
-                        poll_resp.text,
-                    )
-                    return ""
-                prediction = poll_resp.json()
-                status = prediction.get("status")
-                output = prediction.get("output")
-                poll_tries += 1
-                logger.info(
-                    "Replicate poll #%s for prediction '%s' status='%s'",
-                    poll_tries,
-                    prediction.get("id"),
-                    status,
-                )
-
-            if status == "succeeded":
-                url = _extract_replicate_output_url(output)
-                logger.info("Replicate thumbnail generated successfully for topic '%s': %s", topic, bool(url))
-                return url
-            logger.error("Replicate prediction did not succeed. Final status='%s', body=%s", status, prediction)
+        loop = asyncio.get_event_loop()
+        url = await loop.run_in_executor(None, _run_replicate)
+        logger.info("Replicate thumbnail generated successfully for topic '%s': %s", topic, bool(url))
+        return url
     except Exception as e:
         logger.exception("Replicate thumbnail generation failed with exception: %s", e)
 
@@ -251,6 +202,7 @@ async def discover_trends(niche: str) -> tuple[list[str], dict]:
 
 async def gather_topic_media(niche: str, topic: str) -> dict:
     search_query = f"{niche} {topic}"
+    print(f"STARTING MEDIA GATHER FOR: {topic}")
     print(f"Calling Instagram search for: {search_query}")
     coros = [
         _safe_fetch(youtube_search(search_query, max_results=4), []),
@@ -262,10 +214,11 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
         _safe_fetch(pinterest_search(search_query, max_results=4), []),
         _safe_fetch(medium_search(search_query, max_results=4), []),
     ]
-    youtube, instagram, tiktok, news, hn, web, pins, articles = await asyncio.gather(*coros)
+    youtube, instagram_results, tiktok, news, hn, web, pins, articles = await asyncio.gather(*coros)
+    print(f"INSTAGRAM RESULTS: {len(instagram_results)} items")
     return {
         "youtube": youtube,
-        "instagram": instagram,
+        "instagram": instagram_results,
         "tiktok": tiktok,
         "google_news": news,
         "hackernews": hn,
