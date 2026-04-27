@@ -105,10 +105,16 @@ const platformGlyph: Record<string, string> = {
 
 function getPlatformBadges(trend: TrendIdea): string[] {
   const badges: string[] = [];
+  const hasTaggedInstagram = trend.instagram_posts.some(
+    (p) => (p as { platform?: string }).platform === "instagram",
+  );
+  const hasTaggedYoutube = trend.example_videos.some(
+    (v) => (v as { platform?: string }).platform === "youtube",
+  );
   if (trend.tiktok_videos.length > 0) badges.push("TikTok");
-  if (trend.example_videos.length > 0) badges.push("YouTube");
+  if (trend.example_videos.length > 0 || hasTaggedYoutube) badges.push("YouTube");
   if (trend.reddit_posts.length > 0) badges.push("Reddit");
-  if (trend.instagram_posts.length > 0) badges.push("Instagram");
+  if (trend.instagram_posts.length > 0 || hasTaggedInstagram) badges.push("Instagram");
   if (trend.web_results.length > 0 || trend.hackernews_stories.length > 0) {
     badges.push("Twitter");
   }

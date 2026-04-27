@@ -216,9 +216,11 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
     ]
     youtube, instagram_results, tiktok, news, hn, web, pins, articles = await asyncio.gather(*coros)
     print(f"INSTAGRAM RESULTS: {len(instagram_results)} items")
+    youtube_tagged = [{**item, "platform": "youtube"} for item in youtube if isinstance(item, dict)]
+    instagram_tagged = [{**item, "platform": "instagram"} for item in instagram_results if isinstance(item, dict)]
     return {
-        "youtube": youtube,
-        "instagram": instagram_results,
+        "youtube": youtube_tagged,
+        "instagram": instagram_tagged,
         "tiktok": tiktok,
         "google_news": news,
         "hackernews": hn,
