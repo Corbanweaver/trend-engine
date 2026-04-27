@@ -14,17 +14,19 @@ async def _run_apify_instagram_actor(query: str, max_results: int) -> list[dict]
         logger.warning("Instagram search skipped: APIFY_API_TOKEN missing.")
         return []
 
-    # Keep payload schema-flexible across actor versions.
+    normalized = query.strip().strip("#").lower()
+    hashtag_url = f"https://www.instagram.com/explore/tags/{normalized}/"
+    # Use hashtag/directUrls input (matches manual actor usage better than generic search keys).
     actor_input = {
-        "search": query,
-        "query": query,
-        "searchType": "hashtag",
+        "hashtags": [normalized],
+        "directUrls": [hashtag_url],
         "resultsLimit": max_results,
         "maxItems": max_results,
         "addParentData": False,
     }
-    url = f"{APIFY_API_BASE}/acts/{INSTAGRAM_ACTOR_ID}/run-sync-get-dataset-items"
-    params = {"token": token, "limit": max_results}
+    url = f"{APIFY_API_BASE}/acts/{INSTAGRAM_ACTOR_ID}/run-sync-get-dataset-items?token={token}"
+    params = {"limit": max_results}
+    logger.info("Instagram Apify payload for '%s': %s", query, actor_input)
 
     try:
         async with httpx.AsyncClient(timeout=45.0) as client:
