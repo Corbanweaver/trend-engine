@@ -15,15 +15,20 @@ async def _run_apify_instagram_actor(query: str, max_results: int) -> list[dict]
         return []
 
     normalized = query.strip().strip("#").lower()
-    hashtag_url = f"https://www.instagram.com/explore/tags/{normalized}/"
-    # Use hashtag/directUrls input (matches manual actor usage better than generic search keys).
+    # Use hashtag search input format that matches the Apify actor schema.
     actor_input = {
-        "hashtags": [normalized],
-        "directUrls": [hashtag_url],
+        "addParentData": False,
+        "searchType": "hashtag",
+        "searchLimit": max_results,
+        "resultsType": "posts",
         "resultsLimit": max_results,
+        "search": normalized,
+    }
+    # Keep these aliases for compatibility with actor variants.
+    actor_input.update({
         "maxItems": max_results,
         "addParentData": False,
-    }
+    })
     url = f"{APIFY_API_BASE}/acts/{INSTAGRAM_ACTOR_ID}/run-sync-get-dataset-items?token={token}"
     params = {"limit": max_results}
     logger.info("Instagram Apify payload for '%s': %s", query, actor_input)
