@@ -34,17 +34,17 @@ execute function public.set_user_subscriptions_updated_at();
 
 alter table public.user_subscriptions enable row level security;
 
-create policy if not exists "user_subscriptions_select_own"
+create policy "user_subscriptions_select_own"
   on public.user_subscriptions
   for select
   using (auth.uid() = user_id);
 
-create policy if not exists "user_subscriptions_insert_own"
+create policy "user_subscriptions_insert_own"
   on public.user_subscriptions
   for insert
   with check (auth.uid() = user_id);
 
-create policy if not exists "user_subscriptions_update_own"
+create policy "user_subscriptions_update_own"
   on public.user_subscriptions
   for update
   using (auth.uid() = user_id)
