@@ -45,6 +45,12 @@ type UserSubscriptionRow = {
   updated_at: string;
 };
 
+function formatPlanLabel(plan: SubscriptionPlan): "Free" | "Creator" | "Pro" {
+  if (plan === "creator") return "Creator";
+  if (plan === "pro") return "Pro";
+  return "Free";
+}
+
 function isSameMonth(timestamp: string, now = new Date()): boolean {
   const date = new Date(timestamp);
   return (
@@ -635,7 +641,7 @@ export function TrendDashboard() {
             API: {getApiBaseUrl()}
           </div>
           <div className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-100">
-            Plan: {plan.toUpperCase()}
+            Plan: {formatPlanLabel(plan)}
             {plan === "free" ? ` (${analysesUsedThisMonth}/${FREE_ANALYSIS_LIMIT})` : ""}
           </div>
           <Link

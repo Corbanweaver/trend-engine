@@ -8,6 +8,8 @@ export const metadata: Metadata = {
     "Pinterest-style trend intelligence dashboard with AI-generated video ideas",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function DashboardPage() {
   return <TrendDashboard />;
 }
