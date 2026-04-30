@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 
+import { trackUiEvent } from "@/lib/telemetry";
 import type { TrendIdea, VideoIdea } from "@/lib/trend-ideas-types";
 
 function estimateVideoLength(idea: VideoIdea): string {
@@ -116,20 +117,109 @@ function renderMarkdownLikeContent(text: string): React.ReactNode {
 
 export function IdeaPanel({
   trend,
+  trendIdeas,
   onSaveIdea,
 }: {
   trend: TrendIdea | null;
+  trendIdeas?: TrendIdea[];
   onSaveIdea?: (payload: { trend: string; idea: VideoIdea }) => Promise<void>;
 }) {
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [savedIndexes, setSavedIndexes] = useState<Record<number, boolean>>({});
   const [errorByIndex, setErrorByIndex] = useState<Record<number, string>>({});
+  const [ideaRatings, setIdeaRatings] = useState<Record<string, "up" | "down">>({});
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("idea_ratings");
+      if (!raw) return;
+      setIdeaRatings(JSON.parse(raw) as Record<string, "up" | "down">);
+    } catch {
+      /* ignore malformed local cache */
+    }
+  }, []);
 
   useEffect(() => {
     setSavingIndex(null);
     setSavedIndexes({});
     setErrorByIndex({});
   }, [trend?.trend]);
+
+  const setIdeaRating = async (idea: VideoIdea, index: number, value: "up" | "down") => {
+    if (!trend) return;
+    const key = `${trend?.trend ?? "trend"}::${idea.optimized_title ?? idea.hook ?? idea.idea}`;
+    setErrorByIndex((prev) => ({ ...prev, [index]: "" }));
+    setIdeaRatings((prev) => {
+      const next = { ...prev, [key]: value };
+      try {
+        window.localStorage.setItem("idea_ratings", JSON.stringify(next));
+      } catch {
+        /* ignore localStorage errors */
+      }
+      return next;
+    });
+    try {
+      const res = await fetch("/api/idea-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trend: trend.trend,
+          idea_title: idea.optimized_title?.trim() || idea.hook || idea.idea || "Idea",
+          rating: value,
+        }),
+      });
+      if (!res.ok) {
+        let message = "Failed to save feedback";
+        try {
+          const body = (await res.json()) as { error?: string };
+          if (body.error) message = body.error;
+        } catch {
+          /* ignore */
+        }
+        throw new Error(message);
+      }
+      trackUiEvent({
+        area: "idea_panel",
+        action: "rate_idea_success",
+        context: {
+          trend: trend.trend,
+          rating: value,
+        },
+      });
+    } catch (err) {
+      trackUiEvent({
+        area: "idea_panel",
+        action: "rate_idea_failed",
+        level: "error",
+        message: err instanceof Error ? err.message : "unknown",
+        context: {
+          trend: trend.trend,
+          rating: value,
+        },
+      });
+      setErrorByIndex((prev) => ({
+        ...prev,
+        [index]: err instanceof Error ? err.message : "Failed to save feedback.",
+      }));
+    }
+  };
+
+  const relatedTrends =
+    trend && trendIdeas
+      ? trendIdeas
+          .filter((t) => t.trend !== trend.trend)
+          .map((t) => {
+            const a = new Set(trend.trend.toLowerCase().split(/\W+/).filter(Boolean));
+            const b = new Set(t.trend.toLowerCase().split(/\W+/).filter(Boolean));
+            let overlap = 0;
+            a.forEach((w) => {
+              if (b.has(w)) overlap += 1;
+            });
+            return { trend: t.trend, overlap };
+          })
+          .sort((x, y) => y.overlap - x.overlap)
+          .slice(0, 3)
+      : [];
 
   const handleSaveIdea = async (idea: VideoIdea, index: number) => {
     if (!trend || !onSaveIdea) return;
@@ -138,7 +228,19 @@ export function IdeaPanel({
     try {
       await onSaveIdea({ trend: trend.trend, idea });
       setSavedIndexes((prev) => ({ ...prev, [index]: true }));
+      trackUiEvent({
+        area: "idea_panel",
+        action: "save_idea_success",
+        context: { trend: trend.trend },
+      });
     } catch (err) {
+      trackUiEvent({
+        area: "idea_panel",
+        action: "save_idea_failed",
+        level: "error",
+        message: err instanceof Error ? err.message : "unknown",
+        context: { trend: trend.trend },
+      });
       setErrorByIndex((prev) => ({
         ...prev,
         [index]: err instanceof Error ? err.message : "Failed to save idea.",
@@ -173,6 +275,24 @@ export function IdeaPanel({
           your Content Engine
         </p>
       </div>
+
+      {relatedTrends.length > 0 ? (
+        <div className="rounded-lg border border-white/10 bg-slate-900/60 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">
+            Similar trends
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {relatedTrends.map((t) => (
+              <span
+                key={t.trend}
+                className="rounded-full border border-cyan-300/30 bg-cyan-500/10 px-2.5 py-1 text-xs text-cyan-100"
+              >
+                {t.trend}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="space-y-3">
         {trend.ideas.map((idea, i) => (
@@ -263,6 +383,22 @@ export function IdeaPanel({
               ) : null}
               {onSaveIdea ? (
                 <div className="space-y-2 pt-1">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void setIdeaRating(idea, i, "up")}
+                      className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200"
+                    >
+                      👍
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void setIdeaRating(idea, i, "down")}
+                      className="rounded-md border border-amber-400/30 bg-amber-500/10 px-2 py-1 text-xs text-amber-100"
+                    >
+                      👎
+                    </button>
+                  </div>
                   <Button
                     type="button"
                     disabled={savingIndex === i || savedIndexes[i]}
@@ -275,6 +411,15 @@ export function IdeaPanel({
                         ? "Saving..."
                         : "Save Idea"}
                   </Button>
+                  {(() => {
+                    const key = `${trend.trend}::${idea.optimized_title ?? idea.hook ?? idea.idea}`;
+                    const rating = ideaRatings[key];
+                    return rating ? (
+                      <p className="text-xs text-slate-400">
+                        Feedback saved: {rating === "up" ? "Thumbs up" : "Thumbs down"}
+                      </p>
+                    ) : null;
+                  })()}
                   {errorByIndex[i] ? (
                     <p className="text-xs text-red-300">{errorByIndex[i]}</p>
                   ) : null}

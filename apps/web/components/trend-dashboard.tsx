@@ -3,7 +3,19 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Loader2, LogOut, Search, Sparkles } from "lucide-react";
+import {
+  ChevronRight,
+  Loader2,
+  LogOut,
+  Search,
+  Sparkles,
+  Moon,
+  Sun,
+  Info,
+  Calendar,
+  Home,
+  Bookmark,
+} from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 import { IdeaPanel } from "@/components/idea-panel";
@@ -36,6 +48,8 @@ import { cn } from "@/lib/utils";
 const TREND_RESULTS_STORAGE_KEY = "trend_dashboard:last_results";
 const FREE_ANALYSIS_LIMIT = 5;
 const ONBOARDING_DISMISSED_KEY = "trend_dashboard:onboarding_dismissed";
+const NICHE_FAVORITES_KEY = "trend_dashboard:niche_favorites";
+const NICHE_HISTORY_KEY = "trend_dashboard:niche_history";
 const ANALYSIS_PROGRESS_STEPS = [
   "Scanning TikTok...",
   "Scanning Reddit...",
@@ -326,8 +340,14 @@ function TrendCard({
               ))}
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+              <p className="flex items-center justify-end gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
                 Engagement
+                <span
+                  title="Trend score combines Reddit score/comments, TikTok likes/plays, Hacker News score, and counts from YouTube/news/web/Pinterest/Medium, then log-scales to 0-100."
+                  className="inline-flex"
+                >
+                  <Info className="size-3 text-slate-500" />
+                </span>
               </p>
               <p className="text-lg font-bold tabular-nums leading-none text-white">
                 {raw > 0 ? heat : "—"}
@@ -385,12 +405,19 @@ function LoadingState({ niche }: { niche: string }) {
           short-form concepts.
         </p>
       </div>
-      <div className="grid w-full max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="h-32 animate-pulse rounded-xl border border-white/10 bg-slate-900/60"
-          />
+            className="overflow-hidden rounded-xl border border-white/10 bg-slate-900/60"
+          >
+            <div className="h-28 animate-pulse bg-slate-800/80" />
+            <div className="space-y-2 p-3">
+              <div className="h-3 w-16 animate-pulse rounded bg-slate-700/70" />
+              <div className="h-4 w-5/6 animate-pulse rounded bg-slate-700/70" />
+              <div className="h-2 w-full animate-pulse rounded bg-slate-800/80" />
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -459,6 +486,9 @@ export function TrendDashboard() {
   const [analysisStep, setAnalysisStep] = useState<(typeof ANALYSIS_PROGRESS_STEPS)[number]>(
     ANALYSIS_PROGRESS_STEPS[0],
   );
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [favoriteNiches, setFavoriteNiches] = useState<string[]>([]);
+  const [nicheHistory, setNicheHistory] = useState<string[]>([]);
 
   useEffect(() => {
     try {
@@ -469,6 +499,47 @@ export function TrendDashboard() {
     } catch {
       /* ignore localStorage errors */
     }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const savedTheme = window.localStorage.getItem("theme");
+      const nextTheme = savedTheme === "light" ? "light" : "dark";
+      setTheme(nextTheme);
+      document.documentElement.classList.toggle("dark", nextTheme === "dark");
+      const fav = window.localStorage.getItem(NICHE_FAVORITES_KEY);
+      if (fav) setFavoriteNiches(JSON.parse(fav) as string[]);
+      const hist = window.localStorage.getItem(NICHE_HISTORY_KEY);
+      if (hist) setNicheHistory(JSON.parse(hist) as string[]);
+    } catch {
+      /* ignore localStorage errors */
+    }
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      document.documentElement.classList.toggle("dark", next === "dark");
+      try {
+        window.localStorage.setItem("theme", next);
+      } catch {
+        /* ignore localStorage errors */
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleFavoriteNiche = useCallback((value: string) => {
+    if (!value || value === "custom") return;
+    setFavoriteNiches((prev) => {
+      const next = prev.includes(value) ? prev.filter((x) => x !== value) : [value, ...prev];
+      try {
+        window.localStorage.setItem(NICHE_FAVORITES_KEY, JSON.stringify(next.slice(0, 8)));
+      } catch {
+        /* ignore localStorage errors */
+      }
+      return next.slice(0, 8);
+    });
   }, []);
 
   const dismissOnboarding = useCallback(() => {
@@ -544,6 +615,15 @@ export function TrendDashboard() {
       const res = await fetchTrendIdeas(effectiveNiche);
       setData(res);
       setAnalysisProgress(100);
+      setNicheHistory((prev) => {
+        const next = [effectiveNiche, ...prev.filter((n) => n !== effectiveNiche)].slice(0, 5);
+        try {
+          window.localStorage.setItem(NICHE_HISTORY_KEY, JSON.stringify(next));
+        } catch {
+          /* ignore localStorage errors */
+        }
+        return next;
+      });
 
       if (userId && plan === "free") {
         const nextCount = analysesUsedThisMonth + 1;
@@ -673,6 +753,9 @@ export function TrendDashboard() {
   }, []);
 
   const freeLimitReached = plan === "free" && analysesUsedThisMonth >= FREE_ANALYSIS_LIMIT;
+  const favoriteSet = new Set(favoriteNiches);
+  const favoriteOptions = NICHE_OPTIONS.filter((o) => favoriteSet.has(o.value));
+  const regularOptions = NICHE_OPTIONS.filter((o) => !favoriteSet.has(o.value));
 
   const saveIdea = useCallback(
     async ({ trend, idea }: { trend: string; idea: VideoIdea }) => {
@@ -700,7 +783,7 @@ export function TrendDashboard() {
   );
 
   return (
-    <div className="relative flex min-h-svh flex-col overflow-hidden bg-slate-950 text-slate-100">
+    <div className="relative flex min-h-svh flex-col overflow-hidden bg-slate-950 pb-16 text-slate-100 lg:pb-0">
       {showOnboarding ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
           <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-slate-900 p-6 shadow-2xl">
@@ -749,7 +832,7 @@ export function TrendDashboard() {
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-3">
           <Link
             href="/"
-            className="text-sm font-medium text-slate-400 hover:text-white"
+            className="fluid-transition rounded-md px-1 text-sm font-medium text-slate-400 hover:text-white"
           >
             ← Home
           </Link>
@@ -776,9 +859,15 @@ export function TrendDashboard() {
           </div>
           <Link
             href="/saved"
-            className="rounded-md border border-white/15 bg-slate-900/70 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
+            className="fluid-transition rounded-md border border-white/15 bg-slate-900/70 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
           >
             Saved Ideas
+          </Link>
+          <Link
+            href="/calendar"
+            className="fluid-transition rounded-md border border-white/15 bg-slate-900/70 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
+          >
+            Calendar
           </Link>
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-200">
             {userAvatar ? (
@@ -814,6 +903,15 @@ export function TrendDashboard() {
               </>
             )}
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={toggleTheme}
+            className="h-9 border-white/20 bg-slate-900/70 text-slate-100 hover:bg-slate-800"
+          >
+            {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            {theme === "dark" ? "Light" : "Dark"}
+          </Button>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-slate-400">Niche</span>
             <label className="sr-only" htmlFor="niche-select">
@@ -829,7 +927,20 @@ export function TrendDashboard() {
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300",
               )}
             >
-              {NICHE_OPTIONS.map((o) => (
+              {favoriteOptions.length > 0 ? (
+                <optgroup label="Favorites">
+                  {favoriteOptions.map((o) => (
+                    <option
+                      key={o.value}
+                      value={o.value}
+                      disabled={o.value.startsWith("__group_")}
+                    >
+                      {o.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null}
+              {regularOptions.map((o) => (
                 <option
                   key={o.value}
                   value={o.value}
@@ -839,6 +950,21 @@ export function TrendDashboard() {
                 </option>
               ))}
             </select>
+            {nicheKey !== "custom" ? (
+              <button
+                type="button"
+                onClick={() => toggleFavoriteNiche(nicheKey)}
+                className={cn(
+                  "inline-flex h-9 items-center rounded-md border px-2 text-xs",
+                  favoriteSet.has(nicheKey)
+                    ? "border-amber-300/40 bg-amber-500/20 text-amber-100"
+                    : "border-white/15 bg-slate-900 text-slate-300",
+                )}
+                title="Favorite this niche"
+              >
+                <Sparkles className="size-3.5" />
+              </button>
+            ) : null}
             {nicheKey === "custom" ? (
               <input
                 type="text"
@@ -883,6 +1009,21 @@ export function TrendDashboard() {
           </div>
         </div>
         <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-3 px-4 pb-4">
+          {nicheHistory.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-slate-500">Recent niches:</span>
+              {nicheHistory.map((entry) => (
+                <button
+                  key={entry}
+                  type="button"
+                  onClick={() => setNicheKey(entry)}
+                  className="fluid-transition rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-200 hover:border-cyan-300/40 hover:text-cyan-100"
+                >
+                  {entry}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <div className="relative max-w-xl">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
             <input
@@ -982,7 +1123,11 @@ export function TrendDashboard() {
           )}
         >
           <ScrollArea className="h-[calc(100vh-57px)]">
-            <IdeaPanel trend={selectedTrend} onSaveIdea={saveIdea} />
+            <IdeaPanel
+              trend={selectedTrend}
+              trendIdeas={data?.trend_ideas ?? []}
+              onSaveIdea={saveIdea}
+            />
           </ScrollArea>
         </aside>
       </div>
@@ -997,9 +1142,35 @@ export function TrendDashboard() {
           <SheetHeader className="border-b border-white/10 px-4 py-3 text-left">
             <SheetTitle className="text-base">Video ideas</SheetTitle>
           </SheetHeader>
-          <IdeaPanel trend={selectedTrend} onSaveIdea={saveIdea} />
+          <IdeaPanel
+            trend={selectedTrend}
+            trendIdeas={data?.trend_ideas ?? []}
+            onSaveIdea={saveIdea}
+          />
         </SheetContent>
       </Sheet>
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-slate-950/95 px-3 py-2 backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-md items-center justify-around">
+          <Link href="/" className="flex flex-col items-center text-[11px] text-slate-300">
+            <Home className="mb-1 size-4" />
+            Home
+          </Link>
+          <Link
+            href="/saved"
+            className="flex flex-col items-center text-[11px] text-slate-300"
+          >
+            <Bookmark className="mb-1 size-4" />
+            Saved
+          </Link>
+          <Link
+            href="/calendar"
+            className="flex flex-col items-center text-[11px] text-slate-300"
+          >
+            <Calendar className="mb-1 size-4" />
+            Calendar
+          </Link>
+        </div>
+      </nav>
     </div>
   );
 }

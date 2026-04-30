@@ -63,29 +63,29 @@ const plans = [
 
 function PricingHeader() {
   return (
-    <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
+    <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-7">
       <Link
         href="/"
-        className="text-sm font-semibold tracking-wide text-white transition-colors hover:text-cyan-200"
+        className="fluid-transition text-sm font-semibold tracking-[0.18em] text-white hover:text-cyan-200"
       >
         Content Idea Maker
       </Link>
       <nav className="flex items-center gap-6 text-sm">
         <Link
           href="/pricing"
-          className="font-medium text-cyan-200 transition-colors hover:text-white"
+          className="fluid-transition font-medium text-cyan-200 hover:text-white"
         >
           Pricing
         </Link>
         <Link
           href="/login"
-          className="text-slate-300 transition-colors hover:text-white"
+          className="fluid-transition text-slate-300 hover:text-white"
         >
           Sign in
         </Link>
         <Link
           href="/dashboard"
-          className="rounded-xl bg-white/10 px-4 py-2 font-semibold text-white ring-1 ring-white/15 transition-all hover:bg-white/15"
+          className="fluid-transition glass-surface rounded-xl px-4 py-2 font-semibold text-white ring-1 ring-white/15 hover:bg-white/15"
         >
           Open app
         </Link>
@@ -116,7 +116,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
 
       <PricingHeader />
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 pb-24 pt-4">
+      <div className="relative z-10 mx-auto max-w-6xl px-6 pb-24 pt-6">
         <div className="mx-auto max-w-2xl text-center">
           <span className="rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
             Pricing
@@ -146,10 +146,10 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative flex flex-col rounded-3xl border p-8 shadow-xl transition-transform duration-300 ${
+              className={`fluid-transition relative flex flex-col rounded-3xl border p-8 shadow-xl ${
                 plan.featured
                   ? "z-[1] border-cyan-400/40 bg-slate-950/80 shadow-[0_0_60px_-12px_rgba(34,211,238,0.35)] lg:-translate-y-2 lg:scale-[1.02]"
-                  : "border-white/10 bg-slate-950/50 backdrop-blur-sm hover:border-white/20"
+                  : "glass-surface border-white/10 bg-slate-950/50 backdrop-blur-sm hover:border-white/20"
               }`}
             >
               {plan.featured && plan.popularLabel ? (
