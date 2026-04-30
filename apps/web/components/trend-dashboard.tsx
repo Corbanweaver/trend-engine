@@ -35,6 +35,13 @@ import { cn } from "@/lib/utils";
 
 const TREND_RESULTS_STORAGE_KEY = "trend_dashboard:last_results";
 const FREE_ANALYSIS_LIMIT = 5;
+const ONBOARDING_DISMISSED_KEY = "trend_dashboard:onboarding_dismissed";
+const ANALYSIS_PROGRESS_STEPS = [
+  "Scanning TikTok...",
+  "Scanning Reddit...",
+  "Generating AI ideas...",
+  "Almost done...",
+] as const;
 
 type SubscriptionPlan = "free" | "creator" | "pro";
 
@@ -57,6 +64,52 @@ function isSameMonth(timestamp: string, now = new Date()): boolean {
     date.getUTCFullYear() === now.getUTCFullYear() &&
     date.getUTCMonth() === now.getUTCMonth()
   );
+}
+
+function parseTimestampCandidate(value: unknown): Date | null {
+  if (typeof value !== "string" && typeof value !== "number") return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+}
+
+function getTrendDetectedLabel(trend: TrendIdea): string {
+  const candidates: unknown[] = [];
+  const buckets: Record<string, unknown>[] = [
+    ...trend.tiktok_videos,
+    ...trend.example_videos,
+    ...trend.reddit_posts,
+    ...trend.instagram_posts,
+    ...trend.google_news,
+    ...trend.hackernews_stories,
+    ...trend.web_results,
+  ];
+  const keys = [
+    "published_at",
+    "publishedAt",
+    "created_at",
+    "createdAt",
+    "timestamp",
+    "time",
+    "date",
+    "pubDate",
+  ];
+  for (const item of buckets) {
+    for (const key of keys) {
+      if (key in item) candidates.push((item as Record<string, unknown>)[key]);
+    }
+  }
+  const parsed = candidates
+    .map(parseTimestampCandidate)
+    .filter((d): d is Date => d instanceof Date)
+    .sort((a, b) => b.getTime() - a.getTime());
+  if (!parsed.length) return "Trending now";
+  const now = Date.now();
+  const diffMs = now - parsed[0].getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays <= 0) return "Trending now";
+  if (diffDays === 1) return "Trending 1 day ago";
+  return `Trending ${diffDays} days ago`;
 }
 
 function useIsMobile(breakpoint = 1023) {
@@ -191,6 +244,7 @@ function TrendCard({
   const platformBadges = getPlatformBadges(trend);
   const visual = getCardVisual(trend);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const trendLabel = getTrendDetectedLabel(trend);
 
   const handleCardMove = (e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -293,6 +347,7 @@ function TrendCard({
           <CardTitle className="text-base leading-snug text-slate-100">
             {trend.trend}
           </CardTitle>
+          <p className="text-[11px] text-cyan-200/80">{trendLabel}</p>
         </CardHeader>
         <CardContent className="pb-2">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
@@ -399,6 +454,31 @@ export function TrendDashboard() {
   const [plan, setPlan] = useState<SubscriptionPlan>("free");
   const [analysesUsedThisMonth, setAnalysesUsedThisMonth] = useState(0);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisStep, setAnalysisStep] = useState<(typeof ANALYSIS_PROGRESS_STEPS)[number]>(
+    ANALYSIS_PROGRESS_STEPS[0],
+  );
+
+  useEffect(() => {
+    try {
+      const dismissed = window.localStorage.getItem(ONBOARDING_DISMISSED_KEY);
+      if (!dismissed) {
+        setShowOnboarding(true);
+      }
+    } catch {
+      /* ignore localStorage errors */
+    }
+  }, []);
+
+  const dismissOnboarding = useCallback(() => {
+    setShowOnboarding(false);
+    try {
+      window.localStorage.setItem(ONBOARDING_DISMISSED_KEY, "1");
+    } catch {
+      /* ignore localStorage errors */
+    }
+  }, []);
 
   useEffect(() => {
     try {
@@ -452,9 +532,18 @@ export function TrendDashboard() {
     setLoading(true);
     setError(null);
     setSelectedIndex(null);
+    setAnalysisProgress(8);
+    setAnalysisStep(ANALYSIS_PROGRESS_STEPS[0]);
+    let stepIndex = 0;
+    const timer = window.setInterval(() => {
+      stepIndex = Math.min(stepIndex + 1, ANALYSIS_PROGRESS_STEPS.length - 1);
+      setAnalysisStep(ANALYSIS_PROGRESS_STEPS[stepIndex]);
+      setAnalysisProgress((prev) => Math.min(prev + 23, 92));
+    }, 1300);
     try {
       const res = await fetchTrendIdeas(effectiveNiche);
       setData(res);
+      setAnalysisProgress(100);
 
       if (userId && plan === "free") {
         const nextCount = analysesUsedThisMonth + 1;
@@ -471,7 +560,11 @@ export function TrendDashboard() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
+      window.clearInterval(timer);
       setLoading(false);
+      window.setTimeout(() => {
+        setAnalysisProgress(0);
+      }, 450);
     }
   }, [analysesUsedThisMonth, effectiveNiche, plan, userId]);
 
@@ -608,6 +701,30 @@ export function TrendDashboard() {
 
   return (
     <div className="relative flex min-h-svh flex-col overflow-hidden bg-slate-950 text-slate-100">
+      {showOnboarding ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-slate-900 p-6 shadow-2xl">
+            <h2 className="text-xl font-semibold text-white">Welcome to Content Idea Maker</h2>
+            <p className="mt-2 text-sm text-slate-300">
+              Get started in under two minutes:
+            </p>
+            <ol className="mt-4 space-y-2 text-sm text-slate-200">
+              <li>1. Pick your niche</li>
+              <li>2. Run your first analysis</li>
+              <li>3. Save your best ideas</li>
+            </ol>
+            <div className="mt-6 flex justify-end">
+              <Button
+                type="button"
+                onClick={dismissOnboarding}
+                className="bg-gradient-to-r from-cyan-400 to-indigo-500 text-slate-950 hover:opacity-90"
+              >
+                Let&apos;s go
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div
         className="pointer-events-none absolute inset-0 opacity-50"
         style={{
@@ -616,6 +733,19 @@ export function TrendDashboard() {
         }}
       />
       <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur">
+        {loading ? (
+          <div className="border-b border-cyan-400/20 bg-cyan-500/5 px-4 py-2">
+            <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-1">
+              <p className="text-xs font-medium text-cyan-200">{analysisStep}</p>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500 transition-all duration-500"
+                  style={{ width: `${analysisProgress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-3">
           <Link
             href="/"

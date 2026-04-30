@@ -13,6 +13,36 @@ import { useEffect, useState } from "react";
 
 import type { TrendIdea, VideoIdea } from "@/lib/trend-ideas-types";
 
+function estimateVideoLength(idea: VideoIdea): string {
+  const scriptWords = idea.script?.trim().split(/\s+/).filter(Boolean).length ?? 0;
+  if (scriptWords > 220) return "90-120 seconds";
+  if (scriptWords > 120) return "60-90 seconds";
+  return "30-60 seconds";
+}
+
+function estimateBestPostTime(ideaIndex: number): string {
+  const slots = ["Tuesday 6-9pm", "Wednesday 5-8pm", "Thursday 6-9pm", "Sunday 4-7pm"];
+  return slots[ideaIndex % slots.length];
+}
+
+function buildOutline(idea: VideoIdea): string[] {
+  if (idea.script) {
+    const bullets = idea.script
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith("- ") || line.startsWith("* "))
+      .map((line) => line.replace(/^[-*]\s+/, ""))
+      .filter(Boolean);
+    if (bullets.length >= 3) return bullets.slice(0, 4);
+  }
+  return [
+    `Open with: ${idea.hook || "a bold problem statement"}`,
+    `Teach one clear insight about ${idea.angle || "the trend"}`,
+    `Show a quick example viewers can copy today`,
+    "Close with a CTA to comment or save",
+  ];
+}
+
 function renderInlineMarkdown(text: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   const regex = /\*\*(.+?)\*\*/g;
@@ -172,6 +202,16 @@ export function IdeaPanel({
               ) : null}
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
+              <div className="grid gap-2 rounded-md border border-white/10 bg-slate-800/40 p-3 text-xs text-slate-200 sm:grid-cols-2">
+                <p>
+                  <span className="font-semibold text-slate-100">Video length: </span>
+                  {estimateVideoLength(idea)}
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-100">Best post time: </span>
+                  {estimateBestPostTime(i)}
+                </p>
+              </div>
               {idea.angle ? (
                 <p>
                   <span className="font-medium text-slate-200">Angle: </span>
@@ -198,6 +238,16 @@ export function IdeaPanel({
                   {renderMarkdownLikeContent(idea.script)}
                 </div>
               ) : null}
+              <div className="rounded-md border border-cyan-400/25 bg-cyan-500/10 p-3">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-cyan-200">
+                  Content Outline
+                </p>
+                <ul className="list-disc space-y-1 pl-5 text-xs text-slate-100">
+                  {buildOutline(idea).map((point, oi) => (
+                    <li key={`${trend.trend}-${i}-outline-${oi}`}>{point}</li>
+                  ))}
+                </ul>
+              </div>
               {idea.hashtags && idea.hashtags.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {idea.hashtags.map((tag, hi) => (
