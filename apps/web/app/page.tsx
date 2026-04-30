@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="relative min-h-svh overflow-hidden bg-gradient-to-br from-[#020617] via-[#0b1120] to-[#1e1b4b] text-white">
@@ -7,7 +9,24 @@ export default function Home() {
         <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 animate-pulse rounded-full bg-indigo-500/20 blur-3xl" />
       </div>
 
-      <section className="relative mx-auto flex min-h-svh w-full max-w-6xl flex-col items-center justify-center px-6 py-24 text-center">
+      <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
+        <Link
+          href="/"
+          className="text-sm font-semibold tracking-wide text-white transition-colors hover:text-cyan-200"
+        >
+          Content Idea Maker
+        </Link>
+        <nav className="flex items-center gap-6 text-sm">
+          <Link
+            href="/pricing"
+            className="font-medium text-slate-300 transition-colors hover:text-white"
+          >
+            Pricing
+          </Link>
+        </nav>
+      </header>
+
+      <section className="relative mx-auto flex min-h-[calc(100svh-5rem)] w-full max-w-6xl flex-col items-center justify-center px-6 py-16 text-center">
         <span className="rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
           Content Idea Maker
         </span>
