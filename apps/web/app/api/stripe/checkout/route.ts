@@ -38,8 +38,8 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${siteUrl}/pricing?checkout=success`,
-      cancel_url: `${siteUrl}/pricing?checkout=cancelled`,
+      success_url: "https://contentideamaker.com/dashboard?success=true",
+      cancel_url: "https://contentideamaker.com/pricing",
       allow_promotion_codes: true,
     });
 
