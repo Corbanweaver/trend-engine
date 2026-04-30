@@ -21,6 +21,7 @@ const plans = [
       "No saved ideas",
     ],
     ctaHref: "/signup",
+    planKey: "free",
     ctaVariant: "outline" as const,
   },
   {
@@ -36,7 +37,8 @@ const plans = [
       "Save unlimited ideas",
       "AI thumbnails",
     ],
-    ctaHref: "/signup",
+    ctaHref: "/api/stripe/checkout",
+    planKey: "creator",
     ctaVariant: "primary" as const,
   },
   {
@@ -53,7 +55,8 @@ const plans = [
       "Priority scraping",
       "Early access to new features",
     ],
-    ctaHref: "/signup",
+    ctaHref: "/api/stripe/checkout",
+    planKey: "pro",
     ctaVariant: "outline" as const,
   },
 ];
@@ -91,7 +94,17 @@ function PricingHeader() {
   );
 }
 
-export default function PricingPage() {
+type PricingPageProps = {
+  searchParams?: {
+    checkout?: string;
+  };
+};
+
+export default function PricingPage({ searchParams }: PricingPageProps) {
+  const checkoutStatus = searchParams?.checkout;
+  const isCheckoutSuccess = checkoutStatus === "success";
+  const isCheckoutCancelled = checkoutStatus === "cancelled";
+
   return (
     <main className="relative min-h-svh overflow-hidden bg-gradient-to-br from-[#020617] via-[#0b1120] to-[#1e1b4b] text-white">
       <div className="pointer-events-none absolute inset-0">
@@ -115,6 +128,18 @@ export default function PricingPage() {
             anytime.
           </p>
         </div>
+
+        {isCheckoutSuccess ? (
+          <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-5 py-4 text-center text-sm text-emerald-200">
+            Checkout complete. Your subscription is now active.
+          </div>
+        ) : null}
+
+        {isCheckoutCancelled ? (
+          <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-amber-400/40 bg-amber-500/10 px-5 py-4 text-center text-sm text-amber-100">
+            Checkout canceled. No charge was made.
+          </div>
+        ) : null}
 
         <div className="mx-auto mt-16 grid max-w-5xl gap-8 lg:mx-auto lg:grid-cols-3 lg:items-stretch">
           {plans.map((plan) => (
@@ -158,16 +183,32 @@ export default function PricingPage() {
                 ))}
               </ul>
 
-              <Link
-                href={plan.ctaHref}
-                className={
-                  plan.ctaVariant === "primary"
-                    ? "inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-500 px-6 py-3.5 text-center text-base font-bold text-slate-950 shadow-[0_0_32px_rgba(56,189,248,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
-                    : "inline-flex w-full items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-6 py-3.5 text-center text-base font-semibold text-white transition-all duration-200 hover:border-white/35 hover:bg-white/10"
-                }
-              >
-                Get Started
-              </Link>
+              {plan.planKey === "free" ? (
+                <Link
+                  href={plan.ctaHref}
+                  className={
+                    plan.ctaVariant === "primary"
+                      ? "inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-500 px-6 py-3.5 text-center text-base font-bold text-slate-950 shadow-[0_0_32px_rgba(56,189,248,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
+                      : "inline-flex w-full items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-6 py-3.5 text-center text-base font-semibold text-white transition-all duration-200 hover:border-white/35 hover:bg-white/10"
+                  }
+                >
+                  Get Started
+                </Link>
+              ) : (
+                <form action={plan.ctaHref} method="POST">
+                  <input type="hidden" name="plan" value={plan.planKey} />
+                  <button
+                    type="submit"
+                    className={
+                      plan.ctaVariant === "primary"
+                        ? "inline-flex w-full cursor-pointer items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-500 px-6 py-3.5 text-center text-base font-bold text-slate-950 shadow-[0_0_32px_rgba(56,189,248,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
+                        : "inline-flex w-full cursor-pointer items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-6 py-3.5 text-center text-base font-semibold text-white transition-all duration-200 hover:border-white/35 hover:bg-white/10"
+                    }
+                  >
+                    Get Started
+                  </button>
+                </form>
+              )}
             </div>
           ))}
         </div>
