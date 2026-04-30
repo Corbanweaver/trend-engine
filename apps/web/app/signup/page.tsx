@@ -3,11 +3,13 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 import { getSupabaseClient } from "@/lib/supabase";
 
 export default function SignupPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +34,9 @@ export default function SignupPage() {
       }
 
       setSuccess("Account created. Check your email to confirm your account.");
+      window.setTimeout(() => {
+        router.push("/login?verify=1");
+      }, 600);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed.");
     } finally {
@@ -40,7 +45,7 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-slate-950 px-4 text-slate-100">
+    <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
       <div className="w-full max-w-md rounded-xl border border-white/10 bg-slate-900 p-6">
         <h1 className="text-2xl font-semibold">Sign up</h1>
         <p className="mt-1 text-sm text-slate-400">Create your account.</p>

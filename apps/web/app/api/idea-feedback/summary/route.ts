@@ -9,12 +9,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type FeedbackRow = {
-  trend: string;
-  rating: "up" | "down";
+  idea_title: string;
+  feedback: "thumbs_up" | "thumbs_down";
 };
 
-function inferNiche(trend: string): string {
-  const t = trend.toLowerCase();
+function inferNiche(title: string): string {
+  const t = title.toLowerCase();
   if (/(fitness|workout|gym|protein|fat|muscle|diet|cardio)/.test(t)) return "fitness";
   if (/(beauty|skincare|makeup|hair|cosmetic)/.test(t)) return "beauty";
   if (/(finance|money|invest|crypto|stock|budget)/.test(t)) return "finance";
@@ -53,23 +53,28 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("idea_feedback")
-    .select("trend, rating")
+    .select("idea_title, feedback")
     .eq("user_id", user.id)
-    .order("updated_at", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(1000);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const rows = ((data as FeedbackRow[] | null) ?? []).filter((r) => r.rating === "up");
+  const rows = ((data as FeedbackRow[] | null) ?? []).filter(
+    (r) => r.feedback === "thumbs_up",
+  );
   const bucket = new Map<string, { likes: number; topTrends: Map<string, number> }>();
 
   for (const row of rows) {
-    const niche = inferNiche(row.trend);
+    const niche = inferNiche(row.idea_title);
     const current = bucket.get(niche) ?? { likes: 0, topTrends: new Map<string, number>() };
     current.likes += 1;
-    current.topTrends.set(row.trend, (current.topTrends.get(row.trend) ?? 0) + 1);
+    current.topTrends.set(
+      row.idea_title,
+      (current.topTrends.get(row.idea_title) ?? 0) + 1,
+    );
     bucket.set(niche, current);
   }
 

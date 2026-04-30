@@ -10,12 +10,13 @@ import { getSupabaseClient } from "@/lib/supabase";
 
 function LoginForm() {
   const router = useRouter();
-  useSearchParams();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const verifyPrompt = searchParams.get("verify") === "1";
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -54,10 +55,15 @@ function LoginForm() {
   };
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-slate-950 px-4 text-slate-100">
+    <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
       <div className="w-full max-w-md rounded-xl border border-white/10 bg-slate-900 p-6">
         <h1 className="text-2xl font-semibold">Log in</h1>
         <p className="mt-1 text-sm text-slate-400">Access your dashboard.</p>
+        {verifyPrompt ? (
+          <p className="mt-3 rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+            Please check your email to confirm your account.
+          </p>
+        ) : null}
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm">
@@ -117,7 +123,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-svh items-center justify-center bg-slate-950 px-4 text-slate-100">
+        <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
           <div className="w-full max-w-md rounded-xl border border-white/10 bg-slate-900 p-6">
             <p className="text-sm text-slate-300">Loading login...</p>
           </div>

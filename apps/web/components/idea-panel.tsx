@@ -124,8 +124,10 @@ export function IdeaPanel({
   trendIdeas?: TrendIdea[];
   onSaveIdea?: (payload: { trend: string; idea: VideoIdea }) => Promise<void>;
 }) {
-  const [savingIndex, setSavingIndex] = useState<number | null>(null);
+  const [savingIdeaIndex, setSavingIdeaIndex] = useState<number | null>(null);
+  const [savingCalendarIndex, setSavingCalendarIndex] = useState<number | null>(null);
   const [savedIndexes, setSavedIndexes] = useState<Record<number, boolean>>({});
+  const [calendarSavedIndexes, setCalendarSavedIndexes] = useState<Record<number, boolean>>({});
   const [errorByIndex, setErrorByIndex] = useState<Record<number, string>>({});
   const [ideaRatings, setIdeaRatings] = useState<Record<string, "up" | "down">>({});
 
@@ -140,8 +142,10 @@ export function IdeaPanel({
   }, []);
 
   useEffect(() => {
-    setSavingIndex(null);
+    setSavingIdeaIndex(null);
+    setSavingCalendarIndex(null);
     setSavedIndexes({});
+    setCalendarSavedIndexes({});
     setErrorByIndex({});
   }, [trend?.trend]);
 
@@ -163,9 +167,8 @@ export function IdeaPanel({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          trend: trend.trend,
           idea_title: idea.optimized_title?.trim() || idea.hook || idea.idea || "Idea",
-          rating: value,
+          feedback: value === "up" ? "thumbs_up" : "thumbs_down",
         }),
       });
       if (!res.ok) {
@@ -221,32 +224,39 @@ export function IdeaPanel({
           .slice(0, 3)
       : [];
 
-  const handleSaveIdea = async (idea: VideoIdea, index: number) => {
+  const handleSaveIdea = async (
+    idea: VideoIdea,
+    index: number,
+    mode: "saved" | "calendar",
+  ) => {
     if (!trend || !onSaveIdea) return;
     setErrorByIndex((prev) => ({ ...prev, [index]: "" }));
-    setSavingIndex(index);
+    if (mode === "saved") setSavingIdeaIndex(index);
+    else setSavingCalendarIndex(index);
     try {
       await onSaveIdea({ trend: trend.trend, idea });
-      setSavedIndexes((prev) => ({ ...prev, [index]: true }));
+      if (mode === "saved") setSavedIndexes((prev) => ({ ...prev, [index]: true }));
+      else setCalendarSavedIndexes((prev) => ({ ...prev, [index]: true }));
       trackUiEvent({
         area: "idea_panel",
-        action: "save_idea_success",
-        context: { trend: trend.trend },
+        action: mode === "saved" ? "save_idea_success" : "save_to_calendar_success",
+        context: { trend: trend.trend, mode },
       });
     } catch (err) {
       trackUiEvent({
         area: "idea_panel",
-        action: "save_idea_failed",
+        action: mode === "saved" ? "save_idea_failed" : "save_to_calendar_failed",
         level: "error",
         message: err instanceof Error ? err.message : "unknown",
-        context: { trend: trend.trend },
+        context: { trend: trend.trend, mode },
       });
       setErrorByIndex((prev) => ({
         ...prev,
         [index]: err instanceof Error ? err.message : "Failed to save idea.",
       }));
     } finally {
-      setSavingIndex(null);
+      if (mode === "saved") setSavingIdeaIndex(null);
+      else setSavingCalendarIndex(null);
     }
   };
 
@@ -399,24 +409,40 @@ export function IdeaPanel({
                       👎
                     </button>
                   </div>
-                  <Button
-                    type="button"
-                    disabled={savingIndex === i || savedIndexes[i]}
-                    onClick={() => void handleSaveIdea(idea, i)}
-                    className="h-8 bg-cyan-400 px-3 text-xs font-semibold text-slate-950 hover:opacity-90 disabled:opacity-60"
-                  >
-                    {savedIndexes[i]
-                      ? "✔ Saved to Content Calendar"
-                      : savingIndex === i
-                        ? "Saving..."
-                        : "Save to Content Calendar"}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      disabled={savingIdeaIndex === i || savedIndexes[i]}
+                      onClick={() => void handleSaveIdea(idea, i, "saved")}
+                      className="h-8 bg-cyan-400 px-3 text-xs font-semibold text-slate-950 hover:opacity-90 disabled:opacity-60"
+                    >
+                      {savedIndexes[i]
+                        ? "Saved Idea ✔"
+                        : savingIdeaIndex === i
+                          ? "Saving..."
+                          : "Save Idea"}
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={savingCalendarIndex === i || calendarSavedIndexes[i]}
+                      onClick={() => void handleSaveIdea(idea, i, "calendar")}
+                      className={`h-8 border border-emerald-300/40 bg-emerald-500/15 px-3 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/25 disabled:opacity-60 ${
+                        calendarSavedIndexes[i] ? "animate-pulse" : ""
+                      }`}
+                    >
+                      {calendarSavedIndexes[i]
+                        ? "✅ Saved to Content Calendar"
+                        : savingCalendarIndex === i
+                          ? "Saving..."
+                          : "Save to Content Calendar"}
+                    </Button>
+                  </div>
                   {(() => {
                     const key = `${trend.trend}::${idea.optimized_title ?? idea.hook ?? idea.idea}`;
                     const rating = ideaRatings[key];
                     return rating ? (
                       <p className="text-xs text-slate-400">
-                        {rating === "up" ? "✅ Saved to Content Calendar" : "Feedback recorded"}
+                        {rating === "up" ? "Feedback: thumbs up" : "Feedback: thumbs down"}
                       </p>
                     ) : null;
                   })()}

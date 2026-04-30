@@ -9,9 +9,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type FeedbackPayload = {
-  trend: string;
   idea_title: string;
-  rating: "up" | "down";
+  feedback: "thumbs_up" | "thumbs_down";
 };
 
 export async function POST(request: Request) {
@@ -23,11 +22,10 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json()) as Partial<FeedbackPayload>;
-  const trend = (body.trend ?? "").trim();
   const ideaTitle = (body.idea_title ?? "").trim();
-  const rating = body.rating;
+  const feedback = body.feedback;
 
-  if (!trend || !ideaTitle || (rating !== "up" && rating !== "down")) {
+  if (!ideaTitle || (feedback !== "thumbs_up" && feedback !== "thumbs_down")) {
     return NextResponse.json({ error: "Invalid feedback payload" }, { status: 400 });
   }
 
@@ -56,11 +54,10 @@ export async function POST(request: Request) {
     .upsert(
       {
         user_id: user.id,
-        trend,
         idea_title: ideaTitle,
-        rating,
+        feedback,
       },
-      { onConflict: "user_id,trend,idea_title" },
+      { onConflict: "user_id,idea_title" },
     );
 
   if (upsertError) {

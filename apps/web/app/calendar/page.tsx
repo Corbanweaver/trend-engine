@@ -134,6 +134,20 @@ export default function CalendarPage() {
     });
   };
 
+  const removeFromCalendar = (ideaId: string) => {
+    const next: CalendarMap = { ...calendarMap };
+    Object.keys(next).forEach((k) => {
+      next[k] = next[k].filter((id) => id !== ideaId);
+      if (!next[k].length) delete next[k];
+    });
+    saveMap(next);
+    trackUiEvent({
+      area: "calendar",
+      action: "remove_idea_from_calendar",
+      context: { ideaId },
+    });
+  };
+
   return (
     <main className="min-h-svh bg-background p-4 text-foreground">
       <div className="mx-auto max-w-7xl space-y-5">
@@ -239,7 +253,16 @@ export default function CalendarPage() {
                             onDragStart={() => setDragIdeaId(id)}
                             className="fluid-transition cursor-grab rounded-lg border border-cyan-300/25 bg-cyan-500/10 px-1.5 py-1 text-[11px] hover:border-cyan-300/40"
                           >
-                            {idea.idea_title || "Saved idea"}
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="truncate">{idea.idea_title || "Saved idea"}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeFromCalendar(id)}
+                                className="rounded border border-white/20 px-1 text-[10px] text-slate-200 hover:bg-white/10"
+                              >
+                                Remove from Calendar
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
