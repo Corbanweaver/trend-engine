@@ -95,13 +95,14 @@ function PricingHeader() {
 }
 
 type PricingPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     checkout?: string;
-  };
+  }>;
 };
 
-export default function PricingPage({ searchParams }: PricingPageProps) {
-  const checkoutStatus = searchParams?.checkout;
+export default async function PricingPage({ searchParams }: PricingPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const checkoutStatus = resolvedSearchParams?.checkout;
   const isCheckoutSuccess = checkoutStatus === "success";
   const isCheckoutCancelled = checkoutStatus === "cancelled";
 
