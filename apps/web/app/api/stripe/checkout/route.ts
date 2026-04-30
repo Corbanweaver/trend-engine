@@ -60,9 +60,9 @@ export async function POST(request: Request) {
       error: userError,
     } = await supabase.auth.getUser();
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "You must be logged in to start checkout" },
-        { status: 401 },
+      return NextResponse.redirect(
+        new URL("/login?redirect=/pricing", request.url),
+        303,
       );
     }
 
