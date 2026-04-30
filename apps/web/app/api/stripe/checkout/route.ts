@@ -1,10 +1,14 @@
 import Stripe from "stripe";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const creatorPriceId = process.env.STRIPE_CREATOR_PRICE_ID;
 const proPriceId = process.env.STRIPE_PRO_PRICE_ID;
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,6 +38,34 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json(
+        { error: "Missing Supabase configuration" },
+        { status: 500 },
+      );
+    }
+    const cookieStore = await cookies();
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll() {
+          // No cookie refresh required for this route.
+        },
+      },
+    });
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: "You must be logged in to start checkout" },
+        { status: 401 },
+      );
+    }
+
     const stripe = new Stripe(stripeSecretKey);
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -41,6 +73,12 @@ export async function POST(request: Request) {
       success_url: "https://contentideamaker.com/dashboard?success=true",
       cancel_url: "https://contentideamaker.com/pricing",
       allow_promotion_codes: true,
+      customer_email: user.email,
+      client_reference_id: user.id,
+      metadata: {
+        user_id: user.id,
+        plan: selectedPlan,
+      },
     });
 
     if (!session.url) {
