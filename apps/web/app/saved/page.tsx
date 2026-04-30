@@ -16,6 +16,8 @@ type SavedIdea = {
   niche: string;
 };
 
+const SHARE_BASE_URL = "https://contentideamaker.com";
+
 export default function SavedIdeasPage() {
   const [ideas, setIdeas] = useState<SavedIdea[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,7 +143,7 @@ export default function SavedIdeasPage() {
   };
 
   const copyIdea = async (item: SavedIdea) => {
-    const shareableLink = `${window.location.origin}/saved?idea=${encodeURIComponent(item.id)}`;
+    const shareableLink = `${SHARE_BASE_URL}/saved?idea=${encodeURIComponent(item.id)}`;
     try {
       await navigator.clipboard.writeText(shareableLink);
       showToast("Shareable link copied");
@@ -189,7 +191,7 @@ export default function SavedIdeasPage() {
 
   const shareIdea = async (item: SavedIdea) => {
     const shareText = `${item.idea_title}\nNiche: ${item.niche}\n\n${item.idea_content}`;
-    const shareUrl = `${window.location.origin}/saved`;
+    const shareUrl = `${SHARE_BASE_URL}/saved?idea=${encodeURIComponent(item.id)}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: item.idea_title, text: shareText, url: shareUrl });
