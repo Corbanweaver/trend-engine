@@ -52,7 +52,18 @@ export async function POST(request: Request) {
 
     return NextResponse.redirect(session.url, 303);
   } catch (error) {
-    console.error("Stripe checkout error:", error);
+    if (error instanceof Stripe.errors.StripeError) {
+      console.error("Stripe checkout error details:", {
+        message: error.message,
+        type: error.type,
+        code: error.code,
+        param: error.param,
+        requestId: error.requestId,
+        statusCode: error.statusCode,
+      });
+    } else {
+      console.error("Stripe checkout unexpected error:", error);
+    }
     return NextResponse.json(
       { error: "Unable to create Stripe checkout session" },
       { status: 500 },
