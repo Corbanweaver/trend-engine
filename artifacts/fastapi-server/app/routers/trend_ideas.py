@@ -122,11 +122,21 @@ async def generate_idea_thumbnail(niche: str, topic: str, idea: VideoIdea) -> st
 
     title = (idea.optimized_title or "").strip() or (idea.hook or "").strip() or "viral short-form video"
     concept = (idea.idea or "").strip()
+    visual_subject = " ".join(
+        part.strip() for part in [niche, topic, title, concept] if part and part.strip()
+    )[:80]
     prompt = (
-        f"Cinematic social media thumbnail for a short-form video. "
-        f"Niche: {niche}. Topic: {topic}. Title: {title}. Concept: {concept}. "
-        "Bold composition, high contrast lighting, modern creator aesthetic, vibrant colors, clean background, no text, no watermark."
+        f"Clean professional YouTube/TikTok thumbnail of {visual_subject}; "
+        "photorealistic, high quality, 16:9, bright lighting, eye-catching, "
+        "no text, no words, no letters, no watermarks."
     )
+    if len(prompt) > 200:
+        prompt = (
+            f"Professional YouTube/TikTok thumbnail: {visual_subject[:70]}; "
+            "photorealistic, 16:9, bright lighting, eye-catching, "
+            "no text, no words, no letters, no watermarks."
+        )[:200]
+    logger.info("Replicate thumbnail prompt length=%s prompt='%s'", len(prompt), prompt)
     try:
         def _run_replicate() -> str:
             os.environ["REPLICATE_API_TOKEN"] = token
