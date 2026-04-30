@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="relative min-h-svh overflow-hidden bg-gradient-to-br from-[#020617] via-[#0b1120] to-[#1e1b4b] text-white">
+    <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-fuchsia-500/25 blur-3xl" />
         <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-cyan-500/20 blur-3xl" />
@@ -14,7 +14,7 @@ export default function Home() {
           href="/"
           className="fluid-transition text-sm font-semibold tracking-[0.18em] text-white/95 hover:text-cyan-200"
         >
-          Content Idea Maker
+          Trend Engine
         </Link>
         <nav className="flex items-center gap-6 text-sm">
           <Link
@@ -28,7 +28,7 @@ export default function Home() {
 
       <section className="relative mx-auto flex min-h-[calc(100svh-5.5rem)] w-full max-w-6xl flex-col items-center justify-center px-6 py-18 text-center">
         <span className="glass-surface hairline-ring rounded-full border border-white/15 px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
-          Content Idea Maker
+          Trend Engine
         </span>
 
         <h1 className="mt-8 max-w-5xl text-balance bg-gradient-to-r from-white via-cyan-100 to-fuchsia-200 bg-clip-text text-5xl font-extrabold leading-tight text-transparent sm:text-6xl lg:text-7xl">

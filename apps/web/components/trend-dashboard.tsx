@@ -489,6 +489,9 @@ export function TrendDashboard() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [favoriteNiches, setFavoriteNiches] = useState<string[]>([]);
   const [nicheHistory, setNicheHistory] = useState<string[]>([]);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackSent, setFeedbackSent] = useState(false);
 
   useEffect(() => {
     try {
@@ -783,11 +786,11 @@ export function TrendDashboard() {
   );
 
   return (
-    <div className="relative flex min-h-svh flex-col overflow-hidden bg-slate-950 pb-16 text-slate-100 lg:pb-0">
+    <div className="relative flex min-h-svh flex-col overflow-hidden bg-background pb-16 text-foreground lg:pb-0">
       {showOnboarding ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
           <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-slate-900 p-6 shadow-2xl">
-            <h2 className="text-xl font-semibold text-white">Welcome to Content Idea Maker</h2>
+            <h2 className="text-xl font-semibold text-white">Welcome to Trend Engine</h2>
             <p className="mt-2 text-sm text-slate-300">
               Get started in under two minutes:
             </p>
@@ -843,16 +846,14 @@ export function TrendDashboard() {
             </div>
             <div>
               <h1 className="text-lg font-semibold tracking-tight">
-                Content Idea Maker
+                Trend Engine
               </h1>
               <p className="text-xs text-slate-400">
                 AI trend intelligence for creators
               </p>
             </div>
           </div>
-          <div className="ml-auto rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
-            API: {getApiBaseUrl()}
-          </div>
+          <div className="ml-auto" />
           <div className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-100">
             Plan: {formatPlanLabel(plan)}
             {plan === "free" ? ` (${analysesUsedThisMonth}/${FREE_ANALYSIS_LIMIT})` : ""}
@@ -950,21 +951,6 @@ export function TrendDashboard() {
                 </option>
               ))}
             </select>
-            {nicheKey !== "custom" ? (
-              <button
-                type="button"
-                onClick={() => toggleFavoriteNiche(nicheKey)}
-                className={cn(
-                  "inline-flex h-9 items-center rounded-md border px-2 text-xs",
-                  favoriteSet.has(nicheKey)
-                    ? "border-amber-300/40 bg-amber-500/20 text-amber-100"
-                    : "border-white/15 bg-slate-900 text-slate-300",
-                )}
-                title="Favorite this niche"
-              >
-                <Sparkles className="size-3.5" />
-              </button>
-            ) : null}
             {nicheKey === "custom" ? (
               <input
                 type="text"
@@ -1001,6 +987,13 @@ export function TrendDashboard() {
                 Upgrade plan
               </Link>
             ) : null}
+            <button
+              type="button"
+              onClick={() => setFeedbackOpen(true)}
+              className="rounded-md border border-white/20 bg-white/5 px-3 py-2 text-xs text-slate-200 hover:bg-white/10"
+            >
+              Feedback
+            </button>
             {loading ? (
               <p className="w-full text-xs text-slate-400 sm:w-auto">
                 This may take a moment while we scan live trends across platforms.
@@ -1149,6 +1142,46 @@ export function TrendDashboard() {
           />
         </SheetContent>
       </Sheet>
+      {feedbackOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/15 bg-slate-900 p-4">
+            <h3 className="text-base font-semibold text-slate-100">Send feedback</h3>
+            <textarea
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              placeholder="Tell us what to improve..."
+              className="mt-3 h-28 w-full rounded-xl border border-white/15 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500"
+            />
+            {feedbackSent ? (
+              <p className="mt-2 text-xs text-emerald-300">Thanks! Feedback sent.</p>
+            ) : null}
+            <div className="mt-3 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setFeedbackOpen(false)}
+                className="rounded-md border border-white/20 px-3 py-2 text-xs text-slate-200"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!feedbackText.trim()) return;
+                  setFeedbackSent(true);
+                  setFeedbackText("");
+                  window.setTimeout(() => {
+                    setFeedbackSent(false);
+                    setFeedbackOpen(false);
+                  }, 900);
+                }}
+                className="rounded-md bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-slate-950/95 px-3 py-2 backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-md items-center justify-around">
           <Link href="/" className="flex flex-col items-center text-[11px] text-slate-300">

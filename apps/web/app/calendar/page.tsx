@@ -33,6 +33,10 @@ export default function CalendarPage() {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
   useEffect(() => {
+    document.title = "Content Calendar — Trend Engine";
+  }, []);
+
+  useEffect(() => {
     const loadIdeas = async () => {
       setLoading(true);
       setError(null);
@@ -131,7 +135,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <main className="min-h-svh bg-gradient-to-br from-[#020617] via-[#0b1120] to-[#1e1b4b] p-4 text-slate-100">
+    <main className="min-h-svh bg-background p-4 text-foreground">
       <div className="mx-auto max-w-7xl space-y-5">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">Content Calendar</h1>

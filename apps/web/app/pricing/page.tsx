@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Pricing — Content Idea Maker",
+  title: "Pricing — Trend Engine",
   description:
-    "Choose a plan for Content Idea Maker: trend analyses, niches, saved ideas, and AI thumbnails.",
+    "Choose a plan for Trend Engine: trend analyses, niches, saved ideas, and AI thumbnails.",
 };
 
 const plans = [
@@ -68,7 +68,7 @@ function PricingHeader() {
         href="/"
         className="fluid-transition text-sm font-semibold tracking-[0.18em] text-white hover:text-cyan-200"
       >
-        Content Idea Maker
+        Trend Engine
       </Link>
       <nav className="flex items-center gap-6 text-sm">
         <Link
@@ -107,7 +107,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
   const isCheckoutCancelled = checkoutStatus === "cancelled";
 
   return (
-    <main className="relative min-h-svh overflow-hidden bg-gradient-to-br from-[#020617] via-[#0b1120] to-[#1e1b4b] text-white">
+    <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-fuchsia-500/25 blur-3xl" />
         <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-cyan-500/20 blur-3xl" />

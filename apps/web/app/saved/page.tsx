@@ -21,6 +21,16 @@ export default function SavedIdeasPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 1800);
+  };
+
+  useEffect(() => {
+    document.title = "Saved Ideas — Trend Engine";
+  }, []);
 
   useEffect(() => {
     const loadIdeas = async () => {
@@ -131,9 +141,10 @@ export default function SavedIdeasPage() {
   };
 
   const copyIdea = async (item: SavedIdea) => {
-    const payload = `${item.idea_title || "Saved idea"}\n\n${item.idea_content || ""}`;
+    const shareableLink = `${window.location.origin}/saved?idea=${encodeURIComponent(item.id)}`;
     try {
-      await navigator.clipboard.writeText(payload);
+      await navigator.clipboard.writeText(shareableLink);
+      showToast("Shareable link copied");
       trackUiEvent({
         area: "saved",
         action: "copy_idea_success",
@@ -151,53 +162,29 @@ export default function SavedIdeasPage() {
     }
   };
 
-  const downloadIdeaAsPdf = (item: SavedIdea) => {
-    const win = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
-    if (!win) {
-      trackUiEvent({
-        area: "saved",
-        action: "pdf_popup_blocked",
-        level: "warn",
-        context: { ideaId: item.id },
-      });
-      setError("Popup blocked. Allow popups to download as PDF.");
-      return;
-    }
-    const escapedTitle = (item.idea_title || "Saved idea")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-    const escapedBody = (item.idea_content || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\n/g, "<br/>");
-    win.document.write(`
-      <html>
-        <head>
-          <title>${escapedTitle}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 32px; color: #0f172a; }
-            h1 { margin: 0 0 12px; font-size: 24px; }
-            .meta { color: #475569; margin-bottom: 16px; font-size: 13px; }
-            .content { white-space: normal; line-height: 1.6; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <h1>${escapedTitle}</h1>
-          <div class="meta">Niche: ${item.niche} · Saved: ${new Date(item.created_at).toLocaleString()}</div>
-          <div class="content">${escapedBody}</div>
-        </body>
-      </html>
-    `);
-    win.document.close();
-    win.focus();
-    win.print();
+  const downloadIdeaFile = (item: SavedIdea) => {
+    const content = [
+      `${item.idea_title || "Saved idea"}`,
+      `Niche: ${item.niche}`,
+      `Saved: ${new Date(item.created_at).toLocaleString()}`,
+      "",
+      item.idea_content || "",
+    ].join("\n");
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(item.idea_title || "trend-idea").slice(0, 40).replace(/[^\w-]+/g, "_")}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
     trackUiEvent({
       area: "saved",
-      action: "pdf_print_opened",
+      action: "txt_download_started",
       context: { ideaId: item.id },
     });
+    showToast("Idea file downloaded");
   };
 
   const shareIdea = async (item: SavedIdea) => {
@@ -206,6 +193,7 @@ export default function SavedIdeasPage() {
     if (navigator.share) {
       try {
         await navigator.share({ title: item.idea_title, text: shareText, url: shareUrl });
+        showToast("Shared");
         trackUiEvent({
           area: "saved",
           action: "share_native_success",
@@ -224,6 +212,7 @@ export default function SavedIdeasPage() {
     }
     try {
       await navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`);
+      showToast("Shared copy ready");
       trackUiEvent({
         area: "saved",
         action: "share_clipboard_success",
@@ -242,8 +231,13 @@ export default function SavedIdeasPage() {
   };
 
   return (
-    <main className="min-h-svh bg-gradient-to-br from-[#020617] via-[#0b1120] to-[#1e1b4b] px-4 py-8 text-slate-100">
+    <main className="min-h-svh bg-background px-4 py-8 text-foreground">
       <div className="mx-auto max-w-5xl space-y-6">
+        {toast ? (
+          <div className="fixed right-4 top-4 z-50 rounded-xl border border-emerald-300/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-100 shadow-lg">
+            {toast}
+          </div>
+        ) : null}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">Saved Ideas</h1>
           <Link
@@ -293,14 +287,14 @@ export default function SavedIdeasPage() {
                     onClick={() => void copyIdea(item)}
                     className="fluid-transition rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-100 hover:bg-cyan-500/20"
                   >
-                    Copy to clipboard
+                    Copy shareable link
                   </button>
                   <button
                     type="button"
-                    onClick={() => downloadIdeaAsPdf(item)}
+                    onClick={() => downloadIdeaFile(item)}
                     className="fluid-transition rounded-xl border border-indigo-400/30 bg-indigo-500/10 px-3 py-1.5 text-xs font-medium text-indigo-100 hover:bg-indigo-500/20"
                   >
-                    Download as PDF
+                    Download .txt
                   </button>
                   <button
                     type="button"

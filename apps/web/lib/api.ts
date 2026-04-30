@@ -1,5 +1,5 @@
 /**
- * Base URL for the FastAPI Content Engine (no trailing slash).
+ * Base URL for the FastAPI Trend Engine API (no trailing slash).
  * Override with NEXT_PUBLIC_API_URL (e.g. http://localhost:8000).
  */
 export function getApiBaseUrl(): string {

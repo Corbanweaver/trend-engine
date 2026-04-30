@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Content Engine",
-  description: "Trends and video ideas for creators",
+  title: "Trend Engine",
+  description: "Trend intelligence and video ideas for creators",
 };
 
 export default function RootLayout({
@@ -25,6 +25,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(() => {
+  try {
+    const saved = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const theme = saved === "light" || saved === "dark" ? saved : (prefersDark ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  } catch {}
+})();
+`,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${geistSans.className}`}
       >

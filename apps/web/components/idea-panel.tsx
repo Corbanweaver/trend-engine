@@ -272,7 +272,7 @@ export function IdeaPanel({
         </h2>
         <p className="mt-1 text-xs text-slate-400">
           {trend.ideas.length} idea{trend.ideas.length === 1 ? "" : "s"} from
-          your Content Engine
+          your Trend Engine
         </p>
       </div>
 
@@ -406,17 +406,17 @@ export function IdeaPanel({
                     className="h-8 bg-cyan-400 px-3 text-xs font-semibold text-slate-950 hover:opacity-90 disabled:opacity-60"
                   >
                     {savedIndexes[i]
-                      ? "Saved"
+                      ? "✔ Saved to Content Calendar"
                       : savingIndex === i
                         ? "Saving..."
-                        : "Save Idea"}
+                        : "Save to Content Calendar"}
                   </Button>
                   {(() => {
                     const key = `${trend.trend}::${idea.optimized_title ?? idea.hook ?? idea.idea}`;
                     const rating = ideaRatings[key];
                     return rating ? (
                       <p className="text-xs text-slate-400">
-                        Feedback saved: {rating === "up" ? "Thumbs up" : "Thumbs down"}
+                        {rating === "up" ? "✅ Saved to Content Calendar" : "Feedback recorded"}
                       </p>
                     ) : null;
                   })()}
