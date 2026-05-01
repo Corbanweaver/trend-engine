@@ -3,9 +3,13 @@ create table if not exists public.saved_ideas (
   user_id uuid not null references auth.users(id) on delete cascade,
   idea_title text not null default '',
   idea_content text not null default '',
+  thumbnail_url text not null default '',
   niche text not null default '',
   created_at timestamptz not null default now()
 );
+
+alter table public.saved_ideas
+  add column if not exists thumbnail_url text not null default '';
 
 create index if not exists saved_ideas_user_id_created_at_idx
   on public.saved_ideas(user_id, created_at desc);

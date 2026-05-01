@@ -13,6 +13,7 @@ type SavedIdea = {
   created_at: string;
   idea_title: string;
   idea_content: string;
+  thumbnail_url: string;
   niche: string;
 };
 
@@ -60,7 +61,7 @@ export default function SavedIdeasPage() {
 
         const { data, error: fetchError } = await supabase
           .from("saved_ideas")
-          .select("id, created_at, idea_title, idea_content, niche")
+          .select("id, created_at, idea_title, idea_content, thumbnail_url, niche")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
@@ -293,41 +294,51 @@ export default function SavedIdeasPage() {
           {ideas.map((item, index) => (
             <article
               key={item.id}
-              className="fluid-transition glass-surface stagger-in rounded-2xl border border-white/10 p-5"
+              className="fluid-transition glass-surface stagger-in overflow-hidden rounded-2xl border border-border bg-card p-5"
               style={{ ["--stagger" as string]: `${Math.min(index, 12)}` }}
             >
-              <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                <span className="rounded bg-white/5 px-2 py-1">{item.niche}</span>
+              {item.thumbnail_url ? (
+                <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.thumbnail_url}
+                    alt={item.idea_title || "Saved idea thumbnail"}
+                    className="h-44 w-full object-cover"
+                  />
+                </div>
+              ) : null}
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="rounded bg-muted px-2 py-1">{item.niche}</span>
                 <span>{new Date(item.created_at).toLocaleString()}</span>
               </div>
-              <h2 className="text-base font-semibold text-slate-100">{item.idea_title || "Saved idea"}</h2>
+              <h2 className="text-base font-semibold text-foreground">{item.idea_title || "Saved idea"}</h2>
               <div className="mt-2">
                 <div className="flex flex-wrap gap-2.5">
                   <button
                     type="button"
                     onClick={() => void copyIdea(item)}
-                    className="fluid-transition rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-100 hover:bg-cyan-500/20"
+                    className="fluid-transition rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-100 dark:hover:bg-cyan-500/20"
                   >
                     Copy shareable link
                   </button>
                   <button
                     type="button"
                     onClick={() => downloadIdeaFile(item)}
-                    className="fluid-transition rounded-xl border border-indigo-400/30 bg-indigo-500/10 px-3 py-1.5 text-xs font-medium text-indigo-100 hover:bg-indigo-500/20"
+                    className="fluid-transition rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:border-indigo-400/30 dark:bg-indigo-500/10 dark:text-indigo-100 dark:hover:bg-indigo-500/20"
                   >
                     Download .txt
                   </button>
                   <button
                     type="button"
                     onClick={() => void shareIdea(item)}
-                    className="fluid-transition rounded-xl border border-violet-400/30 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-100 hover:bg-violet-500/20"
+                    className="fluid-transition rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-100 dark:hover:bg-violet-500/20"
                   >
                     Share
                   </button>
                   <button
                     type="button"
                     onClick={() => saveIdeaToCalendar(item)}
-                    className="fluid-transition rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-100 hover:bg-emerald-500/20"
+                    className="fluid-transition rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-100 dark:hover:bg-emerald-500/20"
                   >
                     Save to Calendar
                   </button>
@@ -342,7 +353,7 @@ export default function SavedIdeasPage() {
                 </div>
               </div>
               {item.idea_content ? (
-                <div className="mt-3 whitespace-pre-wrap rounded-xl border border-white/10 bg-slate-950/75 p-3.5 font-sans text-sm leading-relaxed text-slate-200">
+                <div className="mt-3 whitespace-pre-wrap rounded-xl border border-border bg-muted/40 p-3.5 font-sans text-sm leading-relaxed text-foreground">
                   {item.idea_content}
                 </div>
               ) : null}

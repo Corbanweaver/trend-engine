@@ -10,6 +10,7 @@ type SavedIdea = {
   id: string;
   idea_title: string;
   idea_content: string;
+  thumbnail_url: string;
   created_at: string;
   niche: string;
 };
@@ -62,7 +63,7 @@ export default function CalendarPage() {
         }
         const { data, error: fetchError } = await supabase
           .from("saved_ideas")
-          .select("id, idea_title, idea_content, niche, created_at")
+          .select("id, idea_title, idea_content, thumbnail_url, niche, created_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
         if (fetchError) {
@@ -209,11 +210,11 @@ export default function CalendarPage() {
               {error}
             </div>
           ) : null}
-          <aside className="glass-surface rounded-2xl border border-white/10 p-3.5">
+          <aside className="glass-surface rounded-2xl border border-border bg-card p-3.5">
             <p className="mb-2 text-sm font-medium">Unscheduled ideas</p>
             <div className="space-y-2">
               {unscheduled.length === 0 ? (
-                <div className="rounded-xl border border-white/10 bg-slate-800/40 p-3 text-xs text-slate-400">
+                <div className="rounded-xl border border-border bg-muted p-3 text-xs text-muted-foreground">
                   All ideas are scheduled. Drag items between dates to reschedule.
                 </div>
               ) : null}
@@ -222,16 +223,26 @@ export default function CalendarPage() {
                   key={idea.id}
                   draggable
                   onDragStart={() => setDragIdeaId(idea.id)}
-                  className="fluid-transition stagger-in spring-pop cursor-grab rounded-xl border border-white/10 bg-slate-800/75 p-2 text-xs hover:-translate-y-0.5 hover:border-cyan-300/30"
+                  className="fluid-transition stagger-in spring-pop cursor-grab rounded-xl border border-border bg-muted/70 p-2 text-xs hover:-translate-y-0.5 hover:border-blue-300 dark:hover:border-cyan-300/30"
                   style={{ ["--stagger" as string]: `${Math.min(idx, 10)}` }}
                 >
+                  {idea.thumbnail_url ? (
+                    <div className="mb-2 overflow-hidden rounded-md border border-border">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={idea.thumbnail_url}
+                        alt={idea.idea_title || "Saved idea thumbnail"}
+                        className="h-20 w-full object-cover"
+                      />
+                    </div>
+                  ) : null}
                   <p className="font-medium">{idea.idea_title || "Saved idea"}</p>
-                  <p className="text-slate-400">{idea.niche}</p>
+                  <p className="text-muted-foreground">{idea.niche}</p>
                 </div>
               ))}
             </div>
           </aside>
-          <section className="glass-surface rounded-2xl border border-white/10 p-3.5">
+          <section className="glass-surface rounded-2xl border border-border bg-card p-3.5">
             <div className="mb-3 flex items-center justify-between">
               <button
                 onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
@@ -251,7 +262,7 @@ export default function CalendarPage() {
             </div>
             <div className="grid grid-cols-7 gap-2">
               {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-                <div key={d} className="px-1 text-xs text-slate-400">
+                <div key={d} className="px-1 text-xs text-muted-foreground">
                   {d}
                 </div>
               ))}
@@ -276,10 +287,10 @@ export default function CalendarPage() {
                         ? "scale-[1.02] border-cyan-300/55 shadow-[0_0_0_1px_rgba(34,211,238,0.35),0_0_20px_rgba(34,211,238,0.2)]"
                         : ""
                     } ${
-                      inMonth ? "border-white/10 bg-slate-800/60" : "border-white/5 bg-slate-900/50"
+                      inMonth ? "border-border bg-muted/60" : "border-border/70 bg-muted/40"
                     }`}
                   >
-                    <p className="mb-1 text-[11px] text-slate-400">{d.getDate()}</p>
+                    <p className="mb-1 text-[11px] text-muted-foreground">{d.getDate()}</p>
                     <div className="space-y-1">
                       {ids.map((id) => {
                         const idea = ideaById.get(id);
@@ -289,8 +300,18 @@ export default function CalendarPage() {
                             key={id}
                             draggable
                             onDragStart={() => setDragIdeaId(id)}
-                            className="fluid-transition cursor-grab rounded-lg border border-cyan-300/25 bg-cyan-500/10 px-1.5 py-1 text-[11px] hover:border-cyan-300/40"
+                            className="fluid-transition cursor-grab rounded-lg border border-blue-200 bg-blue-50/80 px-1.5 py-1 text-[11px] text-blue-900 hover:border-blue-300 dark:border-cyan-300/25 dark:bg-cyan-500/10 dark:text-cyan-100 dark:hover:border-cyan-300/40"
                           >
+                            {idea.thumbnail_url ? (
+                              <div className="mb-1 overflow-hidden rounded border border-border">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={idea.thumbnail_url}
+                                  alt={idea.idea_title || "Saved idea thumbnail"}
+                                  className="h-12 w-full object-cover"
+                                />
+                              </div>
+                            ) : null}
                             <div className="flex items-center justify-between gap-1">
                               <button
                                 type="button"
@@ -302,7 +323,7 @@ export default function CalendarPage() {
                               <button
                                 type="button"
                                 onClick={() => removeFromCalendar(id)}
-                                className="rounded border border-white/20 px-1 text-[10px] text-slate-200 hover:bg-white/10"
+                                className="rounded border border-border px-1 text-[10px] text-foreground hover:bg-muted"
                               >
                                 Remove
                               </button>
@@ -327,26 +348,36 @@ export default function CalendarPage() {
         </div>
       </div>
       {selectedIdea ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-2xl rounded-2xl border border-white/20 bg-slate-900 p-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-2xl rounded-2xl border border-border bg-card p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   {selectedIdea.niche} · {new Date(selectedIdea.created_at).toLocaleString()}
                 </p>
-                <h3 className="mt-1 text-lg font-semibold text-slate-100">
+                <h3 className="mt-1 text-lg font-semibold text-foreground">
                   {selectedIdea.idea_title || "Saved idea"}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedIdeaId(null)}
-                className="rounded-lg border border-white/20 px-2 py-1 text-xs text-slate-200"
+                className="rounded-lg border border-border px-2 py-1 text-xs text-foreground hover:bg-muted"
               >
                 Close
               </button>
             </div>
-            <div className="mt-4 max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-slate-950/80 p-4 text-sm leading-relaxed text-slate-200">
+            {selectedIdea.thumbnail_url ? (
+              <div className="mt-4 overflow-hidden rounded-xl border border-border">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={selectedIdea.thumbnail_url}
+                  alt={selectedIdea.idea_title || "Saved idea thumbnail"}
+                  className="h-56 w-full object-cover"
+                />
+              </div>
+            ) : null}
+            <div className="mt-4 max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-foreground">
               {selectedIdea.idea_content || "No script/content available for this idea."}
             </div>
           </div>

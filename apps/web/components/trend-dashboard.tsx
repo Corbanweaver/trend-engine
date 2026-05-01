@@ -285,8 +285,8 @@ function TrendCard({
     >
       <Card
         className={cn(
-          "group relative cursor-pointer overflow-hidden border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-950/95 text-slate-100 shadow-lg shadow-black/30",
-          "transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:border-cyan-300/40 hover:shadow-cyan-500/20",
+          "group relative cursor-pointer overflow-hidden border-border bg-card text-foreground shadow-lg shadow-black/10 dark:border-white/10 dark:bg-gradient-to-br dark:from-slate-900/95 dark:to-slate-950/95 dark:text-slate-100 dark:shadow-black/30",
+          "transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:border-blue-300 hover:shadow-blue-500/20 dark:hover:border-cyan-300/40 dark:hover:shadow-cyan-500/20",
           selected &&
             "ring-2 ring-cyan-300/80 shadow-[0_0_0_1px_rgba(56,189,248,0.5),0_0_36px_rgba(56,189,248,0.28)]",
         )}
@@ -309,7 +309,7 @@ function TrendCard({
           ) : (
             <div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.35),transparent_40%),radial-gradient(circle_at_80%_20%,rgba(244,114,182,0.3),transparent_35%),radial-gradient(circle_at_50%_100%,rgba(99,102,241,0.25),transparent_40%)]" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent dark:from-slate-950/80 dark:via-slate-950/20" />
           <div className="absolute bottom-2 left-2 flex flex-wrap gap-1.5">
             {platformBadges.slice(0, 3).map((badge) => (
               <span
@@ -340,44 +340,44 @@ function TrendCard({
               ))}
             </div>
             <div className="text-right">
-              <p className="flex items-center justify-end gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
+              <p className="flex items-center justify-end gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground dark:text-slate-400">
                 Engagement
                 <span
                   title="Trend score combines Reddit score/comments, TikTok likes/plays, Hacker News score, and counts from YouTube/news/web/Pinterest/Medium, then log-scales to 0-100."
                   className="inline-flex"
                 >
-                  <Info className="size-3 text-slate-500" />
+                  <Info className="size-3 text-muted-foreground dark:text-slate-500" />
                 </span>
               </p>
-              <p className="text-lg font-bold tabular-nums leading-none text-white">
+              <p className="text-lg font-bold tabular-nums leading-none text-foreground dark:text-white">
                 {raw > 0 ? heat : "—"}
                 {raw > 0 ? (
-                  <span className="text-xs font-normal text-slate-400">
+                  <span className="text-xs font-normal text-muted-foreground dark:text-slate-400">
                     /100
                   </span>
                 ) : null}
               </p>
               {raw > 0 ? (
-                <p className="text-[10px] text-slate-500">
+                <p className="text-[10px] text-muted-foreground dark:text-slate-500">
                   raw {raw.toLocaleString()}
                 </p>
               ) : null}
             </div>
           </div>
-          <CardTitle className="text-base leading-snug text-slate-100">
+          <CardTitle className="text-base leading-snug text-foreground dark:text-slate-100">
             {trend.trend}
           </CardTitle>
-          <p className="text-[11px] text-cyan-200/80">{trendLabel}</p>
+          <p className="text-[11px] text-blue-600/80 dark:text-cyan-200/80">{trendLabel}</p>
         </CardHeader>
         <CardContent className="pb-2">
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500 transition-all"
+              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all dark:from-cyan-400 dark:to-indigo-500"
               style={{ width: raw > 0 ? `${heat}%` : "0%" }}
             />
           </div>
         </CardContent>
-        <CardFooter className="pt-0 text-xs text-slate-400">
+        <CardFooter className="pt-0 text-xs text-muted-foreground dark:text-slate-400">
           {trend.ideas.length} AI idea{trend.ideas.length === 1 ? "" : "s"} ·
           Click for details
           <ChevronRight className="ml-1 size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -775,6 +775,7 @@ export function TrendDashboard() {
         user_id: user.id,
         idea_title: idea.optimized_title?.trim() || idea.hook || trend || "Saved idea",
         idea_content: idea.script?.trim() || idea.idea,
+        thumbnail_url: idea.thumbnail_url?.trim() || "",
         niche: effectiveNiche,
       });
 
@@ -812,20 +813,20 @@ export function TrendDashboard() {
         </div>
       ) : null}
       <div
-        className="pointer-events-none absolute inset-0 opacity-50"
+        className="pointer-events-none absolute inset-0 opacity-60 dark:opacity-50"
         style={{
           background:
-            "radial-gradient(circle at 10% 10%, rgba(34,211,238,0.14), transparent 40%), radial-gradient(circle at 85% 18%, rgba(244,114,182,0.14), transparent 36%), radial-gradient(circle at 50% 90%, rgba(99,102,241,0.12), transparent 42%)",
+            "radial-gradient(circle at 10% 10%, rgba(59,130,246,0.16), transparent 40%), radial-gradient(circle at 85% 18%, rgba(59,130,246,0.1), transparent 36%), radial-gradient(circle at 50% 90%, rgba(59,130,246,0.08), transparent 42%)",
         }}
       />
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-border bg-white/90 backdrop-blur dark:border-white/10 dark:bg-slate-950/90">
         {loading ? (
-          <div className="border-b border-cyan-400/20 bg-cyan-500/5 px-4 py-2">
+          <div className="border-b border-blue-200 bg-blue-50 px-4 py-2 dark:border-cyan-400/20 dark:bg-cyan-500/5">
             <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-1">
-              <p className="text-xs font-medium text-cyan-200">{analysisStep}</p>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+              <p className="text-xs font-medium text-blue-700 dark:text-cyan-200">{analysisStep}</p>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500 transition-all duration-500"
+                  className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 dark:from-cyan-400 dark:to-indigo-500"
                   style={{ width: `${analysisProgress}%` }}
                 />
               </div>
@@ -835,48 +836,42 @@ export function TrendDashboard() {
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-3">
           <Link
             href="/"
-            className="fluid-transition rounded-md px-1 text-sm font-medium text-slate-400 hover:text-white"
+            className="fluid-transition rounded-md px-1 text-sm font-medium text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-white"
           >
             ← Home
           </Link>
-          <div className="hidden h-6 w-px bg-white/10 sm:block" aria-hidden />
+          <div className="hidden h-6 w-px bg-border sm:block dark:bg-white/10" aria-hidden />
           <div className="flex items-center gap-2">
-            <div className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 p-1.5">
-              <Sparkles className="size-4 text-cyan-300" />
+            <div className="rounded-lg border border-blue-200 bg-blue-100 p-1.5 dark:border-cyan-300/30 dark:bg-cyan-400/10">
+              <Sparkles className="size-4 text-blue-600 dark:text-cyan-300" />
             </div>
             <div>
               <h1 className="text-lg font-semibold tracking-tight">
                 Trend Engine
               </h1>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground dark:text-slate-400">
                 AI trend intelligence for creators
               </p>
             </div>
           </div>
           <div className="ml-auto" />
-          <div className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-100">
+          <div className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs text-blue-700 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-100">
             Plan: {formatPlanLabel(plan)}
             {plan === "free" ? ` (${analysesUsedThisMonth}/${FREE_ANALYSIS_LIMIT})` : ""}
           </div>
           <Link
             href="/saved"
-            className="fluid-transition rounded-md border border-white/15 bg-slate-900/70 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
+            className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             Saved Ideas
           </Link>
           <Link
             href="/calendar"
-            className="fluid-transition rounded-md border border-white/15 bg-slate-900/70 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
+            className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             Calendar
           </Link>
-          <Link
-            href="/feedback"
-            className="fluid-transition rounded-md border border-white/15 bg-slate-900/70 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
-          >
-            Feedback Inbox
-          </Link>
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-200">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1 text-xs text-foreground dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
             {userAvatar ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -885,7 +880,7 @@ export function TrendDashboard() {
                 className="size-6 rounded-full object-cover"
               />
             ) : (
-              <div className="flex size-6 items-center justify-center rounded-full bg-cyan-400/20 text-[10px] font-semibold text-cyan-200">
+              <div className="flex size-6 items-center justify-center rounded-full bg-blue-100 text-[10px] font-semibold text-blue-700 dark:bg-cyan-400/20 dark:text-cyan-200">
                 {userEmail ? userEmail.slice(0, 1).toUpperCase() : "U"}
               </div>
             )}
@@ -896,7 +891,7 @@ export function TrendDashboard() {
             variant="outline"
             disabled={signingOut}
             onClick={signOut}
-            className="h-9 border-white/20 bg-slate-900/70 text-slate-100 hover:bg-slate-800"
+            className="h-9 border-border bg-card text-foreground hover:bg-muted dark:border-white/20 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800"
           >
             {signingOut ? (
               <>
@@ -914,13 +909,13 @@ export function TrendDashboard() {
             type="button"
             variant="outline"
             onClick={toggleTheme}
-            className="h-9 border-white/20 bg-slate-900/70 text-slate-100 hover:bg-slate-800"
+            className="h-9 border-border bg-card text-foreground hover:bg-muted dark:border-white/20 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800"
           >
             {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
             {theme === "dark" ? "Light" : "Dark"}
           </Button>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-slate-400">Niche</span>
+            <span className="text-xs text-muted-foreground dark:text-slate-400">Niche</span>
             <label className="sr-only" htmlFor="niche-select">
               Niche
             </label>
@@ -930,8 +925,8 @@ export function TrendDashboard() {
               onChange={(e) => setNicheKey(e.target.value)}
               disabled={loading}
               className={cn(
-                "h-9 rounded-md border border-white/15 bg-slate-900 px-3 text-sm text-slate-100 shadow-sm",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300",
+                "h-9 rounded-md border border-border bg-card px-3 text-sm text-foreground shadow-sm",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/15 dark:bg-slate-900 dark:text-slate-100 dark:focus-visible:ring-cyan-300",
               )}
             >
               {favoriteOptions.length > 0 ? (
@@ -965,8 +960,8 @@ export function TrendDashboard() {
                 placeholder="Your niche…"
                 disabled={loading}
                 className={cn(
-                  "h-9 w-40 rounded-md border border-white/15 bg-slate-900 px-3 text-sm text-slate-100 shadow-sm sm:w-48",
-                  "placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300",
+                  "h-9 w-40 rounded-md border border-border bg-card px-3 text-sm text-foreground shadow-sm sm:w-48",
+                  "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/15 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus-visible:ring-cyan-300",
                 )}
               />
             ) : null}
@@ -974,7 +969,7 @@ export function TrendDashboard() {
               type="button"
               disabled={loading || freeLimitReached || subscriptionLoading}
               onClick={runAnalysis}
-              className="bg-gradient-to-r from-cyan-400 to-indigo-500 text-slate-950 hover:opacity-90"
+              className="bg-primary text-white hover:opacity-90 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
             >
               {loading ? (
                 <>
@@ -988,7 +983,7 @@ export function TrendDashboard() {
             {freeLimitReached ? (
               <Link
                 href="/pricing"
-                className="rounded-md border border-fuchsia-300/40 bg-fuchsia-500/15 px-3 py-2 text-xs font-medium text-fuchsia-100 hover:bg-fuchsia-500/25"
+                className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:border-fuchsia-300/40 dark:bg-fuchsia-500/15 dark:text-fuchsia-100 dark:hover:bg-fuchsia-500/25"
               >
                 Upgrade plan
               </Link>
@@ -996,12 +991,12 @@ export function TrendDashboard() {
             <button
               type="button"
               onClick={() => setFeedbackOpen(true)}
-              className="rounded-md border border-white/20 bg-white/5 px-3 py-2 text-xs text-slate-200 hover:bg-white/10"
+              className="rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
             >
               Feedback
             </button>
             {loading ? (
-              <p className="w-full text-xs text-slate-400 sm:w-auto">
+              <p className="w-full text-xs text-muted-foreground dark:text-slate-400 sm:w-auto">
                 This may take a moment while we scan live trends across platforms.
               </p>
             ) : null}
@@ -1010,13 +1005,13 @@ export function TrendDashboard() {
         <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-3 px-4 pb-4">
           {nicheHistory.length > 0 ? (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-slate-500">Recent niches:</span>
+              <span className="text-xs text-muted-foreground dark:text-slate-500">Recent niches:</span>
               {nicheHistory.map((entry) => (
                 <button
                   key={entry}
                   type="button"
                   onClick={() => setNicheKey(entry)}
-                  className="fluid-transition rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-200 hover:border-cyan-300/40 hover:text-cyan-100"
+                  className="fluid-transition rounded-full border border-border bg-card px-2.5 py-1 text-xs text-foreground hover:border-blue-300 hover:text-blue-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:border-cyan-300/40 dark:hover:text-cyan-100"
                 >
                   {entry}
                 </button>
@@ -1024,12 +1019,12 @@ export function TrendDashboard() {
             </div>
           ) : null}
           <div className="relative max-w-xl">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground dark:text-slate-500" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search trends, hooks, or idea titles..."
-              className="h-10 w-full rounded-xl border border-white/10 bg-slate-900/80 pl-9 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-300/60"
+              className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-cyan-300/60"
             />
           </div>
           <div className="flex flex-wrap gap-2">
@@ -1049,13 +1044,13 @@ export function TrendDashboard() {
       </header>
 
       {error ? (
-        <div className="mx-4 mt-4 rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div className="mx-4 mt-4 rounded-lg border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200">
           {error}
         </div>
       ) : null}
 
       {freeLimitReached ? (
-        <div className="mx-4 mt-4 rounded-lg border border-fuchsia-400/40 bg-fuchsia-500/10 px-4 py-3 text-sm text-fuchsia-100">
+        <div className="mx-4 mt-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700 dark:border-fuchsia-400/40 dark:bg-fuchsia-500/10 dark:text-fuchsia-100">
           You have used all 5 free analyses this month. Upgrade to Creator or Pro
           for higher limits.
           <Link href="/pricing" className="ml-2 underline underline-offset-2">
@@ -1114,7 +1109,7 @@ export function TrendDashboard() {
 
         <aside
           className={cn(
-            "hidden w-[min(420px,40vw)] shrink-0 border-l border-white/10 bg-slate-900/70 lg:block",
+            "hidden w-[min(420px,40vw)] shrink-0 border-l border-border bg-card lg:block dark:border-white/10 dark:bg-slate-900/70",
             "transition-all duration-300",
             selectedTrend
               ? "translate-x-0 opacity-100"
@@ -1137,8 +1132,8 @@ export function TrendDashboard() {
           if (!open) setSelectedIndex(null);
         }}
       >
-        <SheetContent className="w-full overflow-y-auto border-white/10 bg-slate-950 p-0 sm:max-w-lg">
-          <SheetHeader className="border-b border-white/10 px-4 py-3 text-left">
+        <SheetContent className="w-full overflow-y-auto border-border bg-card p-0 dark:border-white/10 dark:bg-slate-950 sm:max-w-lg">
+          <SheetHeader className="border-b border-border px-4 py-3 text-left dark:border-white/10">
             <SheetTitle className="text-base">Video ideas</SheetTitle>
           </SheetHeader>
           <IdeaPanel
@@ -1149,14 +1144,14 @@ export function TrendDashboard() {
         </SheetContent>
       </Sheet>
       {feedbackOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/15 bg-slate-900 p-4">
-            <h3 className="text-base font-semibold text-slate-100">Send feedback</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 dark:bg-slate-950/75">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-4 dark:border-white/15 dark:bg-slate-900">
+            <h3 className="text-base font-semibold text-foreground dark:text-slate-100">Send feedback</h3>
             <textarea
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
               placeholder="Tell us what to improve..."
-              className="mt-3 h-28 w-full rounded-xl border border-white/15 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500"
+              className="mt-3 h-28 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
             />
             {feedbackSent ? (
               <p className="mt-2 text-xs text-emerald-300">Thanks! Feedback sent.</p>
@@ -1165,7 +1160,7 @@ export function TrendDashboard() {
               <button
                 type="button"
                 onClick={() => setFeedbackOpen(false)}
-                className="rounded-md border border-white/20 px-3 py-2 text-xs text-slate-200"
+                className="rounded-md border border-border px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/20 dark:text-slate-200 dark:hover:bg-white/10"
               >
                 Close
               </button>
@@ -1204,7 +1199,7 @@ export function TrendDashboard() {
                     setError(err instanceof Error ? err.message : "Failed to send feedback.");
                   }
                 }}
-                className="rounded-md bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950"
+                className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white dark:bg-cyan-400 dark:text-slate-950"
               >
                 Send
               </button>
@@ -1212,22 +1207,22 @@ export function TrendDashboard() {
           </div>
         </div>
       ) : null}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-slate-950/95 px-3 py-2 backdrop-blur lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-white/95 px-3 py-2 backdrop-blur dark:border-white/10 dark:bg-slate-950/95 lg:hidden">
         <div className="mx-auto flex max-w-md items-center justify-around">
-          <Link href="/" className="flex flex-col items-center text-[11px] text-slate-300">
+          <Link href="/" className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300">
             <Home className="mb-1 size-4" />
             Home
           </Link>
           <Link
             href="/saved"
-            className="flex flex-col items-center text-[11px] text-slate-300"
+            className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300"
           >
             <Bookmark className="mb-1 size-4" />
             Saved
           </Link>
           <Link
             href="/calendar"
-            className="flex flex-col items-center text-[11px] text-slate-300"
+            className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300"
           >
             <Calendar className="mb-1 size-4" />
             Calendar

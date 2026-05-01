@@ -66,26 +66,26 @@ function PricingHeader() {
     <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-7">
       <Link
         href="/"
-        className="fluid-transition text-sm font-semibold tracking-[0.18em] text-white hover:text-cyan-200"
+        className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
       >
         Trend Engine
       </Link>
       <nav className="flex items-center gap-6 text-sm">
         <Link
           href="/pricing"
-          className="fluid-transition font-medium text-cyan-200 hover:text-white"
+          className="fluid-transition font-medium text-primary hover:text-foreground"
         >
           Pricing
         </Link>
         <Link
           href="/login"
-          className="fluid-transition text-slate-300 hover:text-white"
+          className="fluid-transition text-muted-foreground hover:text-foreground"
         >
           Sign in
         </Link>
         <Link
           href="/dashboard"
-          className="fluid-transition glass-surface rounded-xl px-4 py-2 font-semibold text-white ring-1 ring-white/15 hover:bg-white/15"
+          className="fluid-transition glass-surface rounded-xl border border-border bg-card px-4 py-2 font-semibold text-foreground hover:bg-muted"
         >
           Open app
         </Link>
@@ -109,22 +109,22 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
   return (
     <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-fuchsia-500/25 blur-3xl" />
-        <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-cyan-500/20 blur-3xl" />
-        <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 animate-pulse rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-blue-300/30 blur-3xl dark:bg-fuchsia-500/25" />
+        <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-blue-400/20 blur-3xl dark:bg-cyan-500/20" />
+        <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 animate-pulse rounded-full bg-blue-500/20 blur-3xl dark:bg-indigo-500/20" />
       </div>
 
       <PricingHeader />
 
       <div className="relative z-10 mx-auto max-w-6xl px-6 pb-24 pt-6">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
+          <span className="rounded-full border border-border bg-card px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-primary dark:border-white/20 dark:bg-white/10 dark:text-cyan-200">
             Pricing
           </span>
-          <h1 className="mt-6 text-balance bg-gradient-to-r from-white via-cyan-100 to-fuchsia-200 bg-clip-text text-4xl font-extrabold text-transparent sm:text-5xl">
+          <h1 className="mt-6 text-balance bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-4xl font-extrabold text-transparent sm:text-5xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
             Plans that scale with your creativity
           </h1>
-          <p className="mt-4 text-lg leading-relaxed text-slate-300">
+          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
             Pick the tier that matches your workflow. Upgrade or downgrade
             anytime.
           </p>
@@ -148,35 +148,35 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
               key={plan.name}
               className={`fluid-transition relative flex flex-col rounded-3xl border p-8 shadow-xl ${
                 plan.featured
-                  ? "z-[1] border-cyan-400/40 bg-slate-950/80 shadow-[0_0_60px_-12px_rgba(34,211,238,0.35)] lg:-translate-y-2 lg:scale-[1.02]"
-                  : "glass-surface border-white/10 bg-slate-950/50 backdrop-blur-sm hover:border-white/20"
+                  ? "z-[1] border-blue-300 bg-card shadow-[0_0_44px_-10px_rgba(59,130,246,0.28)] lg:-translate-y-2 lg:scale-[1.02] dark:border-cyan-400/40 dark:bg-slate-950/80 dark:shadow-[0_0_60px_-12px_rgba(34,211,238,0.35)]"
+                  : "glass-surface border-border bg-card backdrop-blur-sm hover:border-blue-300 dark:border-white/10 dark:bg-slate-950/50 dark:hover:border-white/20"
               }`}
             >
               {plan.featured && plan.popularLabel ? (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500 px-4 py-1 text-xs font-bold uppercase tracking-wider text-slate-950 shadow-lg">
+                  <span className="inline-flex rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-lg dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950">
                     {plan.popularLabel}
                   </span>
                 </div>
               ) : null}
 
               <div className="mb-6">
-                <h2 className="text-xl font-bold text-white">{plan.name}</h2>
-                <p className="mt-2 min-h-[3rem] text-sm leading-relaxed text-slate-400">
+                <h2 className="text-xl font-bold text-foreground dark:text-white">{plan.name}</h2>
+                <p className="mt-2 min-h-[3rem] text-sm leading-relaxed text-muted-foreground dark:text-slate-400">
                   {plan.description}
                 </p>
                 <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold tracking-tight text-white">
+                  <span className="text-4xl font-extrabold tracking-tight text-foreground dark:text-white">
                     {plan.price}
                   </span>
-                  <span className="text-slate-400">{plan.period}</span>
+                  <span className="text-muted-foreground dark:text-slate-400">{plan.period}</span>
                 </div>
               </div>
 
-              <ul className="mb-8 flex flex-1 flex-col gap-3 text-sm text-slate-200">
+              <ul className="mb-8 flex flex-1 flex-col gap-3 text-sm text-foreground dark:text-slate-200">
                 {plan.features.map((f) => (
                   <li key={f} className="flex gap-3">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-500/15 text-cyan-300">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-cyan-500/15 dark:text-cyan-300">
                       <Check className="h-3.5 w-3.5" strokeWidth={3} />
                     </span>
                     <span>{f}</span>
@@ -189,8 +189,8 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                   href={plan.ctaHref}
                   className={
                     plan.ctaVariant === "primary"
-                      ? "inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-500 px-6 py-3.5 text-center text-base font-bold text-slate-950 shadow-[0_0_32px_rgba(56,189,248,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
-                      : "inline-flex w-full items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-6 py-3.5 text-center text-base font-semibold text-white transition-all duration-200 hover:border-white/35 hover:bg-white/10"
+                      ? "inline-flex w-full items-center justify-center rounded-2xl bg-primary px-6 py-3.5 text-center text-base font-bold text-white shadow-[0_0_24px_rgba(59,130,246,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_36px_rgba(59,130,246,0.45)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_32px_rgba(56,189,248,0.4)] dark:hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
+                      : "inline-flex w-full items-center justify-center rounded-2xl border border-border bg-card px-6 py-3.5 text-center text-base font-semibold text-foreground transition-all duration-200 hover:border-blue-300 hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:border-white/35 dark:hover:bg-white/10"
                   }
                 >
                   Get Started
@@ -202,8 +202,8 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                     type="submit"
                     className={
                       plan.ctaVariant === "primary"
-                        ? "inline-flex w-full cursor-pointer items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-500 px-6 py-3.5 text-center text-base font-bold text-slate-950 shadow-[0_0_32px_rgba(56,189,248,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
-                        : "inline-flex w-full cursor-pointer items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-6 py-3.5 text-center text-base font-semibold text-white transition-all duration-200 hover:border-white/35 hover:bg-white/10"
+                        ? "inline-flex w-full cursor-pointer items-center justify-center rounded-2xl bg-primary px-6 py-3.5 text-center text-base font-bold text-white shadow-[0_0_24px_rgba(59,130,246,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_36px_rgba(59,130,246,0.45)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_32px_rgba(56,189,248,0.4)] dark:hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
+                        : "inline-flex w-full cursor-pointer items-center justify-center rounded-2xl border border-border bg-card px-6 py-3.5 text-center text-base font-semibold text-foreground transition-all duration-200 hover:border-blue-300 hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:border-white/35 dark:hover:bg-white/10"
                     }
                   >
                     Get Started
@@ -214,7 +214,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           ))}
         </div>
 
-        <p className="mt-16 text-center text-sm text-slate-500">
+        <p className="mt-16 text-center text-sm text-muted-foreground">
           Questions? We&apos;re here to help — reach out anytime after you sign
           up.
         </p>
