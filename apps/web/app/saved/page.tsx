@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { getSupabaseClient } from "@/lib/supabase";
 import { trackUiEvent } from "@/lib/telemetry";
@@ -28,6 +28,42 @@ export default function SavedIdeasPage() {
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [detailIdea, setDetailIdea] = useState<SavedIdea | null>(null);
+
+  const closeDetail = useCallback(() => {
+    setDetailIdea(null);
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("idea")) {
+        url.searchParams.delete("idea");
+        const next = `${url.pathname}${url.search}${url.hash}`;
+        window.history.replaceState({}, "", next);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!detailIdea) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeDetail();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [detailIdea, closeDetail]);
+
+  useEffect(() => {
+    if (loading || ideas.length === 0) return;
+    try {
+      const id = new URLSearchParams(window.location.search).get("idea");
+      if (!id) return;
+      const match = ideas.find((i) => i.id === id);
+      if (match) setDetailIdea(match);
+    } catch {
+      /* ignore */
+    }
+  }, [loading, ideas]);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -294,16 +330,17 @@ export default function SavedIdeasPage() {
           {ideas.map((item, index) => (
             <article
               key={item.id}
-              className="fluid-transition glass-surface stagger-in overflow-hidden rounded-2xl border border-border bg-card p-5"
+              onClick={() => setDetailIdea(item)}
+              className="fluid-transition glass-surface stagger-in cursor-pointer overflow-hidden rounded-2xl border border-border bg-card p-5 text-left"
               style={{ ["--stagger" as string]: `${Math.min(index, 12)}` }}
             >
               {item.thumbnail_url ? (
-                <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+                <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-xl border border-border bg-muted">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={item.thumbnail_url}
                     alt={item.idea_title || "Saved idea thumbnail"}
-                    className="h-44 w-full object-cover"
+                    className="absolute inset-0 size-full object-cover"
                   />
                 </div>
               ) : null}
@@ -316,28 +353,40 @@ export default function SavedIdeasPage() {
                 <div className="flex flex-wrap gap-2.5">
                   <button
                     type="button"
-                    onClick={() => void copyIdea(item)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void copyIdea(item);
+                    }}
                     className="fluid-transition rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-100 dark:hover:bg-cyan-500/20"
                   >
                     Copy shareable link
                   </button>
                   <button
                     type="button"
-                    onClick={() => downloadIdeaFile(item)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadIdeaFile(item);
+                    }}
                     className="fluid-transition rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:border-indigo-400/30 dark:bg-indigo-500/10 dark:text-indigo-100 dark:hover:bg-indigo-500/20"
                   >
                     Download .txt
                   </button>
                   <button
                     type="button"
-                    onClick={() => void shareIdea(item)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void shareIdea(item);
+                    }}
                     className="fluid-transition rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-100 dark:hover:bg-violet-500/20"
                   >
                     Share
                   </button>
                   <button
                     type="button"
-                    onClick={() => saveIdeaToCalendar(item)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      saveIdeaToCalendar(item);
+                    }}
                     className="fluid-transition rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-100 dark:hover:bg-emerald-500/20"
                   >
                     Save to Calendar
@@ -345,7 +394,10 @@ export default function SavedIdeasPage() {
                   <button
                     type="button"
                     disabled={deletingId === item.id}
-                    onClick={() => void removeIdea(item.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void removeIdea(item.id);
+                    }}
                     className="fluid-transition rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {deletingId === item.id ? "Removing..." : "Remove"}
@@ -353,7 +405,7 @@ export default function SavedIdeasPage() {
                 </div>
               </div>
               {item.idea_content ? (
-                <div className="mt-3 whitespace-pre-wrap rounded-xl border border-border bg-muted/40 p-3.5 font-sans text-sm leading-relaxed text-foreground">
+                <div className="mt-3 line-clamp-3 rounded-xl border border-border bg-muted/40 p-3.5 font-sans text-sm leading-relaxed text-foreground">
                   {item.idea_content}
                 </div>
               ) : null}
@@ -361,6 +413,55 @@ export default function SavedIdeasPage() {
           ))}
         </div>
       </div>
+      {detailIdea ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="presentation"
+          onClick={() => closeDetail()}
+        >
+          <div
+            className="w-full max-w-2xl rounded-2xl border border-border bg-card p-5"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="saved-idea-detail-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  {detailIdea.niche} · {new Date(detailIdea.created_at).toLocaleString()}
+                </p>
+                <h3
+                  id="saved-idea-detail-title"
+                  className="mt-1 text-lg font-semibold text-foreground"
+                >
+                  {detailIdea.idea_title || "Saved idea"}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => closeDetail()}
+                className="rounded-lg border border-border px-2 py-1 text-xs text-foreground hover:bg-muted"
+              >
+                Close
+              </button>
+            </div>
+            {detailIdea.thumbnail_url ? (
+              <div className="relative mt-4 aspect-video w-full overflow-hidden rounded-xl border border-border bg-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={detailIdea.thumbnail_url}
+                  alt={detailIdea.idea_title || "Saved idea thumbnail"}
+                  className="absolute inset-0 size-full object-cover"
+                />
+              </div>
+            ) : null}
+            <div className="mt-4 max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-foreground">
+              {detailIdea.idea_content || "No script/content available for this idea."}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

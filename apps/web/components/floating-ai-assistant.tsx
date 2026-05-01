@@ -1,8 +1,11 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { Bot, Loader2, MessageCircle, Send, X } from "lucide-react";
 import { usePathname } from "next/navigation";
+
+import { getSupabaseClient } from "@/lib/supabase";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -26,11 +29,40 @@ const INITIAL_ASSISTANT_MESSAGE: ChatMessage = {
 
 export function FloatingAiAssistant() {
   const pathname = usePathname();
+  const [user, setUser] = useState<User | null | undefined>(undefined);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_ASSISTANT_MESSAGE]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+
+    const syncUser = (next: User | null) => {
+      setUser(next);
+      if (!next) {
+        setOpen(false);
+        setMessages([INITIAL_ASSISTANT_MESSAGE]);
+        setInput("");
+        setError(null);
+      }
+    };
+
+    void supabase.auth.getUser().then(({ data }) => {
+      syncUser(data.user ?? null);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -69,7 +101,7 @@ export function FloatingAiAssistant() {
 
   const canSend = input.trim().length > 0 && !loading;
 
-  if (pathname === "/") {
+  if (pathname === "/" || user === undefined || user === null) {
     return null;
   }
 

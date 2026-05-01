@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { getSupabaseClient } from "@/lib/supabase";
 import { trackUiEvent } from "@/lib/telemetry";
@@ -36,10 +36,24 @@ export default function CalendarPage() {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [selectedIdeaId, setSelectedIdeaId] = useState<string | null>(null);
   const [deletingIdeaId, setDeletingIdeaId] = useState<string | null>(null);
+  const blockDetailClickUntilRef = useRef(0);
+
+  const closeDetail = useCallback(() => {
+    setSelectedIdeaId(null);
+  }, []);
 
   useEffect(() => {
     document.title = "Content Calendar — Trend Engine";
   }, []);
+
+  useEffect(() => {
+    if (!selectedIdeaId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeDetail();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedIdeaId, closeDetail]);
 
   useEffect(() => {
     const loadIdeas = async () => {
@@ -223,16 +237,31 @@ export default function CalendarPage() {
                   key={idea.id}
                   draggable
                   onDragStart={() => setDragIdeaId(idea.id)}
-                  className="fluid-transition stagger-in spring-pop cursor-grab rounded-xl border border-border bg-muted/70 p-2 text-xs hover:-translate-y-0.5 hover:border-blue-300 dark:hover:border-cyan-300/30"
+                  onDragEnd={() => {
+                    blockDetailClickUntilRef.current = Date.now() + 250;
+                  }}
+                  onClick={() => {
+                    if (Date.now() < blockDetailClickUntilRef.current) return;
+                    setSelectedIdeaId(idea.id);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedIdeaId(idea.id);
+                    }
+                  }}
+                  className="fluid-transition stagger-in spring-pop cursor-grab rounded-xl border border-border bg-muted/70 p-2 text-left text-xs outline-none hover:-translate-y-0.5 hover:border-blue-300 focus-visible:ring-2 focus-visible:ring-cyan-400/60 dark:hover:border-cyan-300/30"
                   style={{ ["--stagger" as string]: `${Math.min(idx, 10)}` }}
                 >
                   {idea.thumbnail_url ? (
-                    <div className="mb-2 overflow-hidden rounded-md border border-border">
+                    <div className="relative mb-2 aspect-video w-full overflow-hidden rounded-md border border-border bg-muted">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={idea.thumbnail_url}
                         alt={idea.idea_title || "Saved idea thumbnail"}
-                        className="h-20 w-full object-cover"
+                        className="absolute inset-0 size-full object-cover"
                       />
                     </div>
                   ) : null}
@@ -300,38 +329,47 @@ export default function CalendarPage() {
                             key={id}
                             draggable
                             onDragStart={() => setDragIdeaId(id)}
-                            className="fluid-transition cursor-grab rounded-lg border border-blue-200 bg-blue-50/80 px-1.5 py-1 text-[11px] text-blue-900 hover:border-blue-300 dark:border-cyan-300/25 dark:bg-cyan-500/10 dark:text-cyan-100 dark:hover:border-cyan-300/40"
+                            onDragEnd={() => {
+                              blockDetailClickUntilRef.current = Date.now() + 250;
+                            }}
+                            onClick={() => {
+                              if (Date.now() < blockDetailClickUntilRef.current) return;
+                              setSelectedIdeaId(id);
+                            }}
+                            className="fluid-transition cursor-grab rounded-lg border border-blue-200 bg-blue-50/80 px-1.5 py-1 text-left text-[11px] text-blue-900 hover:border-blue-300 dark:border-cyan-300/25 dark:bg-cyan-500/10 dark:text-cyan-100 dark:hover:border-cyan-300/40"
                           >
                             {idea.thumbnail_url ? (
-                              <div className="mb-1 overflow-hidden rounded border border-border">
+                              <div className="relative mb-1 aspect-video w-full overflow-hidden rounded border border-border bg-muted">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={idea.thumbnail_url}
                                   alt={idea.idea_title || "Saved idea thumbnail"}
-                                  className="h-12 w-full object-cover"
+                                  className="absolute inset-0 size-full object-cover"
                                 />
                               </div>
                             ) : null}
                             <div className="flex items-center justify-between gap-1">
-                              <button
-                                type="button"
-                                onClick={() => setSelectedIdeaId(id)}
-                                className="truncate text-left hover:underline"
-                              >
+                              <span className="min-w-0 flex-1 truncate font-medium">
                                 {idea.idea_title || "Saved idea"}
-                              </button>
+                              </span>
                               <button
                                 type="button"
-                                onClick={() => removeFromCalendar(id)}
-                                className="rounded border border-border px-1 text-[10px] text-foreground hover:bg-muted"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeFromCalendar(id);
+                                }}
+                                className="shrink-0 rounded border border-border px-1 text-[10px] text-foreground hover:bg-muted"
                               >
                                 Remove
                               </button>
                               <button
                                 type="button"
                                 disabled={deletingIdeaId === id}
-                                onClick={() => void deleteIdea(id)}
-                                className="rounded border border-red-300/40 px-1 text-[10px] text-red-100 hover:bg-red-500/20 disabled:opacity-60"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void deleteIdea(id);
+                                }}
+                                className="shrink-0 rounded border border-red-300/40 px-1 text-[10px] text-red-100 hover:bg-red-500/20 disabled:opacity-60"
                               >
                                 {deletingIdeaId === id ? "..." : "Delete"}
                               </button>
@@ -348,32 +386,45 @@ export default function CalendarPage() {
         </div>
       </div>
       {selectedIdea ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-2xl border border-border bg-card p-5">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="presentation"
+          onClick={() => closeDetail()}
+        >
+          <div
+            className="w-full max-w-2xl rounded-2xl border border-border bg-card p-5"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="calendar-idea-detail-title"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs text-muted-foreground">
                   {selectedIdea.niche} · {new Date(selectedIdea.created_at).toLocaleString()}
                 </p>
-                <h3 className="mt-1 text-lg font-semibold text-foreground">
+                <h3
+                  id="calendar-idea-detail-title"
+                  className="mt-1 text-lg font-semibold text-foreground"
+                >
                   {selectedIdea.idea_title || "Saved idea"}
                 </h3>
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedIdeaId(null)}
+                onClick={() => closeDetail()}
                 className="rounded-lg border border-border px-2 py-1 text-xs text-foreground hover:bg-muted"
               >
                 Close
               </button>
             </div>
             {selectedIdea.thumbnail_url ? (
-              <div className="mt-4 overflow-hidden rounded-xl border border-border">
+              <div className="relative mt-4 aspect-video w-full overflow-hidden rounded-xl border border-border bg-muted">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={selectedIdea.thumbnail_url}
                   alt={selectedIdea.idea_title || "Saved idea thumbnail"}
-                  className="h-56 w-full object-cover"
+                  className="absolute inset-0 size-full object-cover"
                 />
               </div>
             ) : null}
