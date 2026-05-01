@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { trackUiEvent } from "@/lib/telemetry";
 import type { TrendIdea, VideoIdea } from "@/lib/trend-ideas-types";
@@ -130,6 +130,7 @@ export function IdeaPanel({
   const [calendarSavedIndexes, setCalendarSavedIndexes] = useState<Record<number, boolean>>({});
   const [errorByIndex, setErrorByIndex] = useState<Record<number, string>>({});
   const [ideaRatings, setIdeaRatings] = useState<Record<string, "up" | "down">>({});
+  const saveInFlightRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     try {
@@ -230,6 +231,9 @@ export function IdeaPanel({
     mode: "saved" | "calendar",
   ) => {
     if (!trend || !onSaveIdea) return;
+    const lockKey = `${mode}:${index}`;
+    if (saveInFlightRef.current.has(lockKey)) return;
+    saveInFlightRef.current.add(lockKey);
     setErrorByIndex((prev) => ({ ...prev, [index]: "" }));
     if (mode === "saved") setSavingIdeaIndex(index);
     else setSavingCalendarIndex(index);
@@ -255,6 +259,7 @@ export function IdeaPanel({
         [index]: err instanceof Error ? err.message : "Failed to save idea.",
       }));
     } finally {
+      saveInFlightRef.current.delete(lockKey);
       if (mode === "saved") setSavingIdeaIndex(null);
       else setSavingCalendarIndex(null);
     }

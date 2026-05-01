@@ -72,6 +72,12 @@ function PricingHeader() {
       </Link>
       <nav className="flex items-center gap-6 text-sm">
         <Link
+          href="/trending"
+          className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
+        >
+          Trending
+        </Link>
+        <Link
           href="/pricing"
           className="fluid-transition font-medium text-primary hover:text-foreground"
         >

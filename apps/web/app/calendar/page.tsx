@@ -392,20 +392,20 @@ export default function CalendarPage() {
           onClick={() => closeDetail()}
         >
           <div
-            className="w-full max-w-2xl rounded-2xl border border-border bg-card p-5"
+            className="flex max-h-[70vh] w-[min(100%-2rem,60vw)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl"
             role="dialog"
             aria-modal="true"
             aria-labelledby="calendar-idea-detail-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs text-muted-foreground">
+            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-[11px] text-muted-foreground">
                   {selectedIdea.niche} · {new Date(selectedIdea.created_at).toLocaleString()}
                 </p>
                 <h3
                   id="calendar-idea-detail-title"
-                  className="mt-1 text-lg font-semibold text-foreground"
+                  className="mt-0.5 text-base font-semibold leading-snug text-foreground"
                 >
                   {selectedIdea.idea_title || "Saved idea"}
                 </h3>
@@ -413,23 +413,25 @@ export default function CalendarPage() {
               <button
                 type="button"
                 onClick={() => closeDetail()}
-                className="rounded-lg border border-border px-2 py-1 text-xs text-foreground hover:bg-muted"
+                className="shrink-0 rounded-lg border border-border px-2 py-1 text-xs text-foreground hover:bg-muted"
               >
                 Close
               </button>
             </div>
-            {selectedIdea.thumbnail_url ? (
-              <div className="relative mt-4 aspect-video w-full overflow-hidden rounded-xl border border-border bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={selectedIdea.thumbnail_url}
-                  alt={selectedIdea.idea_title || "Saved idea thumbnail"}
-                  className="absolute inset-0 size-full object-cover"
-                />
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+              {selectedIdea.thumbnail_url ? (
+                <div className="relative mb-3 aspect-video w-full shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={selectedIdea.thumbnail_url}
+                    alt={selectedIdea.idea_title || "Saved idea thumbnail"}
+                    className="absolute inset-0 size-full object-cover"
+                  />
+                </div>
+              ) : null}
+              <div className="whitespace-pre-wrap rounded-lg border border-border bg-muted/40 p-3 text-sm leading-relaxed text-foreground">
+                {selectedIdea.idea_content || "No script/content available for this idea."}
               </div>
-            ) : null}
-            <div className="mt-4 max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-foreground">
-              {selectedIdea.idea_content || "No script/content available for this idea."}
             </div>
           </div>
         </div>

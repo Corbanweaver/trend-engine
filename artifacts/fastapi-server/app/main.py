@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.database import init_db
 from app.routers import (
-    items, ingest, ideas, trends, trend_ideas,
+    items, ingest, ideas, trends, trend_ideas, daily_trending,
     youtube, instagram, tiktok,
     google_trends, google_news, hackernews, web_search, multi_reddit,
     pinterest, medium, ai_enhance,
@@ -30,6 +30,7 @@ app.include_router(ingest.router)
 app.include_router(ideas.router)
 app.include_router(trends.router)
 app.include_router(trend_ideas.router)
+app.include_router(daily_trending.router)
 app.include_router(youtube.router)
 app.include_router(instagram.router)
 app.include_router(tiktok.router)

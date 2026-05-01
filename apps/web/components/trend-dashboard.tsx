@@ -965,6 +965,12 @@ export function TrendDashboard() {
             Saved Ideas
           </Link>
           <Link
+            href="/trending"
+            className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            Trending
+          </Link>
+          <Link
             href="/calendar"
             className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
           >
@@ -1216,11 +1222,13 @@ export function TrendDashboard() {
           )}
         >
           <ScrollArea className="h-[calc(100vh-57px)]">
-            <IdeaPanel
-              trend={selectedTrend}
-              trendIdeas={data?.trend_ideas ?? []}
-              onSaveIdea={saveIdea}
-            />
+            {!isMobile ? (
+              <IdeaPanel
+                trend={selectedTrend}
+                trendIdeas={data?.trend_ideas ?? []}
+                onSaveIdea={saveIdea}
+              />
+            ) : null}
           </ScrollArea>
         </aside>
       </div>
@@ -1235,11 +1243,13 @@ export function TrendDashboard() {
           <SheetHeader className="border-b border-border px-4 py-3 text-left dark:border-white/10">
             <SheetTitle className="text-base">Video ideas</SheetTitle>
           </SheetHeader>
-          <IdeaPanel
-            trend={selectedTrend}
-            trendIdeas={data?.trend_ideas ?? []}
-            onSaveIdea={saveIdea}
-          />
+          {isMobile ? (
+            <IdeaPanel
+              trend={selectedTrend}
+              trendIdeas={data?.trend_ideas ?? []}
+              onSaveIdea={saveIdea}
+            />
+          ) : null}
         </SheetContent>
       </Sheet>
       {feedbackOpen ? (

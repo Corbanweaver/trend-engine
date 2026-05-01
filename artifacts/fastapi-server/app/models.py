@@ -72,6 +72,24 @@ class TrendIdeasResponse(BaseModel):
     trend_ideas: list[TrendIdea]
 
 
+class DailyTrendItem(BaseModel):
+    title: str
+    subtitle: str = ""
+    url: str = ""
+    meta: str = ""
+
+
+class DailyPlatformSection(BaseModel):
+    key: str
+    label: str
+    items: list[DailyTrendItem]
+
+
+class DailyTrendingResponse(BaseModel):
+    updated_at: str
+    sections: list[DailyPlatformSection]
+
+
 class YouTubeSearchRequest(BaseModel):
     query: str
     max_results: int = 5

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+import { getPasswordStrength } from "@/lib/password-strength";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export default function SignupPage() {
@@ -15,6 +16,8 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const strength = getPasswordStrength(password);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -70,8 +73,63 @@ export default function SignupPage() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              aria-describedby="password-strength-hint"
               className="w-full rounded-md border border-white/15 bg-slate-950 px-3 py-2 text-slate-100 outline-none ring-cyan-300/60 focus:ring-2"
             />
+            {password ? (
+              <div
+                id="password-strength-hint"
+                className="mt-2 space-y-1.5"
+                role="status"
+                aria-live="polite"
+              >
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4].map((segment) => (
+                    <div
+                      key={segment}
+                      className={`h-1.5 flex-1 rounded-full transition-colors duration-200 ${
+                        segment <= strength.level
+                          ? strength.level <= 1
+                            ? "bg-rose-400/90"
+                            : strength.level === 2
+                              ? "bg-amber-400/90"
+                              : strength.level === 3
+                                ? "bg-cyan-400/90"
+                                : "bg-emerald-400/90"
+                          : "bg-slate-700/80"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p
+                  className={`text-xs font-medium tracking-wide ${
+                    strength.level <= 1
+                      ? "text-rose-300/90"
+                      : strength.level === 2
+                        ? "text-amber-200/90"
+                        : strength.level === 3
+                          ? "text-cyan-200/90"
+                          : "text-emerald-200/90"
+                  }`}
+                >
+                  {strength.label === "Too short"
+                    ? "Too short — at least 6 characters"
+                    : strength.label === "Weak"
+                      ? "Weak — add length and mix of characters"
+                      : strength.label === "Fair"
+                        ? "Fair — could be stronger"
+                        : strength.label === "Good"
+                          ? "Good password"
+                          : "Strong password"}
+                </p>
+              </div>
+            ) : (
+              <p id="password-strength-hint" className="mt-1.5 text-xs text-slate-500">
+                Use at least 8 characters with upper and lower case, a number, and a symbol for a
+                strong password.
+              </p>
+            )}
           </label>
 
           {error ? (
