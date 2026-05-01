@@ -5,8 +5,8 @@ import { NextResponse } from "next/server";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const resendApiKey = process.env.RESEND_API_KEY;
-const feedbackAdminEmail = process.env.FEEDBACK_ADMIN_EMAIL || "corbanweaver5@gmail.com";
-const feedbackSenderEmail = process.env.FEEDBACK_SENDER_EMAIL || "onboarding@resend.dev";
+const feedbackAdminEmail = "corbanweaver5@gmail.com";
+const feedbackSenderEmail = "onboarding@resend.dev";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
