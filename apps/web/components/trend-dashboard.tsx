@@ -263,6 +263,19 @@ function getTikTokUrl(trend: TrendIdea): string | null {
   return candidate.url as string;
 }
 
+function getRedditUrl(trend: TrendIdea): string | null {
+  const candidate = trend.reddit_posts.find((post) => {
+    const sourceKeys = ["url", "permalink", "link"] as const;
+    return sourceKeys.some((key) => {
+      const value = post[key];
+      return typeof value === "string" && value.trim().length > 0;
+    });
+  });
+  if (!candidate) return null;
+  const preferred = candidate.url ?? candidate.permalink ?? candidate.link;
+  return typeof preferred === "string" && preferred.trim().length > 0 ? preferred : null;
+}
+
 function TrendCard({
   trend,
   index,
@@ -280,6 +293,7 @@ function TrendCard({
   const visual = getCardVisual(trend);
   const youtubeUrl = getYouTubeUrl(trend);
   const tiktokUrl = getTikTokUrl(trend);
+  const redditUrl = getRedditUrl(trend);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const trendLabel = getTrendDetectedLabel(trend);
 
@@ -406,7 +420,7 @@ function TrendCard({
               style={{ width: raw > 0 ? `${heat}%` : "0%" }}
             />
           </div>
-          {youtubeUrl || tiktokUrl ? (
+          {youtubeUrl || tiktokUrl || redditUrl ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {tiktokUrl ? (
                 <a
@@ -414,7 +428,11 @@ function TrendCard({
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-pink-400/35 bg-pink-500/10 px-2.5 py-1.5 text-[11px] font-medium text-pink-100 transition-colors hover:bg-pink-500/20"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    platformIconStyles.TikTok,
+                    "hover:bg-pink-500/30",
+                  )}
                 >
                   <Music2 className="size-3.5" />
                   Watch on TikTok
@@ -427,10 +445,31 @@ function TrendCard({
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-red-400/35 bg-red-500/10 px-2.5 py-1.5 text-[11px] font-medium text-red-100 transition-colors hover:bg-red-500/20"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    platformIconStyles.YouTube,
+                    "hover:bg-red-500/30",
+                  )}
                 >
                   <Youtube className="size-3.5" />
                   Watch on YouTube
+                  <ExternalLink className="size-3.5" />
+                </a>
+              ) : null}
+              {redditUrl ? (
+                <a
+                  href={redditUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    platformIconStyles.Reddit,
+                    "hover:bg-orange-500/30",
+                  )}
+                >
+                  <span className="text-xs font-bold">R</span>
+                  View on Reddit
                   <ExternalLink className="size-3.5" />
                 </a>
               ) : null}
