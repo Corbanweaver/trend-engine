@@ -1,13 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const resendApiKey = process.env.RESEND_API_KEY;
+const gmailUser = process.env.GMAIL_USER;
+const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
 const feedbackAdminEmail = "corbanweaver5@gmail.com";
-const feedbackSenderEmail = "onboarding@resend.dev";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,10 +47,18 @@ async function sendFeedbackEmail({
   feedbackType: FeedbackPayload["feedback_type"];
   message: string;
 }) {
-  if (!resendApiKey) {
-    throw new Error("Missing RESEND_API_KEY");
+  if (!gmailUser || !gmailAppPassword) {
+    throw new Error("Missing GMAIL_USER or GMAIL_APP_PASSWORD");
   }
-  const resend = new Resend(resendApiKey);
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: gmailUser,
+      pass: gmailAppPassword,
+    },
+  });
 
   const prettyFeedback = getFeedbackLabel(feedbackType);
   const safeMessage = message || "(none)";
@@ -73,31 +81,30 @@ async function sendFeedbackEmail({
     `Written message: ${safeMessage}`,
   ].join("\n");
 
-  const { error } = await resend.emails.send({
-    from: feedbackSenderEmail,
-    to: feedbackAdminEmail,
-    subject: `Trend Engine feedback: ${prettyFeedback}`,
-    html,
-    text,
-  });
-
-  if (error) {
-    console.error("[idea-feedback] Resend send error:", {
-      message: error.message,
-      name: error.name,
-      // Log common SDK/server payload details when available.
-      response: (error as { response?: unknown }).response ?? null,
-      body: (error as { body?: unknown }).body ?? null,
-      fullError: error,
+  try {
+    await transporter.sendMail({
+      from: gmailUser,
+      to: feedbackAdminEmail,
+      subject: `Trend Engine feedback: ${prettyFeedback}`,
+      html,
+      text,
     });
-    throw new Error(`Failed to send feedback email: ${error.message}`);
+  } catch (error) {
+    console.error("[idea-feedback] Nodemailer send error:", {
+      message: error instanceof Error ? error.message : String(error),
+      // Log full error shape for SMTP diagnostics.
+      fullError: error,
+      response: (error as { response?: unknown })?.response ?? null,
+      code: (error as { code?: unknown })?.code ?? null,
+      command: (error as { command?: unknown })?.command ?? null,
+    });
+    throw new Error(
+      `Failed to send feedback email: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
 export async function POST(request: Request) {
-  const resendKeyPreview = resendApiKey ? `${resendApiKey.slice(0, 5)}...` : "(missing)";
-  console.log("[idea-feedback] RESEND_API_KEY preview:", resendKeyPreview);
-
   if (!supabaseUrl || !supabaseAnonKey) {
     return NextResponse.json(
       { error: "Missing Supabase environment configuration" },
