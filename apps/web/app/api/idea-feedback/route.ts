@@ -101,6 +101,9 @@ async function sendFeedbackEmail({
 }
 
 export async function POST(request: Request) {
+  const resendKeyPreview = resendApiKey ? `${resendApiKey.slice(0, 5)}...` : "(missing)";
+  console.log("[idea-feedback] RESEND_API_KEY preview:", resendKeyPreview);
+
   if (!supabaseUrl || !supabaseAnonKey) {
     return NextResponse.json(
       { error: "Missing Supabase environment configuration" },
