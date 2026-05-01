@@ -1175,8 +1175,8 @@ export function TrendDashboard() {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         idea_title: "General dashboard feedback",
-                        feedback: "written",
-                        feedback_text: message,
+                        feedback_type: "written",
+                        message,
                       }),
                     });
                     if (!res.ok) {

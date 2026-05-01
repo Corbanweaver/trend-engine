@@ -168,7 +168,7 @@ export function IdeaPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           idea_title: idea.optimized_title?.trim() || idea.hook || idea.idea || "Idea",
-          feedback: value === "up" ? "thumbs_up" : "thumbs_down",
+          feedback_type: value === "up" ? "thumbs_up" : "thumbs_down",
         }),
       });
       if (!res.ok) {

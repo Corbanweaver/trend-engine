@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 type FeedbackRow = {
   idea_title: string;
-  feedback: "thumbs_up" | "thumbs_down" | "written";
+  feedback_type: "thumbs_up" | "thumbs_down" | "written";
 };
 
 function inferNiche(title: string): string {
@@ -53,7 +53,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("idea_feedback")
-    .select("idea_title, feedback")
+    .select("idea_title, feedback_type")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1000);
@@ -63,7 +63,7 @@ export async function GET() {
   }
 
   const rows = ((data as FeedbackRow[] | null) ?? []).filter(
-    (r) => r.feedback === "thumbs_up",
+    (r) => r.feedback_type === "thumbs_up",
   );
   const bucket = new Map<string, { likes: number; topTrends: Map<string, number> }>();
 

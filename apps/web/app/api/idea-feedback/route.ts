@@ -13,13 +13,16 @@ export const dynamic = "force-dynamic";
 
 type FeedbackPayload = {
   idea_title: string;
-  feedback: "thumbs_up" | "thumbs_down" | "written";
+  feedback_type: "thumbs_up" | "thumbs_down" | "written";
+  message?: string;
+  // Backward compatibility for older clients
+  feedback?: "thumbs_up" | "thumbs_down" | "written";
   feedback_text?: string;
 };
 
-function getFeedbackLabel(feedback: FeedbackPayload["feedback"]): string {
-  if (feedback === "thumbs_up") return "Thumbs up";
-  if (feedback === "thumbs_down") return "Thumbs down";
+function getFeedbackLabel(feedbackType: FeedbackPayload["feedback_type"]): string {
+  if (feedbackType === "thumbs_up") return "Thumbs up";
+  if (feedbackType === "thumbs_down") return "Thumbs down";
   return "Written feedback";
 }
 
@@ -35,20 +38,20 @@ function escapeHtml(value: string): string {
 async function sendFeedbackEmail({
   userEmail,
   ideaTitle,
-  feedback,
-  feedbackText,
+  feedbackType,
+  message,
 }: {
   userEmail: string;
   ideaTitle: string;
-  feedback: FeedbackPayload["feedback"];
-  feedbackText: string;
+  feedbackType: FeedbackPayload["feedback_type"];
+  message: string;
 }) {
   if (!resendApiKey) {
     throw new Error("Missing RESEND_API_KEY");
   }
 
-  const prettyFeedback = getFeedbackLabel(feedback);
-  const safeMessage = feedbackText || "(none)";
+  const prettyFeedback = getFeedbackLabel(feedbackType);
+  const safeMessage = message || "(none)";
   const safeUserEmail = escapeHtml(userEmail);
   const safeIdeaTitle = escapeHtml(ideaTitle);
   const html = `
@@ -107,18 +110,19 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as Partial<FeedbackPayload>;
   const ideaTitle = (body.idea_title ?? "").trim();
-  const feedback = body.feedback;
-  const feedbackText = (body.feedback_text ?? "").trim();
+  // Accept both new and legacy payload keys during rollout.
+  const feedbackType = body.feedback_type ?? body.feedback;
+  const message = (body.message ?? body.feedback_text ?? "").trim();
 
   const feedbackIsValid =
-    feedback === "thumbs_up" || feedback === "thumbs_down" || feedback === "written";
+    feedbackType === "thumbs_up" || feedbackType === "thumbs_down" || feedbackType === "written";
 
   if (!ideaTitle || !feedbackIsValid) {
     return NextResponse.json({ error: "Invalid feedback payload" }, { status: 400 });
   }
-  if (feedback === "written" && !feedbackText) {
+  if (feedbackType === "written" && !message) {
     return NextResponse.json(
-      { error: "Written feedback requires a feedback_text value" },
+      { error: "Written feedback requires a message value" },
       { status: 400 },
     );
   }
@@ -149,8 +153,8 @@ export async function POST(request: Request) {
       {
         user_id: user.id,
         idea_title: ideaTitle,
-        feedback,
-        feedback_text: feedbackText || null,
+        feedback_type: feedbackType,
+        message: message || null,
       },
       { onConflict: "user_id,idea_title" },
     );
@@ -163,8 +167,8 @@ export async function POST(request: Request) {
     await sendFeedbackEmail({
       userEmail: user.email ?? "(unknown)",
       ideaTitle,
-      feedback,
-      feedbackText,
+      feedbackType,
+      message,
     });
   } catch (emailError) {
     return NextResponse.json(
