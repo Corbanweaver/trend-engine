@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ChevronRight,
+  ExternalLink,
   Loader2,
   LogOut,
+  Music2,
   Search,
   Sparkles,
   Moon,
@@ -15,6 +17,7 @@ import {
   Calendar,
   Home,
   Bookmark,
+  Youtube,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
@@ -242,6 +245,24 @@ function getCardVisual(trend: TrendIdea) {
   return youtubeThumb || tiktokCover || null;
 }
 
+function getYouTubeUrl(trend: TrendIdea): string | null {
+  const candidate = trend.example_videos.find((video) => {
+    const url = video.url;
+    return typeof url === "string" && url.trim().length > 0;
+  });
+  if (!candidate) return null;
+  return candidate.url as string;
+}
+
+function getTikTokUrl(trend: TrendIdea): string | null {
+  const candidate = trend.tiktok_videos.find((video) => {
+    const url = video.url;
+    return typeof url === "string" && url.trim().length > 0;
+  });
+  if (!candidate) return null;
+  return candidate.url as string;
+}
+
 function TrendCard({
   trend,
   index,
@@ -257,10 +278,12 @@ function TrendCard({
   const heat = engagementHeat(raw);
   const platformBadges = getPlatformBadges(trend);
   const visual = getCardVisual(trend);
+  const youtubeUrl = getYouTubeUrl(trend);
+  const tiktokUrl = getTikTokUrl(trend);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const trendLabel = getTrendDetectedLabel(trend);
 
-  const handleCardMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleCardMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const px = (e.clientX - rect.left) / rect.width;
     const py = (e.clientY - rect.top) / rect.height;
@@ -272,9 +295,16 @@ function TrendCard({
   const resetCardTilt = () => setTilt({ x: 0, y: 0 });
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
       onMouseMove={handleCardMove}
       onMouseLeave={resetCardTilt}
       style={{ animationDelay: `${Math.min(index, 10) * 70}ms` }}
@@ -376,6 +406,36 @@ function TrendCard({
               style={{ width: raw > 0 ? `${heat}%` : "0%" }}
             />
           </div>
+          {youtubeUrl || tiktokUrl ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {tiktokUrl ? (
+                <a
+                  href={tiktokUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-pink-400/35 bg-pink-500/10 px-2.5 py-1.5 text-[11px] font-medium text-pink-100 transition-colors hover:bg-pink-500/20"
+                >
+                  <Music2 className="size-3.5" />
+                  Watch on TikTok
+                  <ExternalLink className="size-3.5" />
+                </a>
+              ) : null}
+              {youtubeUrl ? (
+                <a
+                  href={youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-red-400/35 bg-red-500/10 px-2.5 py-1.5 text-[11px] font-medium text-red-100 transition-colors hover:bg-red-500/20"
+                >
+                  <Youtube className="size-3.5" />
+                  Watch on YouTube
+                  <ExternalLink className="size-3.5" />
+                </a>
+              ) : null}
+            </div>
+          ) : null}
         </CardContent>
         <CardFooter className="pt-0 text-xs text-muted-foreground dark:text-slate-400">
           {trend.ideas.length} AI idea{trend.ideas.length === 1 ? "" : "s"} ·
@@ -383,7 +443,7 @@ function TrendCard({
           <ChevronRight className="ml-1 size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
         </CardFooter>
       </Card>
-    </button>
+    </div>
   );
 }
 

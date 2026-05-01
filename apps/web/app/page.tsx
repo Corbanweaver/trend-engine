@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmailWaitlistForm } from "@/components/email-waitlist-form";
 
 export default function Home() {
   return (
@@ -45,6 +46,18 @@ export default function Home() {
         >
           Start Finding Trends
         </a>
+      </section>
+
+      <section className="relative z-20 mx-auto w-full max-w-6xl px-6 pb-20">
+        <div className="rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-slate-950/90 via-slate-900/90 to-indigo-950/70 p-8 shadow-[0_0_48px_rgba(59,130,246,0.18)] backdrop-blur-sm sm:p-10">
+          <p className="text-center text-2xl font-semibold text-slate-100 sm:text-3xl">
+            Join 1,000+ creators discovering viral trends
+          </p>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-slate-300 sm:text-base">
+            Get product updates, early feature access, and weekly trend insights straight to your inbox.
+          </p>
+          <EmailWaitlistForm />
+        </div>
       </section>
     </main>
   );
