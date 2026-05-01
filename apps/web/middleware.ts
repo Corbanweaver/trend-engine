@@ -38,7 +38,8 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/saved") ||
-    pathname.startsWith("/calendar");
+    pathname.startsWith("/calendar") ||
+    pathname.startsWith("/feedback");
   const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/signup");
 
   if (isProtectedRoute && !user) {
@@ -68,5 +69,12 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/saved/:path*", "/calendar/:path*", "/login", "/signup"],
+  matcher: [
+    "/dashboard/:path*",
+    "/saved/:path*",
+    "/calendar/:path*",
+    "/feedback/:path*",
+    "/login",
+    "/signup",
+  ],
 };

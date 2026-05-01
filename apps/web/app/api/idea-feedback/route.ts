@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 
 type FeedbackPayload = {
   idea_title: string;
-  feedback: "thumbs_up" | "thumbs_down";
+  feedback: "thumbs_up" | "thumbs_down" | "written";
+  feedback_text?: string;
 };
 
 export async function POST(request: Request) {
@@ -24,9 +25,19 @@ export async function POST(request: Request) {
   const body = (await request.json()) as Partial<FeedbackPayload>;
   const ideaTitle = (body.idea_title ?? "").trim();
   const feedback = body.feedback;
+  const feedbackText = (body.feedback_text ?? "").trim();
 
-  if (!ideaTitle || (feedback !== "thumbs_up" && feedback !== "thumbs_down")) {
+  const feedbackIsValid =
+    feedback === "thumbs_up" || feedback === "thumbs_down" || feedback === "written";
+
+  if (!ideaTitle || !feedbackIsValid) {
     return NextResponse.json({ error: "Invalid feedback payload" }, { status: 400 });
+  }
+  if (feedback === "written" && !feedbackText) {
+    return NextResponse.json(
+      { error: "Written feedback requires a feedback_text value" },
+      { status: 400 },
+    );
   }
 
   const cookieStore = await cookies();
@@ -56,6 +67,7 @@ export async function POST(request: Request) {
         user_id: user.id,
         idea_title: ideaTitle,
         feedback,
+        feedback_text: feedbackText || null,
       },
       { onConflict: "user_id,idea_title" },
     );

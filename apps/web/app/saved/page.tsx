@@ -17,6 +17,9 @@ type SavedIdea = {
 };
 
 const SHARE_BASE_URL = "https://contentideamaker.com";
+const PLAN_KEY = "calendar:plans";
+
+type CalendarMap = Record<string, string[]>;
 
 export default function SavedIdeasPage() {
   const [ideas, setIdeas] = useState<SavedIdea[]>([]);
@@ -232,6 +235,22 @@ export default function SavedIdeasPage() {
     }
   };
 
+  const saveIdeaToCalendar = (item: SavedIdea) => {
+    const d = new Date();
+    const dayKey = d.toISOString().slice(0, 10);
+    try {
+      const raw = window.localStorage.getItem(PLAN_KEY);
+      const map = raw ? (JSON.parse(raw) as CalendarMap) : {};
+      const existing = new Set(map[dayKey] ?? []);
+      existing.add(item.id);
+      map[dayKey] = [...existing];
+      window.localStorage.setItem(PLAN_KEY, JSON.stringify(map));
+      showToast("Saved to Calendar");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save idea to calendar.");
+    }
+  };
+
   return (
     <main className="min-h-svh bg-background px-4 py-8 text-foreground">
       <div className="mx-auto max-w-5xl space-y-6">
@@ -304,6 +323,13 @@ export default function SavedIdeasPage() {
                     className="fluid-transition rounded-xl border border-violet-400/30 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-100 hover:bg-violet-500/20"
                   >
                     Share
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => saveIdeaToCalendar(item)}
+                    className="fluid-transition rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-100 hover:bg-emerald-500/20"
+                  >
+                    Save to Calendar
                   </button>
                   <button
                     type="button"

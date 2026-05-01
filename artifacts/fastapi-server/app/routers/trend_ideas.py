@@ -27,6 +27,7 @@ from app.medium_client import medium_search
 
 router = APIRouter(prefix="/trend-ideas", tags=["trend-ideas"])
 REPLICATE_MODEL = "black-forest-labs/flux-schnell"
+RECENCY_DAYS = 7
 
 SYSTEM_PROMPT = """You are a world-class short-form content creator and strategist known for making ideas feel human, bold, and impossible to scroll past.
 
@@ -189,7 +190,7 @@ async def discover_trends(niche: str) -> tuple[list[str], dict]:
         _safe_fetch(google_news_search(niche, max_results=8), []),
         _safe_fetch(google_trends_search(niche), {}, timeout=15.0),
         _safe_fetch(web_search(f"{niche} trending viral 2026", max_results=8), []),
-        _safe_fetch(multi_reddit_ingest(niche, max_per_sub=5), []),
+        _safe_fetch(multi_reddit_ingest(niche, max_per_sub=5, days_back=RECENCY_DAYS), []),
     ]
     news, trends_data, web_results, reddit_posts = await asyncio.gather(*coros)
 
@@ -223,9 +224,9 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
     print(f"STARTING MEDIA GATHER FOR: {topic}")
     print(f"Calling Instagram search for niche: {instagram_query}")
     coros = [
-        _safe_fetch(youtube_search(search_query, max_results=4), []),
+        _safe_fetch(youtube_search(search_query, max_results=4, days_back=RECENCY_DAYS), []),
         _safe_fetch(search_instagram(instagram_query, max_results=4), []),
-        _safe_fetch(tiktok_trending_search(search_query, max_results=3), []),
+        _safe_fetch(tiktok_trending_search(search_query, max_results=3, days_back=RECENCY_DAYS), []),
         _safe_fetch(google_news_search(search_query, max_results=4), []),
         _safe_fetch(hn_search(search_query, max_results=3), []),
         _safe_fetch(web_search(f"{search_query} trending", max_results=4), []),

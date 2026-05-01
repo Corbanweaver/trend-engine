@@ -9,6 +9,8 @@ import { trackUiEvent } from "@/lib/telemetry";
 type SavedIdea = {
   id: string;
   idea_title: string;
+  idea_content: string;
+  created_at: string;
   niche: string;
 };
 
@@ -31,6 +33,8 @@ export default function CalendarPage() {
   });
   const [dragIdeaId, setDragIdeaId] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
+  const [selectedIdeaId, setSelectedIdeaId] = useState<string | null>(null);
+  const [deletingIdeaId, setDeletingIdeaId] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = "Content Calendar — Trend Engine";
@@ -58,7 +62,7 @@ export default function CalendarPage() {
         }
         const { data, error: fetchError } = await supabase
           .from("saved_ideas")
-          .select("id, idea_title, niche")
+          .select("id, idea_title, idea_content, niche, created_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
         if (fetchError) {
@@ -147,6 +151,40 @@ export default function CalendarPage() {
       context: { ideaId },
     });
   };
+
+  const deleteIdea = async (ideaId: string) => {
+    setDeletingIdeaId(ideaId);
+    setError(null);
+    try {
+      const supabase = getSupabaseClient();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) {
+        setError("Please log in to delete calendar ideas.");
+        return;
+      }
+      const { error: deleteError } = await supabase
+        .from("saved_ideas")
+        .delete()
+        .eq("id", ideaId)
+        .eq("user_id", user.id);
+      if (deleteError) {
+        setError(deleteError.message);
+        return;
+      }
+      setIdeas((prev) => prev.filter((idea) => idea.id !== ideaId));
+      removeFromCalendar(ideaId);
+      if (selectedIdeaId === ideaId) setSelectedIdeaId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete idea.");
+    } finally {
+      setDeletingIdeaId(null);
+    }
+  };
+
+  const selectedIdea = selectedIdeaId ? ideaById.get(selectedIdeaId) ?? null : null;
 
   return (
     <main className="min-h-svh bg-background p-4 text-foreground">
@@ -254,13 +292,27 @@ export default function CalendarPage() {
                             className="fluid-transition cursor-grab rounded-lg border border-cyan-300/25 bg-cyan-500/10 px-1.5 py-1 text-[11px] hover:border-cyan-300/40"
                           >
                             <div className="flex items-center justify-between gap-1">
-                              <span className="truncate">{idea.idea_title || "Saved idea"}</span>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedIdeaId(id)}
+                                className="truncate text-left hover:underline"
+                              >
+                                {idea.idea_title || "Saved idea"}
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => removeFromCalendar(id)}
                                 className="rounded border border-white/20 px-1 text-[10px] text-slate-200 hover:bg-white/10"
                               >
-                                Remove from Calendar
+                                Remove
+                              </button>
+                              <button
+                                type="button"
+                                disabled={deletingIdeaId === id}
+                                onClick={() => void deleteIdea(id)}
+                                className="rounded border border-red-300/40 px-1 text-[10px] text-red-100 hover:bg-red-500/20 disabled:opacity-60"
+                              >
+                                {deletingIdeaId === id ? "..." : "Delete"}
                               </button>
                             </div>
                           </div>
@@ -274,6 +326,32 @@ export default function CalendarPage() {
           </section>
         </div>
       </div>
+      {selectedIdea ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-2xl rounded-2xl border border-white/20 bg-slate-900 p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs text-slate-400">
+                  {selectedIdea.niche} · {new Date(selectedIdea.created_at).toLocaleString()}
+                </p>
+                <h3 className="mt-1 text-lg font-semibold text-slate-100">
+                  {selectedIdea.idea_title || "Saved idea"}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedIdeaId(null)}
+                className="rounded-lg border border-white/20 px-2 py-1 text-xs text-slate-200"
+              >
+                Close
+              </button>
+            </div>
+            <div className="mt-4 max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-slate-950/80 p-4 text-sm leading-relaxed text-slate-200">
+              {selectedIdea.idea_content || "No script/content available for this idea."}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 type FeedbackRow = {
   idea_title: string;
-  feedback: "thumbs_up" | "thumbs_down";
+  feedback: "thumbs_up" | "thumbs_down" | "written";
 };
 
 function inferNiche(title: string): string {

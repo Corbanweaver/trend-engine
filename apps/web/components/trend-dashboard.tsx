@@ -870,6 +870,12 @@ export function TrendDashboard() {
           >
             Calendar
           </Link>
+          <Link
+            href="/feedback"
+            className="fluid-transition rounded-md border border-white/15 bg-slate-900/70 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
+          >
+            Feedback Inbox
+          </Link>
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-200">
             {userAvatar ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -1165,14 +1171,38 @@ export function TrendDashboard() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  if (!feedbackText.trim()) return;
-                  setFeedbackSent(true);
-                  setFeedbackText("");
-                  window.setTimeout(() => {
-                    setFeedbackSent(false);
-                    setFeedbackOpen(false);
-                  }, 900);
+                onClick={async () => {
+                  const message = feedbackText.trim();
+                  if (!message) return;
+                  try {
+                    const res = await fetch("/api/idea-feedback", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        idea_title: "General dashboard feedback",
+                        feedback: "written",
+                        feedback_text: message,
+                      }),
+                    });
+                    if (!res.ok) {
+                      let detail = "Failed to send feedback.";
+                      try {
+                        const body = (await res.json()) as { error?: string };
+                        if (body.error) detail = body.error;
+                      } catch {
+                        // ignore parse failures
+                      }
+                      throw new Error(detail);
+                    }
+                    setFeedbackSent(true);
+                    setFeedbackText("");
+                    window.setTimeout(() => {
+                      setFeedbackSent(false);
+                      setFeedbackOpen(false);
+                    }, 900);
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Failed to send feedback.");
+                  }
                 }}
                 className="rounded-md bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950"
               >

@@ -1,5 +1,6 @@
 import os
 from urllib.parse import quote
+from datetime import datetime, timedelta, timezone
 
 import httpx
 
@@ -7,10 +8,14 @@ APIFY_API_BASE = "https://api.apify.com/v2"
 TIKTOK_ACTOR_ID = "clockworks/free-tiktok-scraper"
 
 
-async def _run_apify_tiktok_actor(query: str, max_results: int) -> list[dict]:
+async def _run_apify_tiktok_actor(query: str, max_results: int, days_back: int = 7) -> list[dict]:
     token = os.environ.get("APIFY_API_TOKEN", "").strip()
     if not token:
         return []
+
+    since = datetime.now(timezone.utc) - timedelta(days=max(days_back, 1))
+    since_iso = since.isoformat()
+    since_unix = int(since.timestamp())
 
     # Keep the input broad and minimal; actor schemas can evolve.
     # We submit multiple commonly accepted fields to improve compatibility.
@@ -21,6 +26,9 @@ async def _run_apify_tiktok_actor(query: str, max_results: int) -> list[dict]:
         "searchTerms": [query],
         "maxItems": max_results,
         "resultsPerPage": max_results,
+        "startDate": since_iso,
+        "publishedAfter": since_iso,
+        "minCreatedAt": since_unix,
     }
 
     url = f"{APIFY_API_BASE}/acts/{TIKTOK_ACTOR_ID}/run-sync-get-dataset-items"
@@ -90,9 +98,22 @@ def _map_apify_tiktok_item(item: dict) -> dict:
     }
 
 
-async def tiktok_trending_search(query: str, max_results: int = 6) -> list[dict]:
-    raw_items = await _run_apify_tiktok_actor(query, max_results)
-    results = [_map_apify_tiktok_item(item) for item in raw_items[:max_results] if isinstance(item, dict)]
+async def tiktok_trending_search(query: str, max_results: int = 6, days_back: int = 7) -> list[dict]:
+    raw_items = await _run_apify_tiktok_actor(query, max_results, days_back=days_back)
+    since_unix = int((datetime.now(timezone.utc) - timedelta(days=max(days_back, 1))).timestamp())
+    recent_items: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        created_value = item.get("createTime") or item.get("createTimestamp") or item.get("createdAt")
+        try:
+            created_unix = int(float(created_value))
+            if created_unix < since_unix:
+                continue
+        except (TypeError, ValueError):
+            pass
+        recent_items.append(item)
+    results = [_map_apify_tiktok_item(item) for item in recent_items[:max_results]]
     # Preserve older behavior: if provider returns nothing, keep a soft fallback.
     results = [r for r in results if r.get("id") or r.get("url")]
 

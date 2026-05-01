@@ -37,9 +37,10 @@ def get_subreddits_for_niche(niche: str) -> list[str]:
     return ["all"]
 
 
-async def multi_reddit_ingest(niche: str, max_per_sub: int = 10) -> list[dict]:
+async def multi_reddit_ingest(niche: str, max_per_sub: int = 10, days_back: int = 7) -> list[dict]:
     subreddits = get_subreddits_for_niche(niche)
     all_posts = []
+    time_filter = "week" if days_back <= 7 else "month"
 
     async with httpx.AsyncClient(
         timeout=10.0,
@@ -48,7 +49,7 @@ async def multi_reddit_ingest(niche: str, max_per_sub: int = 10) -> list[dict]:
     ) as client:
         for sub in subreddits:
             try:
-                url = f"https://www.reddit.com/r/{sub}/hot.json?limit={max_per_sub}"
+                url = f"https://www.reddit.com/r/{sub}/top.json?limit={max_per_sub}&t={time_filter}"
                 resp = await client.get(url)
 
                 if resp.status_code == 200:
@@ -78,5 +79,5 @@ async def multi_reddit_ingest(niche: str, max_per_sub: int = 10) -> list[dict]:
 
 
 async def reddit_trending_topics(niche: str, max_posts: int = 50) -> list[dict]:
-    posts = await multi_reddit_ingest(niche, max_per_sub=15)
+    posts = await multi_reddit_ingest(niche, max_per_sub=15, days_back=7)
     return posts[:max_posts]

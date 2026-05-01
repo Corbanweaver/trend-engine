@@ -1,17 +1,20 @@
 import os
 import httpx
 import logging
+from datetime import datetime, timedelta, timezone
 
 YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
 logger = logging.getLogger(__name__)
 
 
-async def youtube_search(query: str, max_results: int = 5) -> list[dict]:
+async def youtube_search(query: str, max_results: int = 5, days_back: int = 7) -> list[dict]:
     api_key = YOUTUBE_API_KEY or os.environ.get("YOUTUBE_API_KEY", "")
     logger.info("YouTube API key found: %s", "yes" if bool(api_key) else "no")
     if not api_key:
         logger.warning("YouTube search skipped: YOUTUBE_API_KEY missing.")
         return []
+
+    published_after = (datetime.now(timezone.utc) - timedelta(days=max(days_back, 1))).isoformat()
 
     async with httpx.AsyncClient(timeout=10.0) as client:
         resp = await client.get(
@@ -23,6 +26,7 @@ async def youtube_search(query: str, max_results: int = 5) -> list[dict]:
                 "maxResults": max_results,
                 "order": "relevance",
                 "videoDuration": "short",
+                "publishedAfter": published_after,
                 "key": api_key,
             },
         )
@@ -75,4 +79,4 @@ def _quota_exceeded_placeholder(query: str) -> list[dict]:
 
 async def youtube_trending_videos(niche: str, max_results: int = 10) -> list[dict]:
     query = f"{niche} short form video tips"
-    return await youtube_search(query, max_results)
+    return await youtube_search(query, max_results, days_back=7)
