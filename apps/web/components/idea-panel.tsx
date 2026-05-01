@@ -1,6 +1,5 @@
- "use client";
+"use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,8 +10,43 @@ import {
 } from "@/components/ui/card";
 import { useEffect, useRef, useState } from "react";
 
+import { getApiBaseUrl } from "@/lib/api";
 import { trackUiEvent } from "@/lib/telemetry";
 import type { TrendIdea, VideoIdea } from "@/lib/trend-ideas-types";
+
+function tiktokTagSearchUrl(tag: string): string {
+  const clean = tag.replace(/^#/, "").trim();
+  if (!clean) return "https://www.tiktok.com/search";
+  return `https://www.tiktok.com/search?q=${encodeURIComponent(`#${clean}`)}`;
+}
+
+async function postIdeaEnrichment<T>(
+  path: "generate-hooks" | "generate-hashtags" | "generate-full-script",
+  body: Record<string, string>,
+): Promise<T> {
+  const base = getApiBaseUrl();
+  const res = await fetch(`${base}/trend-ideas/${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const errBody = (await res.json()) as { detail?: unknown };
+      if (errBody?.detail != null) {
+        detail =
+          typeof errBody.detail === "string"
+            ? errBody.detail
+            : JSON.stringify(errBody.detail);
+      }
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail || `Request failed (${res.status})`);
+  }
+  return res.json() as Promise<T>;
+}
 
 function estimateVideoLength(idea: VideoIdea): string {
   const scriptWords = idea.script?.trim().split(/\s+/).filter(Boolean).length ?? 0;
@@ -118,10 +152,12 @@ function renderMarkdownLikeContent(text: string): React.ReactNode {
 export function IdeaPanel({
   trend,
   trendIdeas,
+  niche,
   onSaveIdea,
 }: {
   trend: TrendIdea | null;
   trendIdeas?: TrendIdea[];
+  niche: string;
   onSaveIdea?: (payload: { trend: string; idea: VideoIdea }) => Promise<void>;
 }) {
   const [savingIdeaIndex, setSavingIdeaIndex] = useState<number | null>(null);
@@ -131,6 +167,36 @@ export function IdeaPanel({
   const [errorByIndex, setErrorByIndex] = useState<Record<number, string>>({});
   const [ideaRatings, setIdeaRatings] = useState<Record<string, "up" | "down">>({});
   const saveInFlightRef = useRef<Set<string>>(new Set());
+
+  const [trendingTagsByIndex, setTrendingTagsByIndex] = useState<
+    Record<number, string[]>
+  >({});
+  const [tagsLoadingByIndex, setTagsLoadingByIndex] = useState<
+    Record<number, boolean>
+  >({});
+  const [tagsErrorByIndex, setTagsErrorByIndex] = useState<
+    Record<number, string>
+  >({});
+
+  const [hookListsByIndex, setHookListsByIndex] = useState<
+    Record<number, string[]>
+  >({});
+  const [hooksLoadingByIndex, setHooksLoadingByIndex] = useState<
+    Record<number, boolean>
+  >({});
+  const [hooksErrorByIndex, setHooksErrorByIndex] = useState<
+    Record<number, string>
+  >({});
+
+  const [fullScriptByIndex, setFullScriptByIndex] = useState<
+    Record<number, string>
+  >({});
+  const [fullScriptLoadingByIndex, setFullScriptLoadingByIndex] = useState<
+    Record<number, boolean>
+  >({});
+  const [fullScriptErrorByIndex, setFullScriptErrorByIndex] = useState<
+    Record<number, string>
+  >({});
 
   useEffect(() => {
     try {
@@ -148,7 +214,114 @@ export function IdeaPanel({
     setSavedIndexes({});
     setCalendarSavedIndexes({});
     setErrorByIndex({});
+    setTrendingTagsByIndex({});
+    setTagsLoadingByIndex({});
+    setTagsErrorByIndex({});
+    setHookListsByIndex({});
+    setHooksLoadingByIndex({});
+    setHooksErrorByIndex({});
+    setFullScriptByIndex({});
+    setFullScriptLoadingByIndex({});
+    setFullScriptErrorByIndex({});
   }, [trend?.trend]);
+
+  useEffect(() => {
+    if (!trend?.ideas?.length) return;
+
+    const nicheLabel = (niche || "fitness").trim() || "fitness";
+
+    trend.ideas.forEach((idea, index) => {
+      setTagsLoadingByIndex((prev) => ({ ...prev, [index]: true }));
+      setTagsErrorByIndex((prev) => ({ ...prev, [index]: "" }));
+
+      void (async () => {
+        try {
+          const json = await postIdeaEnrichment<{ hashtags: string[] }>(
+            "generate-hashtags",
+            {
+              niche: nicheLabel,
+              trend: trend.trend,
+              hook: idea.hook ?? "",
+              angle: idea.angle ?? "",
+              idea: idea.idea ?? "",
+              optimized_title: idea.optimized_title ?? "",
+            },
+          );
+          setTrendingTagsByIndex((prev) => ({ ...prev, [index]: json.hashtags }));
+        } catch (err) {
+          setTagsErrorByIndex((prev) => ({
+            ...prev,
+            [index]:
+              err instanceof Error ? err.message : "Could not load trending hashtags.",
+          }));
+        } finally {
+          setTagsLoadingByIndex((prev) => ({ ...prev, [index]: false }));
+        }
+      })();
+    });
+  }, [trend, niche]);
+
+  const loadHooks = async (idea: VideoIdea, index: number) => {
+    if (!trend) return;
+    setHooksErrorByIndex((prev) => ({ ...prev, [index]: "" }));
+    setHooksLoadingByIndex((prev) => ({ ...prev, [index]: true }));
+    try {
+      const json = await postIdeaEnrichment<{ hooks: string[] }>("generate-hooks", {
+        niche: (niche || "fitness").trim() || "fitness",
+        trend: trend.trend,
+        hook: idea.hook ?? "",
+        angle: idea.angle ?? "",
+        idea: idea.idea ?? "",
+        optimized_title: idea.optimized_title ?? "",
+      });
+      setHookListsByIndex((prev) => ({ ...prev, [index]: json.hooks }));
+      trackUiEvent({
+        area: "idea_panel",
+        action: "generate_hooks_success",
+        context: { trend: trend.trend },
+      });
+    } catch (err) {
+      setHooksErrorByIndex((prev) => ({
+        ...prev,
+        [index]: err instanceof Error ? err.message : "Hook generation failed.",
+      }));
+    } finally {
+      setHooksLoadingByIndex((prev) => ({ ...prev, [index]: false }));
+    }
+  };
+
+  const loadFullScript = async (idea: VideoIdea, index: number) => {
+    if (!trend) return;
+    setFullScriptErrorByIndex((prev) => ({ ...prev, [index]: "" }));
+    setFullScriptLoadingByIndex((prev) => ({ ...prev, [index]: true }));
+    try {
+      const json = await postIdeaEnrichment<{ script: string }>(
+        "generate-full-script",
+        {
+          niche: (niche || "fitness").trim() || "fitness",
+          trend: trend.trend,
+          hook: idea.hook ?? "",
+          angle: idea.angle ?? "",
+          idea: idea.idea ?? "",
+          optimized_title: idea.optimized_title ?? "",
+          script: idea.script ?? "",
+        },
+      );
+      setFullScriptByIndex((prev) => ({ ...prev, [index]: json.script }));
+      trackUiEvent({
+        area: "idea_panel",
+        action: "generate_full_script_success",
+        context: { trend: trend.trend },
+      });
+    } catch (err) {
+      setFullScriptErrorByIndex((prev) => ({
+        ...prev,
+        [index]: err instanceof Error ? err.message : "Script generation failed.",
+      }));
+    } finally {
+      setFullScriptLoadingByIndex((prev) => ({ ...prev, [index]: false }));
+    }
+  };
 
   const setIdeaRating = async (idea: VideoIdea, index: number, value: "up" | "down") => {
     if (!trend) return;
@@ -365,10 +538,58 @@ export function IdeaPanel({
                   {idea.seo_description}
                 </p>
               ) : null}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={hooksLoadingByIndex[i]}
+                  onClick={() => void loadHooks(idea, i)}
+                  className="h-8 border-fuchsia-400/35 bg-fuchsia-500/10 text-xs font-semibold text-fuchsia-100 hover:bg-fuchsia-500/20"
+                >
+                  {hooksLoadingByIndex[i] ? "Generating…" : "Generate Hooks"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={fullScriptLoadingByIndex[i]}
+                  onClick={() => void loadFullScript(idea, i)}
+                  className="h-8 border-indigo-400/35 bg-indigo-500/10 text-xs font-semibold text-indigo-100 hover:bg-indigo-500/20"
+                >
+                  {fullScriptLoadingByIndex[i] ? "Writing…" : "Write Full Script"}
+                </Button>
+              </div>
+              {hooksErrorByIndex[i] ? (
+                <p className="text-xs text-red-300">{hooksErrorByIndex[i]}</p>
+              ) : null}
+              {hookListsByIndex[i]?.length ? (
+                <div className="rounded-md border border-fuchsia-400/30 bg-fuchsia-950/30 p-3">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-fuchsia-200">
+                    Hook variations
+                  </p>
+                  <ol className="list-decimal space-y-2 pl-4 text-xs leading-relaxed text-slate-100">
+                    {hookListsByIndex[i].map((h, hi) => (
+                      <li key={`hook-${i}-${hi}`}>{h}</li>
+                    ))}
+                  </ol>
+                </div>
+              ) : null}
+              {fullScriptErrorByIndex[i] ? (
+                <p className="text-xs text-red-300">{fullScriptErrorByIndex[i]}</p>
+              ) : null}
+              {fullScriptByIndex[i] ? (
+                <div className="rounded-md border border-indigo-400/30 bg-indigo-950/25 p-3 font-sans">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-indigo-200">
+                    Full script (60-90 seconds)
+                  </p>
+                  {renderMarkdownLikeContent(fullScriptByIndex[i])}
+                </div>
+              ) : null}
               {idea.script ? (
                 <div className="rounded-md border border-white/10 bg-slate-800/50 p-3 font-sans">
                   <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Script
+                    Quick script (30-60s)
                   </p>
                   {renderMarkdownLikeContent(idea.script)}
                 </div>
@@ -383,19 +604,62 @@ export function IdeaPanel({
                   ))}
                 </ul>
               </div>
-              {idea.hashtags && idea.hashtags.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {idea.hashtags.map((tag, hi) => (
-                    <Badge
-                      key={`${tag}-${hi}`}
-                      variant="secondary"
-                      className="border border-cyan-400/30 bg-cyan-500/10 font-normal text-cyan-200"
-                    >
-                      {tag.startsWith("#") ? tag : `#${tag}`}
-                    </Badge>
-                  ))}
-                </div>
-              ) : null}
+              <div className="space-y-1.5 pt-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">
+                  Trending hashtags
+                </p>
+                {tagsLoadingByIndex[i] ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from({ length: 10 }).map((_, hi) => (
+                      <span
+                        key={`tag-sk-${i}-${hi}`}
+                        className="h-6 w-16 animate-pulse rounded-full bg-slate-700/80"
+                      />
+                    ))}
+                  </div>
+                ) : trendingTagsByIndex[i]?.length ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {trendingTagsByIndex[i].map((tag, hi) => (
+                      <a
+                        key={`${tag}-${hi}`}
+                        href={tiktokTagSearchUrl(tag)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center rounded-full border border-cyan-400/40 bg-cyan-500/15 px-2.5 py-1 text-xs font-medium text-cyan-100 transition-colors hover:border-cyan-300/70 hover:bg-cyan-500/25"
+                      >
+                        {tag.startsWith("#") ? tag : `#${tag}`}
+                      </a>
+                    ))}
+                  </div>
+                ) : tagsErrorByIndex[i] && idea.hashtags && idea.hashtags.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {idea.hashtags.slice(0, 10).map((tag, hi) => (
+                      <a
+                        key={`fallback-${tag}-${hi}`}
+                        href={tiktokTagSearchUrl(tag)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center rounded-full border border-slate-500/40 bg-slate-800/60 px-2.5 py-1 text-xs font-normal text-slate-200 hover:border-cyan-400/40"
+                      >
+                        {tag.startsWith("#") ? tag : `#${tag}`}
+                      </a>
+                    ))}
+                  </div>
+                ) : tagsErrorByIndex[i] ? (
+                  <p className="text-xs text-amber-200/90">{tagsErrorByIndex[i]}</p>
+                ) : null}
+                {!tagsLoadingByIndex[i] &&
+                trendingTagsByIndex[i]?.length &&
+                idea.hashtags &&
+                idea.hashtags.length > 0 ? (
+                  <p className="text-[11px] text-slate-500">
+                    Ideas pack also suggested:{" "}
+                    {idea.hashtags
+                      .map((t) => (t.startsWith("#") ? t : `#${t}`))
+                      .join(", ")}
+                  </p>
+                ) : null}
+              </div>
               {onSaveIdea ? (
                 <div className="space-y-2 pt-1">
                   <div className="flex items-center gap-2">

@@ -30,3 +30,10 @@ export const NICHE_OPTIONS: { value: string; label: string }[] = [
   { value: "tech & ai", label: "Tech & AI" },
   { value: "custom", label: "Custom…" },
 ];
+
+/** Preset niches from the dashboard dropdown (excludes group dividers and Custom). */
+export function getSelectableNicheOptions(): { value: string; label: string }[] {
+  return NICHE_OPTIONS.filter(
+    (o) => !o.value.startsWith("__group_") && o.value !== "custom",
+  );
+}

@@ -72,6 +72,37 @@ class TrendIdeasResponse(BaseModel):
     trend_ideas: list[TrendIdea]
 
 
+class TrendDigestTopicsResponse(BaseModel):
+    """Lightweight topic-only payload for email digests (no full idea generation)."""
+
+    niche: str
+    topics: list[str]
+
+
+class IdeaEnrichmentRequest(BaseModel):
+    """Context for per-idea hook, hashtag, and script generation."""
+
+    niche: str = "fitness"
+    trend: str
+    hook: str = ""
+    angle: str = ""
+    idea: str
+    optimized_title: str = ""
+    script: str = ""
+
+
+class HooksResponse(BaseModel):
+    hooks: list[str]
+
+
+class HashtagsResponse(BaseModel):
+    hashtags: list[str]
+
+
+class FullScriptResponse(BaseModel):
+    script: str
+
+
 class DailyTrendItem(BaseModel):
     title: str
     subtitle: str = ""

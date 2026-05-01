@@ -30,3 +30,9 @@ export interface TrendIdeasResponse {
   niche: string;
   trend_ideas: TrendIdea[];
 }
+
+/** FastAPI `POST /trend-ideas/digest-topics` */
+export interface TrendDigestTopicsResponse {
+  niche: string;
+  topics: string[];
+}

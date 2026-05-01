@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
+import { createGmailTransporter } from "@/lib/gmail-transporter";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -50,15 +50,7 @@ async function sendFeedbackEmail({
   if (!gmailUser || !gmailAppPassword) {
     throw new Error("Missing GMAIL_USER or GMAIL_APP_PASSWORD");
   }
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: gmailUser,
-      pass: gmailAppPassword,
-    },
-  });
+  const transporter = createGmailTransporter();
 
   const prettyFeedback = getFeedbackLabel(feedbackType);
   const safeMessage = message || "(none)";

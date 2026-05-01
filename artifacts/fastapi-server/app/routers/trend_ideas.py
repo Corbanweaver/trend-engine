@@ -10,10 +10,20 @@ except ModuleNotFoundError:
 logger = logging.getLogger(__name__)
 _ai_semaphore = asyncio.Semaphore(3)
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
 from openai import OpenAI
 
-from app.models import TrendIdeasRequest, TrendIdeasResponse, TrendIdea, VideoIdea
+from app.models import (
+    TrendIdeasRequest,
+    TrendIdeasResponse,
+    TrendIdea,
+    VideoIdea,
+    TrendDigestTopicsResponse,
+    IdeaEnrichmentRequest,
+    HooksResponse,
+    HashtagsResponse,
+    FullScriptResponse,
+)
 from app.youtube_client import youtube_search
 from app.instagram_client import search_instagram
 from app.tiktok_client import tiktok_trending_search
@@ -65,6 +75,55 @@ Return ONLY a JSON array of 3 strings. Example: ["topic one", "topic two", "topi
 Real-time data:
 {context}"""
 
+HOOK_VARIATIONS_PROMPT = """You are a viral short-form video strategist. Given the niche, trending topic, and video concept below, write exactly 5 distinct opening hooks for the same idea.
+
+Rules:
+- Each hook must be one or two punchy sentences that stop the scroll (under 160 characters each).
+- Use different angles: curiosity, controversy, story, pattern-interrupt, social proof, or urgency — do not repeat the same structure.
+- Sound like a real creator, not marketing copy.
+- Return ONLY a JSON array of 5 strings. No markdown, no keys, no commentary.
+
+Niche: {niche}
+Trending topic: {trend}
+Title: {title}
+Current hook (for reference): {hook}
+Angle: {angle}
+Concept: {idea}"""
+
+TRENDING_HASHTAGS_PROMPT = """You are a TikTok/Instagram/Shorts growth expert. For the video concept below, suggest exactly 10 hashtags that feel trending and discoverable in 2026.
+
+Rules:
+- Mix broad reach tags with niche-specific tags.
+- Hashtags must be relevant to the trend and concept (no random viral tags).
+- Return each tag WITHOUT the # symbol in the JSON (the client will display #).
+- Use camelCase or single words where appropriate for platform search.
+- Return ONLY a JSON array of 10 strings. No markdown or extra text.
+
+Niche: {niche}
+Trending topic: {trend}
+Title: {title}
+Hook: {hook}
+Angle: {angle}
+Concept: {idea}"""
+
+FULL_SCRIPT_PROMPT = """You are an expert short-form scriptwriter. Write a complete spoken script for a single vertical video.
+
+Requirements:
+- Total length 60-90 seconds when read aloud at a natural pace (about 150-240 words).
+- First person, conversational, strong hook in the first line.
+- Include: hook, 3-5 clear beats (each beat can be a short paragraph or labeled section), pattern refreshes, and a memorable call-to-action.
+- Match the niche voice and the specific angle.
+- Use optional brief stage directions in [brackets] only where helpful — not for every line.
+- Do not use markdown headings; plain text with line breaks is fine.
+
+Niche: {niche}
+Trending topic: {trend}
+Title: {title}
+Hook (starting point): {hook}
+Angle: {angle}
+Concept: {idea}
+Existing short script (may extend or replace as needed for length): {script}"""
+
 
 def get_openai_client() -> OpenAI:
     base_url = os.environ.get("AI_INTEGRATIONS_OPENAI_BASE_URL")
@@ -72,6 +131,14 @@ def get_openai_client() -> OpenAI:
     if not base_url:
         raise HTTPException(status_code=503, detail="OpenAI integration not configured.")
     return OpenAI(base_url=base_url, api_key=api_key)
+
+
+def _require_digest_key(x_trend_digest_key: str | None) -> None:
+    expected = os.environ.get("TREND_DIGEST_KEY", "").strip()
+    if not expected:
+        return
+    if (x_trend_digest_key or "").strip() != expected:
+        raise HTTPException(status_code=401, detail="Invalid or missing digest key")
 
 
 def parse_ideas_json(raw: str) -> list[VideoIdea]:
@@ -175,6 +242,63 @@ def parse_topics_json(raw: str) -> list[str]:
     except json.JSONDecodeError:
         pass
     return [cleaned[:50]]
+
+
+def _strip_code_fence(raw: str) -> str:
+    cleaned = raw.strip()
+    if cleaned.startswith("```"):
+        lines = cleaned.splitlines()
+        lines = [l for l in lines if not l.strip().startswith("```")]
+        cleaned = "\n".join(lines)
+    return cleaned
+
+
+def parse_json_string_array(raw: str, max_items: int, exact: int | None = None) -> list[str]:
+    cleaned = _strip_code_fence(raw)
+    try:
+        data = json.loads(cleaned)
+        if isinstance(data, list):
+            out: list[str] = []
+            cap = exact if exact is not None else max_items
+            for item in data:
+                if isinstance(item, str) and item.strip():
+                    out.append(item.strip())
+                if len(out) >= cap:
+                    break
+            if exact is not None:
+                if len(out) < exact:
+                    return []
+                return out[:exact]
+            return out[:max_items]
+    except json.JSONDecodeError:
+        pass
+    return []
+
+
+def normalize_hashtag_tag(tag: str) -> str:
+    t = tag.strip()
+    if t.startswith("#"):
+        t = t[1:].strip()
+    return t
+
+
+async def _chat_completion_text(client, system: str | None, user: str, max_tokens: int) -> str:
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": user})
+
+    async with _ai_semaphore:
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            lambda: client.chat.completions.create(
+                model="gpt-5.2",
+                max_completion_tokens=max_tokens,
+                messages=messages,
+            ),
+        )
+    return response.choices[0].message.content or ""
 
 
 async def _safe_fetch(coro, default, timeout=10.0):
@@ -376,3 +500,109 @@ async def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest()):
                 res.google_trends_data = r if isinstance(r, dict) else {}
 
     return TrendIdeasResponse(niche=niche, trend_ideas=list(results))
+
+
+@router.post("/digest-topics", response_model=TrendDigestTopicsResponse)
+async def get_digest_topics(
+    body: TrendIdeasRequest = TrendIdeasRequest(),
+    x_trend_digest_key: str | None = Header(default=None, alias="X-Trend-Digest-Key"),
+):
+    """
+    Returns the top 3 trending topic names for a niche without generating full video ideas.
+    Used by the weekly email digest. Optional TREND_DIGEST_KEY env locks this endpoint.
+    """
+    _require_digest_key(x_trend_digest_key)
+    niche = body.niche or "fitness"
+    client = get_openai_client()
+
+    discovery_context, _ = await discover_trends(niche)
+
+    if not any(discovery_context):
+        raise HTTPException(status_code=404, detail="Could not discover trends for this niche. Try again.")
+
+    context_text = "\n\n".join(discovery_context)
+    prompt = TOPIC_DISCOVERY_PROMPT.format(niche=niche, context=context_text)
+
+    loop = asyncio.get_event_loop()
+    topic_response = await loop.run_in_executor(
+        None,
+        lambda: client.chat.completions.create(
+            model="gpt-5.2",
+            max_completion_tokens=256,
+            messages=[{"role": "user", "content": prompt}],
+        ),
+    )
+    topics = parse_topics_json(topic_response.choices[0].message.content or "")
+
+    return TrendDigestTopicsResponse(niche=niche, topics=topics)
+
+
+@router.post("/generate-hooks", response_model=HooksResponse)
+async def generate_hooks(body: IdeaEnrichmentRequest):
+    client = get_openai_client()
+    title = (body.optimized_title or "").strip() or (body.hook or "").strip() or "Video idea"
+    prompt = HOOK_VARIATIONS_PROMPT.format(
+        niche=body.niche or "general",
+        trend=body.trend,
+        title=title,
+        hook=(body.hook or "").strip(),
+        angle=(body.angle or "").strip(),
+        idea=(body.idea or "").strip(),
+    )
+    raw = await _chat_completion_text(client, None, prompt, max_tokens=512)
+    hooks = parse_json_string_array(raw, max_items=8, exact=5)
+    if len(hooks) != 5:
+        raise HTTPException(status_code=502, detail="Could not parse 5 hooks from model response.")
+    return HooksResponse(hooks=hooks)
+
+
+@router.post("/generate-hashtags", response_model=HashtagsResponse)
+async def generate_hashtags(body: IdeaEnrichmentRequest):
+    client = get_openai_client()
+    title = (body.optimized_title or "").strip() or (body.hook or "").strip() or "Video idea"
+    prompt = TRENDING_HASHTAGS_PROMPT.format(
+        niche=body.niche or "general",
+        trend=body.trend,
+        title=title,
+        hook=(body.hook or "").strip(),
+        angle=(body.angle or "").strip(),
+        idea=(body.idea or "").strip(),
+    )
+    raw = await _chat_completion_text(client, None, prompt, max_tokens=384)
+    tags = parse_json_string_array(raw, max_items=12)
+    normalized = []
+    seen: set[str] = set()
+    for tag in tags:
+        n = normalize_hashtag_tag(tag)
+        if not n or len(n) > 80:
+            continue
+        key = n.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(n)
+        if len(normalized) >= 10:
+            break
+    if len(normalized) < 10:
+        raise HTTPException(status_code=502, detail="Could not generate 10 distinct hashtags.")
+    return HashtagsResponse(hashtags=normalized[:10])
+
+
+@router.post("/generate-full-script", response_model=FullScriptResponse)
+async def generate_full_script(body: IdeaEnrichmentRequest):
+    client = get_openai_client()
+    title = (body.optimized_title or "").strip() or (body.hook or "").strip() or "Video idea"
+    prompt = FULL_SCRIPT_PROMPT.format(
+        niche=body.niche or "general",
+        trend=body.trend,
+        title=title,
+        hook=(body.hook or "").strip(),
+        angle=(body.angle or "").strip(),
+        idea=(body.idea or "").strip(),
+        script=(body.script or "").strip(),
+    )
+    raw = await _chat_completion_text(client, None, prompt, max_tokens=2048)
+    script = raw.strip()
+    if not script:
+        raise HTTPException(status_code=502, detail="Empty script from model.")
+    return FullScriptResponse(script=script)

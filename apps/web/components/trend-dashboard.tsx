@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  BarChart3,
   ChevronRight,
   ExternalLink,
   Loader2,
@@ -18,6 +19,8 @@ import {
   Home,
   Bookmark,
   Youtube,
+  UserRound,
+  Bell,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
@@ -47,6 +50,7 @@ import type {
 } from "@/lib/trend-ideas-types";
 import { computeEngagementRaw, engagementHeat } from "@/lib/trend-metrics";
 import { cn } from "@/lib/utils";
+import { recordTrendAnalysis } from "@/lib/user-stats";
 
 const TREND_RESULTS_STORAGE_KEY = "trend_dashboard:last_results";
 const FREE_ANALYSIS_LIMIT = 5;
@@ -717,6 +721,7 @@ export function TrendDashboard() {
       const res = await fetchTrendIdeas(effectiveNiche);
       setData(res);
       setAnalysisProgress(100);
+      recordTrendAnalysis(effectiveNiche);
       setNicheHistory((prev) => {
         const next = [effectiveNiche, ...prev.filter((n) => n !== effectiveNiche)].slice(0, 5);
         try {
@@ -959,6 +964,18 @@ export function TrendDashboard() {
             {plan === "free" ? ` (${analysesUsedThisMonth}/${FREE_ANALYSIS_LIMIT})` : ""}
           </div>
           <Link
+            href="/analytics"
+            className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            Analytics
+          </Link>
+          <Link
+            href="/profile"
+            className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            Profile
+          </Link>
+          <Link
             href="/saved"
             className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
           >
@@ -971,17 +988,26 @@ export function TrendDashboard() {
             Trending
           </Link>
           <Link
+            href="/alerts"
+            className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            Trend Alerts
+          </Link>
+          <Link
             href="/calendar"
             className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             Calendar
           </Link>
-          <div className="flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1 text-xs text-foreground dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
+          <Link
+            href="/profile"
+            className="fluid-transition flex max-w-[220px] items-center gap-2 rounded-full border border-border bg-card px-2 py-1 text-xs text-foreground hover:bg-muted dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
             {userAvatar ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={userAvatar}
-                alt="User avatar"
+                alt=""
                 className="size-6 rounded-full object-cover"
               />
             ) : (
@@ -989,8 +1015,8 @@ export function TrendDashboard() {
                 {userEmail ? userEmail.slice(0, 1).toUpperCase() : "U"}
               </div>
             )}
-            <span className="max-w-[180px] truncate">{userEmail || "Logged in user"}</span>
-          </div>
+            <span className="min-w-0 truncate">{userEmail || "Logged in user"}</span>
+          </Link>
           <Button
             type="button"
             variant="outline"
@@ -1226,6 +1252,7 @@ export function TrendDashboard() {
               <IdeaPanel
                 trend={selectedTrend}
                 trendIdeas={data?.trend_ideas ?? []}
+                niche={effectiveNiche}
                 onSaveIdea={saveIdea}
               />
             ) : null}
@@ -1247,6 +1274,7 @@ export function TrendDashboard() {
             <IdeaPanel
               trend={selectedTrend}
               trendIdeas={data?.trend_ideas ?? []}
+              niche={effectiveNiche}
               onSaveIdea={saveIdea}
             />
           ) : null}
@@ -1317,10 +1345,17 @@ export function TrendDashboard() {
         </div>
       ) : null}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-white/95 px-3 py-2 backdrop-blur dark:border-white/10 dark:bg-slate-950/95 lg:hidden">
-        <div className="mx-auto flex max-w-md items-center justify-around">
+        <div className="mx-auto flex max-w-lg items-center justify-around">
           <Link href="/" className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300">
             <Home className="mb-1 size-4" />
             Home
+          </Link>
+          <Link
+            href="/analytics"
+            className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300"
+          >
+            <BarChart3 className="mb-1 size-4" />
+            Stats
           </Link>
           <Link
             href="/saved"
@@ -1330,11 +1365,25 @@ export function TrendDashboard() {
             Saved
           </Link>
           <Link
+            href="/alerts"
+            className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300"
+          >
+            <Bell className="mb-1 size-4" />
+            Alerts
+          </Link>
+          <Link
             href="/calendar"
             className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300"
           >
             <Calendar className="mb-1 size-4" />
             Calendar
+          </Link>
+          <Link
+            href="/profile"
+            className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300"
+          >
+            <UserRound className="mb-1 size-4" />
+            Profile
           </Link>
         </div>
       </nav>
