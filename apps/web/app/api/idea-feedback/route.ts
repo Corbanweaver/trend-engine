@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -49,6 +50,7 @@ async function sendFeedbackEmail({
   if (!resendApiKey) {
     throw new Error("Missing RESEND_API_KEY");
   }
+  const resend = new Resend(resendApiKey);
 
   const prettyFeedback = getFeedbackLabel(feedbackType);
   const safeMessage = message || "(none)";
@@ -71,32 +73,16 @@ async function sendFeedbackEmail({
     `Written message: ${safeMessage}`,
   ].join("\n");
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: feedbackSenderEmail,
-      to: [feedbackAdminEmail],
-      subject: `Trend Engine feedback: ${prettyFeedback}`,
-      html,
-      text,
-    }),
+  const { error } = await resend.emails.send({
+    from: feedbackSenderEmail,
+    to: feedbackAdminEmail,
+    subject: `Trend Engine feedback: ${prettyFeedback}`,
+    html,
+    text,
   });
 
-  if (!response.ok) {
-    let detail = `${response.status} ${response.statusText}`;
-    try {
-      const body = (await response.json()) as { message?: string; error?: string };
-      if (body.message || body.error) {
-        detail = body.message || body.error || detail;
-      }
-    } catch {
-      // ignore parse failure
-    }
-    throw new Error(`Failed to send feedback email: ${detail}`);
+  if (error) {
+    throw new Error(`Failed to send feedback email: ${error.message}`);
   }
 }
 
