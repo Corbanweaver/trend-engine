@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-type AssistantModel = "claude" | "gpt4";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -12,7 +9,6 @@ type ChatMessage = {
 };
 
 type ChatBody = {
-  model?: AssistantModel;
   messages?: ChatMessage[];
 };
 
@@ -45,34 +41,6 @@ function normalizeMessages(messages: ChatMessage[]): ChatMessage[] {
       return typeof message.content === "string" && message.content.trim().length > 0;
     })
     .slice(-20);
-}
-
-async function callClaude(messages: ChatMessage[]): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY?.trim().replace(/^["']|["']$/g, "");
-  if (!apiKey) {
-    throw new Error("Missing ANTHROPIC_API_KEY for Claude chat.");
-  }
-
-  const client = new Anthropic({ apiKey });
-  const response = await client.messages.create({
-    model: process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-latest",
-    max_tokens: 220,
-    temperature: 0.7,
-    system: ASSISTANT_SYSTEM_PROMPT,
-    messages: messages.map((message) => ({
-      role: message.role,
-      content: message.content,
-    })),
-  });
-  const text = response.content
-    .map((entry) => (entry.type === "text" ? entry.text : ""))
-    .join("\n")
-    .trim();
-  if (!text) {
-    throw new Error("Claude returned an empty response.");
-  }
-
-  return enforceBriefReply(text);
 }
 
 async function callGpt4(messages: ChatMessage[]): Promise<string> {
@@ -119,13 +87,12 @@ async function callGpt4(messages: ChatMessage[]): Promise<string> {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as ChatBody;
-    const selectedModel: AssistantModel = body.model === "gpt4" ? "gpt4" : "claude";
     const messages = normalizeMessages(body.messages ?? []);
     if (!messages.length) {
       return NextResponse.json({ error: "Please send at least one message." }, { status: 400 });
     }
 
-    const reply = selectedModel === "gpt4" ? await callGpt4(messages) : await callClaude(messages);
+    const reply = await callGpt4(messages);
     return NextResponse.json({ reply });
   } catch (error) {
     return NextResponse.json(

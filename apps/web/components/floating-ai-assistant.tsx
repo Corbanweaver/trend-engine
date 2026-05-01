@@ -1,9 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Bot, Loader2, MessageCircle, Send, X } from "lucide-react";
-
-type AssistantModel = "claude" | "gpt4";
+import { usePathname } from "next/navigation";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -17,7 +16,6 @@ const QUICK_PROMPTS = [
   "How do I use this app better?",
 ];
 
-const ASSISTANT_MODEL_STORAGE_KEY = "trend_engine:assistant_model";
 const ASSISTANT_MESSAGES_STORAGE_KEY = "trend_engine:assistant_messages";
 
 const INITIAL_ASSISTANT_MESSAGE: ChatMessage = {
@@ -27,8 +25,8 @@ const INITIAL_ASSISTANT_MESSAGE: ChatMessage = {
 };
 
 export function FloatingAiAssistant() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [model, setModel] = useState<AssistantModel>("claude");
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_ASSISTANT_MESSAGE]);
   const [loading, setLoading] = useState(false);
@@ -36,10 +34,6 @@ export function FloatingAiAssistant() {
 
   useEffect(() => {
     try {
-      const savedModel = window.localStorage.getItem(ASSISTANT_MODEL_STORAGE_KEY);
-      if (savedModel === "claude" || savedModel === "gpt4") {
-        setModel(savedModel);
-      }
       const savedMessages = window.localStorage.getItem(ASSISTANT_MESSAGES_STORAGE_KEY);
       if (savedMessages) {
         const parsed = JSON.parse(savedMessages) as ChatMessage[];
@@ -64,14 +58,6 @@ export function FloatingAiAssistant() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(ASSISTANT_MODEL_STORAGE_KEY, model);
-    } catch {
-      // Ignore localStorage errors
-    }
-  }, [model]);
-
-  useEffect(() => {
-    try {
       window.localStorage.setItem(
         ASSISTANT_MESSAGES_STORAGE_KEY,
         JSON.stringify(messages.slice(-20)),
@@ -82,10 +68,10 @@ export function FloatingAiAssistant() {
   }, [messages]);
 
   const canSend = input.trim().length > 0 && !loading;
-  const buttonLabel = useMemo(
-    () => (model === "claude" ? "Claude (Primary)" : "GPT-4"),
-    [model],
-  );
+
+  if (pathname === "/") {
+    return null;
+  }
 
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
@@ -102,7 +88,6 @@ export function FloatingAiAssistant() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model,
           messages: nextMessages,
         }),
       });
@@ -143,17 +128,9 @@ export function FloatingAiAssistant() {
               <Bot className="size-4 text-cyan-300" />
               <div>
                 <p className="text-sm font-semibold">Trend Assistant</p>
-                <p className="text-[11px] text-slate-400">Model: {buttonLabel}</p>
+                <p className="text-[11px] text-slate-400">Model: GPT-4</p>
               </div>
             </div>
-            <select
-              value={model}
-              onChange={(e) => setModel(e.target.value as AssistantModel)}
-              className="rounded-md border border-white/15 bg-slate-900 px-2 py-1 text-xs text-slate-100"
-            >
-              <option value="claude">Claude (Primary)</option>
-              <option value="gpt4">GPT-4</option>
-            </select>
           </header>
 
           <div className="flex-1 space-y-3 overflow-y-auto px-3 py-3">
