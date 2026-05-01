@@ -82,6 +82,14 @@ async function sendFeedbackEmail({
   });
 
   if (error) {
+    console.error("[idea-feedback] Resend send error:", {
+      message: error.message,
+      name: error.name,
+      // Log common SDK/server payload details when available.
+      response: (error as { response?: unknown }).response ?? null,
+      body: (error as { body?: unknown }).body ?? null,
+      fullError: error,
+    });
     throw new Error(`Failed to send feedback email: ${error.message}`);
   }
 }
