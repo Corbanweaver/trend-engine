@@ -61,45 +61,45 @@ function LoginForm() {
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
-      <div className="w-full max-w-md rounded-xl border border-white/10 bg-slate-900 p-6">
+      <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
         <h1 className="text-2xl font-semibold">Log in</h1>
-        <p className="mt-1 text-sm text-slate-400">Access your dashboard.</p>
+        <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">Access your dashboard.</p>
         {verifyPrompt ? (
-          <p className="mt-3 rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+          <p className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">
             Please check your email to confirm your account.
           </p>
         ) : null}
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm">
-            <span className="mb-1 block text-slate-300">Email</span>
+            <span className="mb-1 block text-muted-foreground dark:text-slate-300">Email</span>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-white/15 bg-slate-950 px-3 py-2 text-slate-100 outline-none ring-cyan-300/60 focus:ring-2"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
             />
           </label>
 
           <label className="block text-sm">
-            <span className="mb-1 block text-slate-300">Password</span>
+            <span className="mb-1 block text-muted-foreground dark:text-slate-300">Password</span>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-white/15 bg-slate-950 px-3 py-2 text-slate-100 outline-none ring-cyan-300/60 focus:ring-2"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
             />
           </label>
 
           {error ? (
-            <p className="rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+            <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
               {error}
             </p>
           ) : null}
           {status ? (
-            <p className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+            <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
               {status}
             </p>
           ) : null}
@@ -107,15 +107,15 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-cyan-400 px-4 py-2 font-semibold text-slate-950 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:opacity-90"
           >
             {loading ? "Logging in..." : "Log in"}
           </button>
         </form>
 
-        <p className="mt-4 text-sm text-slate-400">
+        <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
           No account?{" "}
-          <Link href="/signup" className="text-cyan-300 hover:underline">
+          <Link href="/signup" className="text-primary hover:underline dark:text-cyan-300">
             Sign up
           </Link>
         </p>
@@ -129,8 +129,8 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
-          <div className="w-full max-w-md rounded-xl border border-white/10 bg-slate-900 p-6">
-            <p className="text-sm text-slate-300">Loading login...</p>
+          <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 dark:border-white/10 dark:bg-slate-900">
+            <p className="text-sm text-muted-foreground dark:text-slate-300">Loading login...</p>
           </div>
         </main>
       }

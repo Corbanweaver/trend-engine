@@ -31,25 +31,25 @@
 
 :root {
   --radius: 0.625rem;
-  --background: #ffffff;
-  --foreground: #1a1a1a;
-  --card: #f5f5f5;
-  --card-foreground: #1a1a1a;
-  --popover: #ffffff;
-  --popover-foreground: #1a1a1a;
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #1a1a1a;
-  --muted: #f5f5f5;
-  --muted-foreground: #4b5563;
-  --accent: #3b82f6;
-  --accent-foreground: #ffffff;
+  --background: #f3f4f0;
+  --foreground: #22272f;
+  --card: #fbfaf6;
+  --card-foreground: #22272f;
+  --popover: #fbfaf6;
+  --popover-foreground: #22272f;
+  --primary: #365f7d;
+  --primary-foreground: #fbfaf6;
+  --secondary: #e9ece6;
+  --secondary-foreground: #29313a;
+  --muted: #e8ebe5;
+  --muted-foreground: #5d6772;
+  --accent: #dde7e3;
+  --accent-foreground: #244154;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #3b82f6;
+  --border: #d9ded6;
+  --input: #d4dad2;
+  --ring: #4f7894;
 }
 
 .dark {
@@ -82,7 +82,7 @@
     @apply border-border outline-ring/50;
   }
   :focus-visible {
-    outline: 2px solid color-mix(in oklab, #22d3ee 70%, white);
+    outline: 2px solid color-mix(in oklab, var(--ring) 74%, white);
     outline-offset: 2px;
   }
   body {
@@ -95,8 +95,8 @@
       color 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   ::selection {
-    background: color-mix(in oklab, #22d3ee 45%, transparent);
-    color: white;
+    background: color-mix(in oklab, var(--primary) 28%, transparent);
+    color: var(--foreground);
   }
   h1,
   h2,
@@ -141,8 +141,8 @@
   .glass-surface {
     background: linear-gradient(
       145deg,
-      color-mix(in oklab, var(--color-card) 95%, transparent),
-      color-mix(in oklab, var(--color-card) 88%, transparent)
+      color-mix(in oklab, var(--color-card) 96%, var(--color-muted)),
+      color-mix(in oklab, var(--color-card) 78%, var(--color-muted))
     );
     backdrop-filter: blur(14px) saturate(130%);
   }

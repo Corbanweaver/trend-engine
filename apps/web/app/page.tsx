@@ -133,9 +133,9 @@ export default function Home() {
   return (
     <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-blue-300/30 blur-3xl dark:bg-fuchsia-500/25" />
-        <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-blue-400/20 blur-3xl dark:bg-cyan-500/20" />
-        <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 animate-pulse rounded-full bg-blue-500/20 blur-3xl dark:bg-indigo-500/20" />
+        <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-primary/10 blur-3xl dark:bg-fuchsia-500/25" />
+        <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-secondary/70 blur-3xl dark:bg-cyan-500/20" />
+        <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 animate-pulse rounded-full bg-primary/5 blur-3xl dark:bg-indigo-500/20" />
       </div>
 
       <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-7">
@@ -195,7 +195,7 @@ export default function Home() {
         <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
           <a
             href="/dashboard"
-            className="fluid-transition inline-flex items-center justify-center rounded-2xl bg-primary px-10 py-4 text-base font-bold text-primary-foreground shadow-[0_0_28px_rgba(59,130,246,0.35)] hover:-translate-y-0.5 hover:shadow-[0_0_40px_rgba(59,130,246,0.45)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
+            className="fluid-transition inline-flex items-center justify-center rounded-2xl bg-primary px-10 py-4 text-base font-bold text-primary-foreground shadow-[0_12px_28px_rgba(54,95,125,0.2)] hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_36px_rgba(54,95,125,0.24)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
           >
             Start Finding Trends
           </a>
@@ -356,11 +356,11 @@ export default function Home() {
       </section>
 
       <section className="relative z-20 mx-auto w-full max-w-6xl px-6 pb-8">
-        <div className="rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-slate-950/90 via-slate-900/90 to-indigo-950/70 p-8 shadow-[0_0_48px_rgba(59,130,246,0.18)] backdrop-blur-sm sm:p-10">
-          <p className="text-center text-2xl font-semibold text-slate-100 sm:text-3xl">
+        <div className="rounded-3xl border border-border bg-card/85 p-8 shadow-[0_16px_42px_rgba(34,39,47,0.08)] backdrop-blur-sm dark:border-cyan-300/20 dark:bg-gradient-to-br dark:from-slate-950/90 dark:via-slate-900/90 dark:to-indigo-950/70 dark:shadow-[0_0_48px_rgba(59,130,246,0.18)] sm:p-10">
+          <p className="text-center text-2xl font-semibold text-foreground dark:text-slate-100 sm:text-3xl">
             Join 1,000+ creators discovering viral trends
           </p>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-slate-300 sm:text-base">
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-muted-foreground dark:text-slate-300 sm:text-base">
             Get product updates, early feature access, and weekly trend insights
             straight to your inbox.
           </p>

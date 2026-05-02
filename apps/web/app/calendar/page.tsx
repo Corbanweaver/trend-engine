@@ -208,19 +208,19 @@ export default function CalendarPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Content Calendar</h1>
           <Link
             href="/dashboard"
-            className="fluid-transition glass-surface rounded-xl border border-white/20 px-3 py-2 text-sm"
+            className="fluid-transition glass-surface rounded-xl border border-border px-3 py-2 text-sm text-foreground hover:bg-muted dark:border-white/20"
           >
             Back to Dashboard
           </Link>
         </div>
         <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
           {loading ? (
-            <div className="glass-surface shimmer rounded-2xl border border-white/10 p-5 text-sm text-slate-300 lg:col-span-2">
+            <div className="glass-surface shimmer rounded-2xl border border-border p-5 text-sm text-muted-foreground lg:col-span-2 dark:border-white/10 dark:text-slate-300">
               Loading calendar ideas...
             </div>
           ) : null}
           {error ? (
-            <div className="rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200 lg:col-span-2">
+            <div className="rounded-xl border border-red-300/60 bg-red-50 p-4 text-sm text-red-700 lg:col-span-2 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
               {error}
             </div>
           ) : null}
@@ -252,7 +252,7 @@ export default function CalendarPage() {
                       setSelectedIdeaId(idea.id);
                     }
                   }}
-                  className="fluid-transition stagger-in spring-pop cursor-grab rounded-xl border border-border bg-muted/70 p-2 text-left text-xs outline-none hover:-translate-y-0.5 hover:border-blue-300 focus-visible:ring-2 focus-visible:ring-cyan-400/60 dark:hover:border-cyan-300/30"
+                  className="fluid-transition stagger-in spring-pop cursor-grab rounded-xl border border-border bg-muted/70 p-2 text-left text-xs outline-none hover:-translate-y-0.5 hover:border-primary/25 focus-visible:ring-2 focus-visible:ring-ring/60 dark:focus-visible:ring-cyan-400/60 dark:hover:border-cyan-300/30"
                   style={{ ["--stagger" as string]: `${Math.min(idx, 10)}` }}
                 >
                   {idea.thumbnail_url ? (
@@ -275,7 +275,7 @@ export default function CalendarPage() {
             <div className="mb-3 flex items-center justify-between">
               <button
                 onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-                className="fluid-transition rounded-lg border border-white/15 px-2 py-1 text-xs hover:border-white/30"
+                className="fluid-transition rounded-lg border border-border bg-card px-2 py-1 text-xs hover:bg-muted dark:border-white/15 dark:hover:border-white/30"
               >
                 Prev
               </button>
@@ -284,7 +284,7 @@ export default function CalendarPage() {
               </h2>
               <button
                 onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-                className="fluid-transition rounded-lg border border-white/15 px-2 py-1 text-xs hover:border-white/30"
+                className="fluid-transition rounded-lg border border-border bg-card px-2 py-1 text-xs hover:bg-muted dark:border-white/15 dark:hover:border-white/30"
               >
                 Next
               </button>
@@ -336,7 +336,7 @@ export default function CalendarPage() {
                               if (Date.now() < blockDetailClickUntilRef.current) return;
                               setSelectedIdeaId(id);
                             }}
-                            className="fluid-transition cursor-grab rounded-lg border border-blue-200 bg-blue-50/80 px-1.5 py-1 text-left text-[11px] text-blue-900 hover:border-blue-300 dark:border-cyan-300/25 dark:bg-cyan-500/10 dark:text-cyan-100 dark:hover:border-cyan-300/40"
+                            className="fluid-transition cursor-grab rounded-lg border border-primary/20 bg-primary/10 px-1.5 py-1 text-left text-[11px] text-accent-foreground hover:border-primary/35 dark:border-cyan-300/25 dark:bg-cyan-500/10 dark:text-cyan-100 dark:hover:border-cyan-300/40"
                           >
                             {idea.thumbnail_url ? (
                               <div className="relative mb-1 aspect-video w-full overflow-hidden rounded border border-border bg-muted">
@@ -369,7 +369,7 @@ export default function CalendarPage() {
                                   e.stopPropagation();
                                   void deleteIdea(id);
                                 }}
-                                className="shrink-0 rounded border border-red-300/40 px-1 text-[10px] text-red-100 hover:bg-red-500/20 disabled:opacity-60"
+                                className="shrink-0 rounded border border-red-300/50 px-1 text-[10px] text-red-700 hover:bg-red-50 disabled:opacity-60 dark:border-red-300/40 dark:text-red-100 dark:hover:bg-red-500/20"
                               >
                                 {deletingIdeaId === id ? "..." : "Delete"}
                               </button>

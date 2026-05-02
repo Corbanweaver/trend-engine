@@ -479,7 +479,7 @@ export function IdeaPanel({
             {relatedTrends.map((t) => (
               <span
                 key={t.trend}
-                className="rounded-full border border-cyan-500/30 bg-cyan-50 px-2.5 py-1 text-xs text-cyan-700 dark:border-cyan-300/30 dark:bg-cyan-500/10 dark:text-cyan-100"
+                className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs text-primary dark:border-cyan-300/30 dark:bg-cyan-500/10 dark:text-cyan-100"
               >
                 {t.trend}
               </span>
@@ -625,8 +625,8 @@ export function IdeaPanel({
                   {renderMarkdownLikeContent(idea.script)}
                 </div>
               ) : null}
-              <div className="rounded-md border border-cyan-500/25 bg-cyan-50 p-3 dark:border-cyan-400/25 dark:bg-cyan-500/10">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-200">
+              <div className="rounded-md border border-primary/20 bg-primary/10 p-3 dark:border-cyan-400/25 dark:bg-cyan-500/10">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary dark:text-cyan-200">
                   Content Outline
                 </p>
                 <ul className="list-disc space-y-1 pl-5 text-xs text-foreground dark:text-slate-100">
@@ -656,7 +656,7 @@ export function IdeaPanel({
                         href={tiktokTagSearchUrl(tag)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center rounded-full border border-cyan-500/35 bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-700 transition-colors hover:border-cyan-500/60 hover:bg-cyan-100 dark:border-cyan-400/40 dark:bg-cyan-500/15 dark:text-cyan-100 dark:hover:border-cyan-300/70 dark:hover:bg-cyan-500/25"
+                        className="inline-flex items-center rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:border-primary/40 hover:bg-primary/15 dark:border-cyan-400/40 dark:bg-cyan-500/15 dark:text-cyan-100 dark:hover:border-cyan-300/70 dark:hover:bg-cyan-500/25"
                       >
                         {tag.startsWith("#") ? tag : `#${tag}`}
                       </a>
@@ -714,7 +714,7 @@ export function IdeaPanel({
                       type="button"
                       disabled={savingIdeaIndex === i || savedIndexes[i]}
                       onClick={() => void handleSaveIdea(idea, i, "saved")}
-                      className="h-8 bg-cyan-400 px-3 text-xs font-semibold text-slate-950 hover:opacity-90 disabled:opacity-60"
+                      className="h-8 bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:opacity-90"
                     >
                       {savedIndexes[i]
                         ? "Saved Idea ✔"

@@ -57,7 +57,7 @@ export function EmailWaitlistForm() {
         <button
           type="submit"
           disabled={status === "loading"}
-          className="h-12 rounded-xl bg-gradient-to-r from-cyan-400 to-indigo-500 px-6 text-sm font-semibold text-slate-950 shadow-[0_0_24px_rgba(56,189,248,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_0_36px_rgba(99,102,241,0.45)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-12 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[0_12px_24px_rgba(54,95,125,0.2)] transition hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_32px_rgba(54,95,125,0.24)] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_24px_rgba(56,189,248,0.35)] dark:hover:shadow-[0_0_36px_rgba(99,102,241,0.45)]"
         >
           {status === "loading" ? "Submitting..." : "Get Early Access"}
         </button>

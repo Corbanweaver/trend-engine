@@ -115,9 +115,9 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
   return (
     <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-blue-300/30 blur-3xl dark:bg-fuchsia-500/25" />
-        <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-blue-400/20 blur-3xl dark:bg-cyan-500/20" />
-        <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 animate-pulse rounded-full bg-blue-500/20 blur-3xl dark:bg-indigo-500/20" />
+        <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-primary/10 blur-3xl dark:bg-fuchsia-500/25" />
+        <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-secondary/70 blur-3xl dark:bg-cyan-500/20" />
+        <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 animate-pulse rounded-full bg-primary/5 blur-3xl dark:bg-indigo-500/20" />
       </div>
 
       <PricingHeader />
@@ -154,13 +154,13 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
               key={plan.name}
               className={`fluid-transition relative flex flex-col rounded-3xl border p-8 shadow-xl ${
                 plan.featured
-                  ? "z-[1] border-blue-300 bg-card shadow-[0_0_44px_-10px_rgba(59,130,246,0.28)] lg:-translate-y-2 lg:scale-[1.02] dark:border-cyan-400/40 dark:bg-slate-950/80 dark:shadow-[0_0_60px_-12px_rgba(34,211,238,0.35)]"
-                  : "glass-surface border-border bg-card backdrop-blur-sm hover:border-blue-300 dark:border-white/10 dark:bg-slate-950/50 dark:hover:border-white/20"
+                  ? "z-[1] border-primary/30 bg-card shadow-[0_18px_44px_-20px_rgba(54,95,125,0.35)] lg:-translate-y-2 lg:scale-[1.02] dark:border-cyan-400/40 dark:bg-slate-950/80 dark:shadow-[0_0_60px_-12px_rgba(34,211,238,0.35)]"
+                  : "glass-surface border-border bg-card backdrop-blur-sm hover:border-primary/25 dark:border-white/10 dark:bg-slate-950/50 dark:hover:border-white/20"
               }`}
             >
               {plan.featured && plan.popularLabel ? (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-lg dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950">
+                  <span className="inline-flex rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-lg dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950">
                     {plan.popularLabel}
                   </span>
                 </div>
@@ -182,7 +182,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
               <ul className="mb-8 flex flex-1 flex-col gap-3 text-sm text-foreground dark:text-slate-200">
                 {plan.features.map((f) => (
                   <li key={f} className="flex gap-3">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-cyan-500/15 dark:text-cyan-300">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-cyan-500/15 dark:text-cyan-300">
                       <Check className="h-3.5 w-3.5" strokeWidth={3} />
                     </span>
                     <span>{f}</span>
@@ -195,8 +195,8 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                   href={plan.ctaHref}
                   className={
                     plan.ctaVariant === "primary"
-                      ? "inline-flex w-full items-center justify-center rounded-2xl bg-primary px-6 py-3.5 text-center text-base font-bold text-white shadow-[0_0_24px_rgba(59,130,246,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_36px_rgba(59,130,246,0.45)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_32px_rgba(56,189,248,0.4)] dark:hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
-                      : "inline-flex w-full items-center justify-center rounded-2xl border border-border bg-card px-6 py-3.5 text-center text-base font-semibold text-foreground transition-all duration-200 hover:border-blue-300 hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:border-white/35 dark:hover:bg-white/10"
+                      ? "inline-flex w-full items-center justify-center rounded-2xl bg-primary px-6 py-3.5 text-center text-base font-bold text-primary-foreground shadow-[0_12px_24px_rgba(54,95,125,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_32px_rgba(54,95,125,0.24)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_32px_rgba(56,189,248,0.4)] dark:hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
+                      : "inline-flex w-full items-center justify-center rounded-2xl border border-border bg-card px-6 py-3.5 text-center text-base font-semibold text-foreground transition-all duration-200 hover:border-primary/25 hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:border-white/35 dark:hover:bg-white/10"
                   }
                 >
                   Get Started
@@ -208,8 +208,8 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                     type="submit"
                     className={
                       plan.ctaVariant === "primary"
-                        ? "inline-flex w-full cursor-pointer items-center justify-center rounded-2xl bg-primary px-6 py-3.5 text-center text-base font-bold text-white shadow-[0_0_24px_rgba(59,130,246,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_0_36px_rgba(59,130,246,0.45)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_32px_rgba(56,189,248,0.4)] dark:hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
-                        : "inline-flex w-full cursor-pointer items-center justify-center rounded-2xl border border-border bg-card px-6 py-3.5 text-center text-base font-semibold text-foreground transition-all duration-200 hover:border-blue-300 hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:border-white/35 dark:hover:bg-white/10"
+                        ? "inline-flex w-full cursor-pointer items-center justify-center rounded-2xl bg-primary px-6 py-3.5 text-center text-base font-bold text-primary-foreground shadow-[0_12px_24px_rgba(54,95,125,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_32px_rgba(54,95,125,0.24)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_32px_rgba(56,189,248,0.4)] dark:hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
+                        : "inline-flex w-full cursor-pointer items-center justify-center rounded-2xl border border-border bg-card px-6 py-3.5 text-center text-base font-semibold text-foreground transition-all duration-200 hover:border-primary/25 hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:border-white/35 dark:hover:bg-white/10"
                     }
                   >
                     Get Started

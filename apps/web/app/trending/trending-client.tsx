@@ -104,9 +104,9 @@ export function TrendingLivePage() {
   return (
     <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-blue-300/25 blur-3xl dark:bg-fuchsia-500/20" />
-        <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-blue-400/15 blur-3xl dark:bg-cyan-500/15" />
-        <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 rounded-full bg-indigo-500/15 blur-3xl dark:bg-indigo-500/15" />
+        <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-primary/10 blur-3xl dark:bg-fuchsia-500/20" />
+        <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-secondary/70 blur-3xl dark:bg-cyan-500/15" />
+        <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 rounded-full bg-primary/5 blur-3xl dark:bg-indigo-500/15" />
       </div>
 
       <header className="relative z-20 mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-7">
@@ -291,7 +291,7 @@ export function TrendingLivePage() {
           </div>
         ) : null}
 
-        <div className="mt-14 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-gradient-to-r from-slate-950/5 via-slate-900/5 to-indigo-950/10 px-6 py-5 dark:border-white/10 dark:from-slate-950/80 dark:via-slate-900/60 dark:to-indigo-950/40">
+        <div className="mt-14 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-muted/45 px-6 py-5 dark:border-white/10 dark:bg-gradient-to-r dark:from-slate-950/80 dark:via-slate-900/60 dark:to-indigo-950/40">
           <p className="max-w-xl text-sm text-muted-foreground">
             Turn these signals into full scripts, hooks, and thumbnails in the
             dashboard — niches from breaking news to gaming.

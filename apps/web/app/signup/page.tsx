@@ -49,24 +49,24 @@ export default function SignupPage() {
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
-      <div className="w-full max-w-md rounded-xl border border-white/10 bg-slate-900 p-6">
+      <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
         <h1 className="text-2xl font-semibold">Sign up</h1>
-        <p className="mt-1 text-sm text-slate-400">Create your account.</p>
+        <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">Create your account.</p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm">
-            <span className="mb-1 block text-slate-300">Email</span>
+            <span className="mb-1 block text-muted-foreground dark:text-slate-300">Email</span>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-white/15 bg-slate-950 px-3 py-2 text-slate-100 outline-none ring-cyan-300/60 focus:ring-2"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
             />
           </label>
 
           <label className="block text-sm">
-            <span className="mb-1 block text-slate-300">Password</span>
+            <span className="mb-1 block text-muted-foreground dark:text-slate-300">Password</span>
             <input
               type="password"
               required
@@ -75,7 +75,7 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
               aria-describedby="password-strength-hint"
-              className="w-full rounded-md border border-white/15 bg-slate-950 px-3 py-2 text-slate-100 outline-none ring-cyan-300/60 focus:ring-2"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
             />
             {password ? (
               <div
@@ -95,9 +95,9 @@ export default function SignupPage() {
                             : strength.level === 2
                               ? "bg-amber-400/90"
                               : strength.level === 3
-                                ? "bg-cyan-400/90"
+                                ? "bg-primary/80 dark:bg-cyan-400/90"
                                 : "bg-emerald-400/90"
-                          : "bg-slate-700/80"
+                          : "bg-muted-foreground/20 dark:bg-slate-700/80"
                       }`}
                     />
                   ))}
@@ -105,12 +105,12 @@ export default function SignupPage() {
                 <p
                   className={`text-xs font-medium tracking-wide ${
                     strength.level <= 1
-                      ? "text-rose-300/90"
+                      ? "text-rose-700 dark:text-rose-300/90"
                       : strength.level === 2
-                        ? "text-amber-200/90"
+                        ? "text-amber-700 dark:text-amber-200/90"
                         : strength.level === 3
-                          ? "text-cyan-200/90"
-                          : "text-emerald-200/90"
+                          ? "text-primary dark:text-cyan-200/90"
+                          : "text-emerald-700 dark:text-emerald-200/90"
                   }`}
                 >
                   {strength.label === "Too short"
@@ -125,7 +125,7 @@ export default function SignupPage() {
                 </p>
               </div>
             ) : (
-              <p id="password-strength-hint" className="mt-1.5 text-xs text-slate-500">
+              <p id="password-strength-hint" className="mt-1.5 text-xs text-muted-foreground dark:text-slate-500">
                 Use at least 8 characters with upper and lower case, a number, and a symbol for a
                 strong password.
               </p>
@@ -133,13 +133,13 @@ export default function SignupPage() {
           </label>
 
           {error ? (
-            <p className="rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+            <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
               {error}
             </p>
           ) : null}
 
           {success ? (
-            <p className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+            <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
               {success}
             </p>
           ) : null}
@@ -147,15 +147,15 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-cyan-400 px-4 py-2 font-semibold text-slate-950 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:opacity-90"
           >
             {loading ? "Creating account..." : "Sign up"}
           </button>
         </form>
 
-        <p className="mt-4 text-sm text-slate-400">
+        <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
           Already have an account?{" "}
-          <Link href="/login" className="text-cyan-300 hover:underline">
+          <Link href="/login" className="text-primary hover:underline dark:text-cyan-300">
             Log in
           </Link>
         </p>

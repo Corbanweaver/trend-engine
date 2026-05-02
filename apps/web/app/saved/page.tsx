@@ -350,14 +350,14 @@ export default function SavedIdeasPage() {
     <main className="min-h-svh bg-background px-4 py-8 text-foreground">
       <div className="mx-auto max-w-6xl space-y-6">
         {toast ? (
-          <div className="fixed right-4 top-4 z-[60] rounded-xl border border-emerald-300/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-100 shadow-lg backdrop-blur">
+          <div className="fixed right-4 top-4 z-[60] rounded-xl border border-emerald-300/60 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 shadow-lg backdrop-blur dark:border-emerald-300/40 dark:bg-emerald-500/15 dark:text-emerald-100">
             {toast}
           </div>
         ) : null}
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200/80">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary dark:text-cyan-200/80">
               Library
             </p>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight">Saved Ideas</h1>
@@ -376,22 +376,22 @@ export default function SavedIdeasPage() {
         </div>
 
         {loading ? (
-          <div className="glass-surface shimmer rounded-2xl border border-white/10 p-5 text-sm text-slate-300">
+          <div className="glass-surface shimmer rounded-2xl border border-border p-5 text-sm text-muted-foreground dark:border-white/10 dark:text-slate-300">
             Loading saved ideas...
           </div>
         ) : null}
         {error ? (
-          <p className="rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+          <p className="rounded-md border border-red-300/60 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
             {error}
           </p>
         ) : null}
 
         {!loading && !error && ideas.length === 0 ? (
-          <div className="glass-surface overflow-hidden rounded-2xl border border-white/10">
+          <div className="glass-surface overflow-hidden rounded-2xl border border-border dark:border-white/10">
             <div className="grid gap-0 md:grid-cols-[1.2fr_0.8fr]">
               <div className="p-8 sm:p-10">
-                <p className="text-lg font-semibold text-slate-100">No saved ideas yet</p>
-                <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-400">
+                <p className="text-lg font-semibold text-foreground dark:text-slate-100">No saved ideas yet</p>
+                <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground dark:text-slate-400">
                   Save a concept from the dashboard when it feels worth testing. It will
                   show up here with sharing, download, and calendar actions.
                 </p>
@@ -399,12 +399,12 @@ export default function SavedIdeasPage() {
                   <Link href="/dashboard">Find Ideas</Link>
                 </Button>
               </div>
-              <div className="hidden border-l border-white/10 bg-slate-950/35 p-8 md:block">
+              <div className="hidden border-l border-border bg-muted/45 p-8 dark:border-white/10 dark:bg-slate-950/35 md:block">
                 <div className="space-y-3">
                   {["Hook", "Angle", "Script", "Post plan"].map((label) => (
                     <div
                       key={label}
-                      className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300"
+                      className="rounded-xl border border-border bg-card/70 px-4 py-3 text-sm text-muted-foreground dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300"
                     >
                       {label}
                     </div>
@@ -416,7 +416,7 @@ export default function SavedIdeasPage() {
         ) : null}
 
         {!loading && !error && ideas.length > 0 ? (
-          <section className="glass-surface rounded-2xl border border-white/10 p-4">
+          <section className="glass-surface rounded-2xl border border-border p-4 dark:border-white/10">
             <div className="grid gap-3 md:grid-cols-[1fr_180px_160px]">
               <label className="relative block">
                 <span className="sr-only">Search saved ideas</span>
@@ -428,7 +428,7 @@ export default function SavedIdeasPage() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search titles, scripts, niches..."
-                  className="h-10 w-full rounded-xl border border-white/10 bg-slate-950/40 pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-300/20"
+                  className="h-10 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-primary/45 focus:ring-2 focus:ring-ring/20 dark:border-white/10 dark:bg-slate-950/40 dark:focus:border-cyan-300/60 dark:focus:ring-cyan-300/20"
                 />
               </label>
               <label>
@@ -436,7 +436,7 @@ export default function SavedIdeasPage() {
                 <select
                   value={nicheFilter}
                   onChange={(e) => setNicheFilter(e.target.value)}
-                  className="h-10 w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-300/20"
+                  className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary/45 focus:ring-2 focus:ring-ring/20 dark:border-white/10 dark:bg-slate-950/40 dark:focus:border-cyan-300/60 dark:focus:ring-cyan-300/20"
                 >
                   <option value="all">All niches</option>
                   {niches.map((niche) => (
@@ -451,7 +451,7 @@ export default function SavedIdeasPage() {
                 <select
                   value={sortMode}
                   onChange={(e) => setSortMode(e.target.value as SortMode)}
-                  className="h-10 w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-300/20"
+                  className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary/45 focus:ring-2 focus:ring-ring/20 dark:border-white/10 dark:bg-slate-950/40 dark:focus:border-cyan-300/60 dark:focus:ring-cyan-300/20"
                 >
                   <option value="newest">Newest</option>
                   <option value="oldest">Oldest</option>
@@ -470,7 +470,7 @@ export default function SavedIdeasPage() {
                     setQuery("");
                     setNicheFilter("all");
                   }}
-                  className="font-medium text-cyan-200 hover:text-cyan-100"
+                  className="font-medium text-primary hover:text-primary/80 dark:text-cyan-200 dark:hover:text-cyan-100"
                 >
                   Clear filters
                 </button>
@@ -480,9 +480,9 @@ export default function SavedIdeasPage() {
         ) : null}
 
         {!loading && !error && ideas.length > 0 && filteredIdeas.length === 0 ? (
-          <div className="glass-surface rounded-2xl border border-white/10 p-8 text-center">
-            <p className="text-sm font-medium text-slate-200">No matches found</p>
-            <p className="mt-1 text-xs text-slate-400">
+          <div className="glass-surface rounded-2xl border border-border p-8 text-center dark:border-white/10">
+            <p className="text-sm font-medium text-foreground dark:text-slate-200">No matches found</p>
+            <p className="mt-1 text-xs text-muted-foreground dark:text-slate-400">
               Try a different search term or remove the niche filter.
             </p>
           </div>
@@ -493,7 +493,7 @@ export default function SavedIdeasPage() {
             <article
               key={item.id}
               onClick={() => setDetailIdea(item)}
-              className="fluid-transition glass-surface stagger-in group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card/80 text-left shadow-sm hover:-translate-y-0.5 hover:border-cyan-300/35 hover:shadow-xl hover:shadow-black/20"
+              className="fluid-transition glass-surface stagger-in group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card/80 text-left shadow-sm hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-xl hover:shadow-slate-900/10 dark:hover:border-cyan-300/35 dark:hover:shadow-black/20"
               style={{ ["--stagger" as string]: `${Math.min(index, 12)}` }}
             >
               {item.thumbnail_url ? (
@@ -508,7 +508,7 @@ export default function SavedIdeasPage() {
               ) : null}
               <div className="flex flex-1 flex-col p-4">
                 <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="rounded-full border border-white/10 bg-muted px-2.5 py-1 text-slate-200">
+                  <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-muted-foreground dark:border-white/10 dark:text-slate-200">
                     {item.niche || "General"}
                   </span>
                   <span>{formatSavedDate(item.created_at)}</span>
@@ -525,7 +525,7 @@ export default function SavedIdeasPage() {
                     No script/content available for this idea.
                   </p>
                 )}
-                <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
+                <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3 dark:border-white/10">
                   <Button
                     type="button"
                     size="sm"
@@ -546,7 +546,7 @@ export default function SavedIdeasPage() {
                       e.stopPropagation();
                       void copyIdea(item);
                     }}
-                    className="fluid-transition inline-flex size-8 items-center justify-center rounded-lg border border-cyan-400/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20"
+                    className="fluid-transition inline-flex size-8 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-primary hover:bg-primary/15 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-100 dark:hover:bg-cyan-500/20"
                   >
                     <Copy aria-hidden="true" className="size-4" />
                   </button>
@@ -558,7 +558,7 @@ export default function SavedIdeasPage() {
                       e.stopPropagation();
                       downloadIdeaFile(item);
                     }}
-                    className="fluid-transition inline-flex size-8 items-center justify-center rounded-lg border border-indigo-400/30 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20"
+                    className="fluid-transition inline-flex size-8 items-center justify-center rounded-lg border border-primary/20 bg-accent text-accent-foreground hover:bg-accent/80 dark:border-indigo-400/30 dark:bg-indigo-500/10 dark:text-indigo-100 dark:hover:bg-indigo-500/20"
                   >
                     <Download aria-hidden="true" className="size-4" />
                   </button>
@@ -570,7 +570,7 @@ export default function SavedIdeasPage() {
                       e.stopPropagation();
                       void shareIdea(item);
                     }}
-                    className="fluid-transition inline-flex size-8 items-center justify-center rounded-lg border border-violet-400/30 bg-violet-500/10 text-violet-100 hover:bg-violet-500/20"
+                    className="fluid-transition inline-flex size-8 items-center justify-center rounded-lg border border-primary/20 bg-secondary text-secondary-foreground hover:bg-secondary/80 dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-100 dark:hover:bg-violet-500/20"
                   >
                     <Share2 aria-hidden="true" className="size-4" />
                   </button>
@@ -582,7 +582,7 @@ export default function SavedIdeasPage() {
                       e.stopPropagation();
                       saveIdeaToCalendar(item);
                     }}
-                    className="fluid-transition inline-flex size-8 items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20"
+                    className="fluid-transition inline-flex size-8 items-center justify-center rounded-lg border border-emerald-300/60 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-100 dark:hover:bg-emerald-500/20"
                   >
                     <CalendarPlus aria-hidden="true" className="size-4" />
                   </button>
@@ -595,7 +595,7 @@ export default function SavedIdeasPage() {
                       e.stopPropagation();
                       void removeIdea(item.id);
                     }}
-                    className="fluid-transition ml-auto inline-flex size-8 items-center justify-center rounded-lg border border-red-400/30 bg-red-500/10 text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="fluid-transition ml-auto inline-flex size-8 items-center justify-center rounded-lg border border-red-300/60 bg-red-50 text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200 dark:hover:bg-red-500/20"
                   >
                     <Trash2 aria-hidden="true" className="size-4" />
                   </button>
@@ -619,10 +619,10 @@ export default function SavedIdeasPage() {
             aria-labelledby="saved-idea-detail-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-4 border-b border-white/10 p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-4 border-b border-border p-4 dark:border-white/10 sm:p-5">
               <div>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="rounded-full border border-white/10 bg-muted px-2.5 py-1 text-slate-200">
+                  <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-muted-foreground dark:border-white/10 dark:text-slate-200">
                     {detailIdea.niche || "General"}
                   </span>
                   <span>{formatSavedDate(detailIdea.created_at)}</span>
@@ -658,7 +658,7 @@ export default function SavedIdeasPage() {
                 {detailIdea.idea_content || "No script/content available for this idea."}
               </div>
             </div>
-            <div className="flex flex-wrap gap-2 border-t border-white/10 p-4 sm:p-5">
+            <div className="flex flex-wrap gap-2 border-t border-border p-4 dark:border-white/10 sm:p-5">
               <Button type="button" size="sm" onClick={() => void copyIdea(detailIdea)}>
                 <Copy aria-hidden="true" />
                 Copy Link

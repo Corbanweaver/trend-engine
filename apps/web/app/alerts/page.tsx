@@ -172,7 +172,7 @@ export default function TrendAlertsPage() {
     <main className="min-h-svh bg-background px-4 py-8 text-foreground">
       <div className="mx-auto max-w-2xl space-y-6">
         {toast ? (
-          <div className="fixed right-4 top-4 z-50 rounded-xl border border-emerald-300/40 bg-emerald-500/15 px-3 py-2 text-sm text-emerald-100 shadow-lg">
+          <div className="fixed right-4 top-4 z-50 rounded-xl border border-emerald-300/60 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 shadow-lg dark:border-emerald-300/40 dark:bg-emerald-500/15 dark:text-emerald-100">
             {toast}
           </div>
         ) : null}
@@ -181,14 +181,14 @@ export default function TrendAlertsPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Trend Alerts</h1>
           <Link
             href="/dashboard"
-            className="fluid-transition glass-surface rounded-xl border border-white/20 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800"
+            className="fluid-transition glass-surface rounded-xl border border-border px-3 py-2 text-sm text-foreground hover:bg-muted dark:border-white/20 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             Back to Dashboard
           </Link>
         </div>
 
-        <div className="glass-surface rounded-2xl border border-white/10 p-6">
-          <p className="text-sm leading-relaxed text-slate-300">
+        <div className="glass-surface rounded-2xl border border-border p-6 dark:border-white/10">
+          <p className="text-sm leading-relaxed text-muted-foreground dark:text-slate-300">
             Subscribe to niches you care about. Each week you&apos;ll get one email with the top three
             trending topics per niche, powered by the same discovery engine as the dashboard. Delivery is
             typically Monday morning (UTC). You can add or remove niches anytime.
@@ -196,19 +196,19 @@ export default function TrendAlertsPage() {
         </div>
 
         {loading ? (
-          <div className="glass-surface shimmer rounded-2xl border border-white/10 p-5 text-sm text-slate-300">
+          <div className="glass-surface shimmer rounded-2xl border border-border p-5 text-sm text-muted-foreground dark:border-white/10 dark:text-slate-300">
             Loading subscriptions...
           </div>
         ) : null}
 
         {error ? (
-          <p className="rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+          <p className="rounded-md border border-red-300/60 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
             {error}
           </p>
         ) : null}
 
         {!loading && !error?.startsWith("Please log in") ? (
-          <div className="glass-surface rounded-2xl border border-white/10 p-6 space-y-4">
+          <div className="glass-surface rounded-2xl border border-border p-6 space-y-4 dark:border-white/10">
             <h2 className="text-lg font-medium text-foreground">Add a niche</h2>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <label className="flex flex-1 flex-col gap-1 text-xs text-muted-foreground">
@@ -242,7 +242,7 @@ export default function TrendAlertsPage() {
                 type="button"
                 disabled={adding}
                 onClick={() => void addSubscription()}
-                className="fluid-transition rounded-xl border border-cyan-400/40 bg-cyan-500/15 px-4 py-2 text-sm font-medium text-cyan-100 hover:bg-cyan-500/25 disabled:opacity-50"
+                className="fluid-transition rounded-xl border border-primary/25 bg-primary/10 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/15 disabled:opacity-50 dark:border-cyan-400/40 dark:bg-cyan-500/15 dark:text-cyan-100 dark:hover:bg-cyan-500/25"
               >
                 {adding ? "Adding…" : "Subscribe"}
               </button>
@@ -253,9 +253,9 @@ export default function TrendAlertsPage() {
         <div className="space-y-3">
           <h2 className="text-lg font-medium text-foreground">Your niches</h2>
           {!loading && rows.length === 0 && !error ? (
-            <div className="glass-surface rounded-2xl border border-white/10 p-8 text-center">
-              <p className="text-sm font-medium text-slate-200">No alerts yet</p>
-              <p className="mt-1 text-xs text-slate-400">
+            <div className="glass-surface rounded-2xl border border-border p-8 text-center dark:border-white/10">
+              <p className="text-sm font-medium text-foreground dark:text-slate-200">No alerts yet</p>
+              <p className="mt-1 text-xs text-muted-foreground dark:text-slate-400">
                 Add at least one niche above to start receiving the weekly digest.
               </p>
             </div>
@@ -277,7 +277,7 @@ export default function TrendAlertsPage() {
                 type="button"
                 disabled={removingId === row.id}
                 onClick={() => void removeSubscription(row.id)}
-                className="fluid-transition shrink-0 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-200 hover:bg-red-500/20 disabled:opacity-50"
+                className="fluid-transition shrink-0 rounded-xl border border-red-300/60 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200 dark:hover:bg-red-500/20"
               >
                 {removingId === row.id ? "Removing…" : "Remove"}
               </button>
