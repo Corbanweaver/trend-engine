@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { getSupabaseClient } from "@/lib/supabase";
 
@@ -14,6 +14,47 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [verifyingLink, setVerifyingLink] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+
+    if (!access_token || !refresh_token) return;
+
+    let active = true;
+    setVerifyingLink(true);
+    setError(null);
+    setMessage("Verifying your reset link...");
+
+    fetch("/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ access_token, refresh_token, next: "/reset-password" }),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const body = await response.json().catch(() => null);
+          throw new Error(body?.error || "That reset link could not be verified.");
+        }
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        if (active) setMessage("Reset link verified. Choose a new password.");
+      })
+      .catch((err) => {
+        if (active) {
+          setMessage(null);
+          setError(err instanceof Error ? err.message : "That reset link could not be verified.");
+        }
+      })
+      .finally(() => {
+        if (active) setVerifyingLink(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -72,10 +113,10 @@ export default function ResetPasswordPage() {
           ) : null}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || verifyingLink}
             className="w-full rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950"
           >
-            {loading ? "Updating..." : "Update password"}
+            {verifyingLink ? "Verifying..." : loading ? "Updating..." : "Update password"}
           </button>
         </form>
         <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
