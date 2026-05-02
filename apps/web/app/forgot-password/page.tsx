@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { getSupabaseClient } from "@/lib/supabase";
 
@@ -12,6 +12,17 @@ export default function ForgotPasswordPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+
+    const timer = window.setTimeout(() => {
+      setCooldownSeconds((seconds) => Math.max(seconds - 1, 0));
+    }, 1000);
+
+    return () => window.clearTimeout(timer);
+  }, [cooldownSeconds]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -26,9 +37,15 @@ export default function ForgotPasswordPage() {
         redirectTo,
       });
       if (resetError) {
-        setError(resetError.message);
+        if (resetError.message.toLowerCase().includes("rate")) {
+          setCooldownSeconds(60);
+          setError("Please wait about a minute before requesting another reset email. Supabase limits repeated password reset emails for security.");
+        } else {
+          setError(resetError.message);
+        }
         return;
       }
+      setCooldownSeconds(60);
       setMessage("Check your email for a secure password reset link.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send reset email.");
@@ -67,10 +84,10 @@ export default function ForgotPasswordPage() {
           ) : null}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || cooldownSeconds > 0}
             className="w-full rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950"
           >
-            {loading ? "Sending..." : "Send reset link"}
+            {loading ? "Sending..." : cooldownSeconds > 0 ? `Try again in ${cooldownSeconds}s` : "Send reset link"}
           </button>
         </form>
         <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
