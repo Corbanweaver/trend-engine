@@ -30,13 +30,18 @@ export default function SignupPage() {
       const { error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        },
       });
       if (authError) {
         setError(authError.message);
         return;
       }
 
-      setSuccess("Account created. Check your email to confirm your account.");
+      setSuccess(
+        "Account created. Check your email to confirm your account, then you will be sent to the dashboard.",
+      );
       window.setTimeout(() => {
         router.push("/login?verify=1");
       }, 600);
