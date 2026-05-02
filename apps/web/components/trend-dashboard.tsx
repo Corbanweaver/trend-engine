@@ -241,13 +241,16 @@ function getPlatformBadges(trend: TrendIdea): string[] {
 }
 
 function getCardVisual(trend: TrendIdea) {
+  const generatedIdeaThumb = trend.ideas.find(
+    (idea) => typeof idea.thumbnail_url === "string" && idea.thumbnail_url,
+  )?.thumbnail_url;
   const youtubeThumb = trend.example_videos.find(
     (v) => typeof v.thumbnail === "string" && v.thumbnail,
   )?.thumbnail as string | undefined;
   const tiktokCover = trend.tiktok_videos.find(
     (v) => typeof v.cover === "string" && v.cover,
   )?.cover as string | undefined;
-  return youtubeThumb || tiktokCover || null;
+  return generatedIdeaThumb || youtubeThumb || tiktokCover || null;
 }
 
 function getYouTubeUrl(trend: TrendIdea): string | null {
@@ -496,15 +499,15 @@ function LoadingState({ niche }: { niche: string }) {
     <div className="flex flex-col items-center justify-center gap-5 py-24 text-center">
       <div className="relative flex items-center justify-center">
         <div className="absolute size-20 animate-ping rounded-full bg-cyan-500/20" />
-        <div className="relative rounded-full border border-cyan-400/40 bg-slate-900/80 p-5">
-          <Sparkles className="size-8 text-cyan-300" />
+        <div className="relative rounded-full border border-cyan-500/30 bg-card p-5 shadow-sm dark:border-cyan-400/40 dark:bg-slate-900/80">
+          <Sparkles className="size-8 text-cyan-600 dark:text-cyan-300" />
         </div>
       </div>
       <div className="space-y-2">
-        <p className="text-base font-semibold text-slate-100">
+        <p className="text-base font-semibold text-foreground dark:text-slate-100">
           Crafting ideas for {niche}
         </p>
-        <p className="max-w-md text-sm text-slate-400">
+        <p className="max-w-md text-sm text-muted-foreground dark:text-slate-400">
           Scanning live trends across platforms and generating high-converting
           short-form concepts.
         </p>
@@ -513,13 +516,13 @@ function LoadingState({ niche }: { niche: string }) {
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="overflow-hidden rounded-xl border border-white/10 bg-slate-900/60"
+            className="overflow-hidden rounded-xl border border-border bg-card shadow-sm dark:border-white/10 dark:bg-slate-900/60"
           >
-            <div className="h-28 animate-pulse bg-slate-800/80" />
+            <div className="h-28 animate-pulse bg-muted dark:bg-slate-800/80" />
             <div className="space-y-2 p-3">
-              <div className="h-3 w-16 animate-pulse rounded bg-slate-700/70" />
-              <div className="h-4 w-5/6 animate-pulse rounded bg-slate-700/70" />
-              <div className="h-2 w-full animate-pulse rounded bg-slate-800/80" />
+              <div className="h-3 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-slate-700/70" />
+              <div className="h-4 w-5/6 animate-pulse rounded bg-muted-foreground/20 dark:bg-slate-700/70" />
+              <div className="h-2 w-full animate-pulse rounded bg-muted dark:bg-slate-800/80" />
             </div>
           </div>
         ))}
@@ -555,8 +558,8 @@ function FilterChip({
       className={cn(
         "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
         active
-          ? "border-cyan-300/70 bg-cyan-400/20 text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.25)]"
-          : "border-white/10 bg-white/5 text-slate-300 hover:border-white/25 hover:text-white",
+          ? "border-blue-300 bg-blue-50 text-blue-700 shadow-sm dark:border-cyan-300/70 dark:bg-cyan-400/20 dark:text-cyan-100 dark:shadow-[0_0_18px_rgba(34,211,238,0.25)]"
+          : "border-border bg-card text-muted-foreground hover:border-blue-300 hover:text-foreground dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-white/25 dark:hover:text-white",
       )}
       style={{
         transform: `translate(${offset.x}px, ${offset.y}px)`,
@@ -896,13 +899,13 @@ export function TrendDashboard() {
   return (
     <div className="relative flex min-h-svh flex-col overflow-x-hidden bg-background pb-[calc(4.75rem+env(safe-area-inset-bottom))] text-foreground lg:pb-0">
       {showOnboarding ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-slate-900 p-6 shadow-2xl">
-            <h2 className="text-xl font-semibold text-white">Welcome to Trend Engine</h2>
-            <p className="mt-2 text-sm text-slate-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 dark:bg-slate-950/80">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl dark:border-white/15 dark:bg-slate-900">
+            <h2 className="text-xl font-semibold text-foreground dark:text-white">Welcome to Trend Engine</h2>
+            <p className="mt-2 text-sm text-muted-foreground dark:text-slate-300">
               Get started in under two minutes:
             </p>
-            <ol className="mt-4 space-y-2 text-sm text-slate-200">
+            <ol className="mt-4 space-y-2 text-sm text-foreground dark:text-slate-200">
               <li>1. Pick your niche</li>
               <li>2. Run your first analysis</li>
               <li>3. Save your best ideas</li>
@@ -1221,9 +1224,9 @@ export function TrendDashboard() {
           ) : null}
 
           {!loading && !data && !error ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-24 text-center text-slate-400">
-              <Sparkles className="size-8 text-cyan-300" />
-              <p className="text-sm font-medium text-slate-200">No data yet</p>
+            <div className="flex flex-col items-center justify-center gap-3 py-24 text-center text-muted-foreground dark:text-slate-400">
+              <Sparkles className="size-8 text-cyan-600 dark:text-cyan-300" />
+              <p className="text-sm font-medium text-foreground dark:text-slate-200">No data yet</p>
               <p className="max-w-sm text-xs">
                 Choose a niche and run <strong>Analyze trends</strong> to load
                 cards from your FastAPI backend.
@@ -1251,10 +1254,10 @@ export function TrendDashboard() {
               </div>
             ) : (
               <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
-                <p className="text-sm font-medium text-slate-200">
+                <p className="text-sm font-medium text-foreground dark:text-slate-200">
                   No trends match this filter
                 </p>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-muted-foreground dark:text-slate-400">
                   Try another platform chip or clear your search terms.
                 </p>
               </div>

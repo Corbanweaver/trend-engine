@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import { FloatingAiAssistant } from "@/components/floating-ai-assistant";
 
 import "./globals.css";
@@ -19,11 +21,40 @@ export const metadata: Metadata = {
   description: "Trend intelligence and video ideas for creators",
 };
 
-export default function RootLayout({
+async function hasAuthenticatedUser() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return false;
+  }
+
+  const cookieStore = await cookies();
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll() {
+        // Root layout only needs to read auth state for conditional UI.
+      },
+    },
+  });
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return Boolean(user);
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const showFloatingAssistant = await hasAuthenticatedUser();
+
   return (
     <html lang="en">
       <head>
@@ -46,7 +77,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${geistSans.className}`}
       >
         {children}
-        <FloatingAiAssistant />
+        {showFloatingAssistant ? <FloatingAiAssistant /> : null}
       </body>
     </html>
   );

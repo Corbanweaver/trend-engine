@@ -55,6 +55,7 @@ def int_env(name: str, default: int, minimum: int, maximum: int) -> int:
 
 
 OPENAI_IDEA_IMAGE_COMPRESSION = int_env("OPENAI_IDEA_IMAGE_COMPRESSION", 70, 0, 100)
+OPENAI_IDEA_IMAGES_PER_TOPIC = int_env("OPENAI_IDEA_IMAGES_PER_TOPIC", 1, 0, 3)
 
 SYSTEM_PROMPT = """You are a world-class short-form content creator and strategist known for making ideas feel human, bold, and impossible to scroll past.
 
@@ -410,9 +411,15 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
             )
         raw = response.choices[0].message.content or ""
         ideas = parse_ideas_json(raw)
-        image_client = get_openai_image_client()
-        thumbnail_coros = [generate_idea_thumbnail(image_client, niche, topic, idea) for idea in ideas]
-        thumbnail_results = await asyncio.gather(*thumbnail_coros, return_exceptions=True)
+        thumbnail_ideas = ideas[:OPENAI_IDEA_IMAGES_PER_TOPIC]
+        thumbnail_results = []
+        if thumbnail_ideas:
+            image_client = get_openai_image_client()
+            thumbnail_coros = [
+                generate_idea_thumbnail(image_client, niche, topic, idea)
+                for idea in thumbnail_ideas
+            ]
+            thumbnail_results = await asyncio.gather(*thumbnail_coros, return_exceptions=True)
         for idx, result in enumerate(thumbnail_results):
             if isinstance(result, str):
                 ideas[idx].thumbnail_url = result
