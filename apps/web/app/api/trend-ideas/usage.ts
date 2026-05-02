@@ -22,6 +22,14 @@ type UserSubscriptionRow = {
   credits_reset_at: string;
 };
 
+type CreditRpcRow = {
+  plan: SubscriptionPlan;
+  credits_used: number;
+  credits_limit: number;
+  credits_remaining: number;
+  analyses_used: number;
+};
+
 export type CreditSnapshot = {
   plan: SubscriptionPlan;
   creditsUsed: number;
@@ -80,6 +88,16 @@ function snapshotFromRow(row: UserSubscriptionRow): CreditSnapshot {
     creditsLimit,
     creditsRemaining: getRemainingCredits(plan, creditsUsed),
     analysesUsedThisMonth: Math.max(0, row.analyses_used_this_month ?? 0),
+  };
+}
+
+function snapshotFromRpc(row: CreditRpcRow): CreditSnapshot {
+  return {
+    plan: normalizePlan(row.plan),
+    creditsUsed: Math.max(0, row.credits_used ?? 0),
+    creditsLimit: Math.max(0, row.credits_limit ?? 0),
+    creditsRemaining: Math.max(0, row.credits_remaining ?? 0),
+    analysesUsedThisMonth: Math.max(0, row.analyses_used ?? 0),
   };
 }
 
@@ -146,22 +164,43 @@ export async function loadUsage(): Promise<UsageResult> {
 export async function spendCredits(
   admin: SupabaseClient,
   userId: string,
-  current: CreditSnapshot,
   cost: number,
   options: { countAnalysis?: boolean } = {},
 ): Promise<CreditSnapshot> {
-  const nextCreditsUsed = current.creditsUsed + cost;
-  const nextAnalysesUsed = current.analysesUsedThisMonth + (options.countAnalysis ? 1 : 0);
   const { data, error } = await admin
-    .from("user_subscriptions")
-    .update({
-      credits_used_this_month: nextCreditsUsed,
-      analyses_used_this_month: nextAnalysesUsed,
+    .rpc("spend_user_credits", {
+      p_user_id: userId,
+      p_cost: cost,
+      p_count_analysis: options.countAnalysis ?? false,
     })
-    .eq("user_id", userId)
-    .select("user_id,plan,analyses_used_this_month,credits_used_this_month,credits_reset_at")
-    .single<UserSubscriptionRow>();
+    .single();
 
   if (error) throw error;
-  return snapshotFromRow(data);
+  return snapshotFromRpc(data as CreditRpcRow);
+}
+
+export async function refundCredits(
+  admin: SupabaseClient,
+  userId: string,
+  cost: number,
+  options: { countAnalysis?: boolean } = {},
+): Promise<CreditSnapshot> {
+  const { data, error } = await admin
+    .rpc("refund_user_credits", {
+      p_user_id: userId,
+      p_cost: cost,
+      p_count_analysis: options.countAnalysis ?? false,
+    })
+    .single();
+
+  if (error) throw error;
+  return snapshotFromRpc(data as CreditRpcRow);
+}
+
+export function isInsufficientCreditsError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const maybeError = error as { message?: unknown; details?: unknown };
+  return [maybeError.message, maybeError.details].some(
+    (value) => typeof value === "string" && value.includes("insufficient_credits"),
+  );
 }

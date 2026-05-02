@@ -1,9 +1,13 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+import { CREDIT_COSTS } from "@/lib/credits";
+
+import {
+  isInsufficientCreditsError,
+  loadUsage,
+  refundCredits,
+  spendCredits,
+} from "../trend-ideas/usage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -90,42 +94,55 @@ async function callGpt4(messages: ChatMessage[]): Promise<string> {
 }
 
 export async function POST(request: Request) {
+  const usage = await loadUsage();
+  if (!usage.ok) {
+    return NextResponse.json({ error: usage.error }, { status: usage.status });
+  }
+
   try {
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json(
-        { error: "Missing Supabase environment configuration" },
-        { status: 500 },
-      );
-    }
-
-    const cookieStore = await cookies();
-    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll() {
-          // no-op for API routes
-        },
-      },
-    });
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = (await request.json()) as ChatBody;
     const messages = normalizeMessages(body.messages ?? []);
     if (!messages.length) {
       return NextResponse.json({ error: "Please send at least one message." }, { status: 400 });
     }
 
-    const reply = await callGpt4(messages);
-    return NextResponse.json({ reply });
+    const cost = CREDIT_COSTS.assistantMessage;
+    if (usage.snapshot.creditsRemaining < cost) {
+      return NextResponse.json(
+        {
+          error: `You need ${cost} credit to message the AI assistant.`,
+          credits: usage.snapshot,
+          requiredCredits: cost,
+        },
+        { status: 402 },
+      );
+    }
+
+    let charged = false;
+    try {
+      const credits = await spendCredits(usage.admin, usage.user.id, cost);
+      charged = true;
+      const reply = await callGpt4(messages);
+      return NextResponse.json({ reply, credits });
+    } catch (error) {
+      if (charged) {
+        await refundCredits(usage.admin, usage.user.id, cost).catch((refundError) =>
+          console.error("Failed to refund assistant credits:", refundError),
+        );
+      }
+      if (isInsufficientCreditsError(error)) {
+        return NextResponse.json(
+          {
+            error: `You need ${cost} credit to message the AI assistant.`,
+            credits: usage.snapshot,
+            requiredCredits: cost,
+          },
+          { status: 402 },
+        );
+      }
+      throw error;
+    }
+
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Assistant request failed." },

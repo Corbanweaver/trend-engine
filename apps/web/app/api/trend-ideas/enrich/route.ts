@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getApiBaseUrl } from "@/lib/api";
 import { CREDIT_COSTS } from "@/lib/credits";
 
-import { loadUsage, spendCredits } from "../usage";
+import { isInsufficientCreditsError, loadUsage, refundCredits, spendCredits } from "../usage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -62,7 +62,11 @@ export async function POST(request: Request) {
     );
   }
 
+  let charged = false;
   try {
+    const reservedCredits = await spendCredits(usage.admin, usage.user.id, cost);
+    charged = true;
+
     const backend = await fetch(`${getApiBaseUrl()}/trend-ideas/${body.path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -72,15 +76,33 @@ export async function POST(request: Request) {
     const data = (await backend.json().catch(() => null)) as Record<string, unknown> | null;
     if (!backend.ok) {
       const detail = data?.detail ?? data?.error ?? backend.statusText;
+      await refundCredits(usage.admin, usage.user.id, cost).catch((refundError) =>
+        console.error("Failed to refund idea tool credits:", refundError),
+      );
+      charged = false;
       return NextResponse.json(
         { error: typeof detail === "string" ? detail : JSON.stringify(detail) },
         { status: backend.status },
       );
     }
 
-    const credits = await spendCredits(usage.admin, usage.user.id, usage.snapshot, cost);
-    return NextResponse.json({ data, credits });
+    return NextResponse.json({ data, credits: reservedCredits });
   } catch (error) {
+    if (charged) {
+      await refundCredits(usage.admin, usage.user.id, cost).catch((refundError) =>
+        console.error("Failed to refund idea tool credits:", refundError),
+      );
+    }
+    if (isInsufficientCreditsError(error)) {
+      return NextResponse.json(
+        {
+          error: `You need ${cost} credits to run this AI tool.`,
+          credits: usage.snapshot,
+          requiredCredits: cost,
+        },
+        { status: 402 },
+      );
+    }
     console.error("Trend idea enrichment route failed:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Idea tool failed." },

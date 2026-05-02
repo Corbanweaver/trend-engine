@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getApiBaseUrl } from "@/lib/api";
 import { CREDIT_COSTS } from "@/lib/credits";
 
-import { loadUsage, spendCredits } from "../usage";
+import { isInsufficientCreditsError, loadUsage, refundCredits, spendCredits } from "../usage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +39,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Choose a niche to analyze." }, { status: 400 });
   }
 
+  let charged = false;
   try {
+    const reservedCredits = await spendCredits(usage.admin, usage.user.id, cost, {
+      countAnalysis: true,
+    });
+    charged = true;
+
     const backend = await fetch(`${getApiBaseUrl()}/trend-ideas/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -49,18 +55,33 @@ export async function POST(request: Request) {
     const payload = (await backend.json().catch(() => null)) as Record<string, unknown> | null;
     if (!backend.ok) {
       const detail = payload?.detail ?? payload?.error ?? backend.statusText;
+      await refundCredits(usage.admin, usage.user.id, cost, { countAnalysis: true }).catch(
+        (refundError) => console.error("Failed to refund analysis credits:", refundError),
+      );
+      charged = false;
       return NextResponse.json(
         { error: typeof detail === "string" ? detail : JSON.stringify(detail) },
         { status: backend.status },
       );
     }
 
-    const credits = await spendCredits(usage.admin, usage.user.id, usage.snapshot, cost, {
-      countAnalysis: true,
-    });
-
-    return NextResponse.json({ ...(payload ?? {}), credits });
+    return NextResponse.json({ ...(payload ?? {}), credits: reservedCredits });
   } catch (error) {
+    if (charged) {
+      await refundCredits(usage.admin, usage.user.id, cost, { countAnalysis: true }).catch(
+        (refundError) => console.error("Failed to refund analysis credits:", refundError),
+      );
+    }
+    if (isInsufficientCreditsError(error)) {
+      return NextResponse.json(
+        {
+          error: `You need ${cost} credits to run a full analysis with images.`,
+          credits: usage.snapshot,
+          requiredCredits: cost,
+        },
+        { status: 402 },
+      );
+    }
     console.error("Trend analysis route failed:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Trend analysis failed." },

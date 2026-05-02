@@ -110,3 +110,147 @@ insert into public.user_subscriptions (user_id, plan, analyses_used_this_month)
 select id, 'free', 0
 from auth.users
 on conflict (user_id) do nothing;
+
+create or replace function public.credit_limit_for_plan(p_plan text)
+returns integer
+language sql
+immutable
+as $$
+  select case
+    when p_plan = 'pro' then 1800
+    when p_plan = 'creator' then 600
+    else 30
+  end;
+$$;
+
+create or replace function public.spend_user_credits(
+  p_user_id uuid,
+  p_cost integer,
+  p_count_analysis boolean default false
+)
+returns table (
+  plan text,
+  credits_used integer,
+  credits_limit integer,
+  credits_remaining integer,
+  analyses_used integer
+)
+language plpgsql
+set search_path = public
+as $$
+declare
+  v_row public.user_subscriptions%rowtype;
+  v_limit integer;
+begin
+  if p_cost <= 0 then
+    raise exception 'credit cost must be positive';
+  end if;
+
+  insert into public.user_subscriptions (
+    user_id,
+    plan,
+    analyses_used_this_month,
+    credits_used_this_month
+  )
+  values (p_user_id, 'free', 0, 0)
+  on conflict (user_id) do nothing;
+
+  select *
+    into v_row
+  from public.user_subscriptions
+  where user_id = p_user_id
+  for update;
+
+  if not found then
+    raise exception 'subscription row not found';
+  end if;
+
+  if date_trunc('month', v_row.credits_reset_at at time zone 'UTC')
+    <> date_trunc('month', now() at time zone 'UTC') then
+    update public.user_subscriptions
+      set analyses_used_this_month = 0,
+          credits_used_this_month = 0,
+          credits_reset_at = now()
+      where user_id = p_user_id
+      returning * into v_row;
+  end if;
+
+  v_limit := public.credit_limit_for_plan(v_row.plan);
+
+  if v_row.credits_used_this_month + p_cost > v_limit then
+    raise exception 'insufficient_credits'
+      using detail = format(
+        'required=%s remaining=%s',
+        p_cost,
+        greatest(0, v_limit - v_row.credits_used_this_month)
+      );
+  end if;
+
+  update public.user_subscriptions
+    set credits_used_this_month = credits_used_this_month + p_cost,
+        analyses_used_this_month =
+          analyses_used_this_month + case when p_count_analysis then 1 else 0 end
+    where user_id = p_user_id
+    returning * into v_row;
+
+  return query select
+    v_row.plan,
+    v_row.credits_used_this_month,
+    v_limit,
+    greatest(0, v_limit - v_row.credits_used_this_month),
+    v_row.analyses_used_this_month;
+end;
+$$;
+
+create or replace function public.refund_user_credits(
+  p_user_id uuid,
+  p_cost integer,
+  p_count_analysis boolean default false
+)
+returns table (
+  plan text,
+  credits_used integer,
+  credits_limit integer,
+  credits_remaining integer,
+  analyses_used integer
+)
+language plpgsql
+set search_path = public
+as $$
+declare
+  v_row public.user_subscriptions%rowtype;
+  v_limit integer;
+begin
+  if p_cost <= 0 then
+    raise exception 'credit cost must be positive';
+  end if;
+
+  update public.user_subscriptions
+    set credits_used_this_month = greatest(0, credits_used_this_month - p_cost),
+        analyses_used_this_month =
+          greatest(0, analyses_used_this_month - case when p_count_analysis then 1 else 0 end)
+    where user_id = p_user_id
+    returning * into v_row;
+
+  if not found then
+    raise exception 'subscription row not found';
+  end if;
+
+  v_limit := public.credit_limit_for_plan(v_row.plan);
+
+  return query select
+    v_row.plan,
+    v_row.credits_used_this_month,
+    v_limit,
+    greatest(0, v_limit - v_row.credits_used_this_month),
+    v_row.analyses_used_this_month;
+end;
+$$;
+
+revoke execute on function public.credit_limit_for_plan(text) from public, anon, authenticated;
+revoke execute on function public.spend_user_credits(uuid, integer, boolean) from public, anon, authenticated;
+revoke execute on function public.refund_user_credits(uuid, integer, boolean) from public, anon, authenticated;
+
+grant execute on function public.credit_limit_for_plan(text) to service_role;
+grant execute on function public.spend_user_credits(uuid, integer, boolean) to service_role;
+grant execute on function public.refund_user_credits(uuid, integer, boolean) to service_role;
