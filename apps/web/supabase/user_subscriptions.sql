@@ -34,17 +34,62 @@ execute function public.set_user_subscriptions_updated_at();
 
 alter table public.user_subscriptions enable row level security;
 
+drop policy if exists "user_subscriptions_select_own"
+  on public.user_subscriptions;
+
 create policy "user_subscriptions_select_own"
   on public.user_subscriptions
   for select
   using (auth.uid() = user_id);
 
+drop policy if exists "user_subscriptions_insert_own"
+  on public.user_subscriptions;
+
 create policy "user_subscriptions_insert_own"
   on public.user_subscriptions
   for insert
-  with check (auth.uid() = user_id);
+  with check (
+    auth.uid() = user_id
+    and plan = 'free'
+    and stripe_customer_id is null
+    and stripe_subscription_id is null
+    and analyses_used_this_month = 0
+  );
 
-create policy "user_subscriptions_update_own"
+create or replace function public.prevent_user_subscription_tampering()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.role() = 'authenticated' then
+    if new.user_id is distinct from old.user_id
+      or new.plan is distinct from old.plan
+      or new.stripe_customer_id is distinct from old.stripe_customer_id
+      or new.stripe_subscription_id is distinct from old.stripe_subscription_id
+    then
+      raise exception 'Subscription plan and Stripe fields can only be changed by trusted server code.';
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists prevent_user_subscription_tampering on public.user_subscriptions;
+create trigger prevent_user_subscription_tampering
+before update on public.user_subscriptions
+for each row
+execute function public.prevent_user_subscription_tampering();
+
+drop policy if exists "user_subscriptions_update_own"
+  on public.user_subscriptions;
+
+drop policy if exists "user_subscriptions_update_own_usage"
+  on public.user_subscriptions;
+
+create policy "user_subscriptions_update_own_usage"
   on public.user_subscriptions
   for update
   using (auth.uid() = user_id)

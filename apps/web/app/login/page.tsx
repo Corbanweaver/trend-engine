@@ -17,6 +17,11 @@ function LoginForm() {
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const verifyPrompt = searchParams.get("verify") === "1";
+  const redirectTarget = searchParams.get("next") ?? searchParams.get("redirect");
+  const safeRedirectTarget =
+    redirectTarget?.startsWith("/") && !redirectTarget.startsWith("//")
+      ? redirectTarget
+      : "/dashboard";
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -40,8 +45,8 @@ function LoginForm() {
         return;
       }
 
-      setStatus("Login successful. Redirecting to dashboard...");
-      router.replace("/dashboard");
+      setStatus("Login successful. Redirecting...");
+      router.replace(safeRedirectTarget);
       router.refresh();
     } catch (err) {
       setError(

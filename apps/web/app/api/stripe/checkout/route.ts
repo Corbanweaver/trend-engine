@@ -6,7 +6,10 @@ import { NextResponse } from "next/server";
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const creatorPriceId = process.env.STRIPE_CREATOR_PRICE_ID;
 const proPriceId = process.env.STRIPE_PRO_PRICE_ID;
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(
+  /\/$/,
+  "",
+);
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -70,8 +73,8 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: "https://contentideamaker.com/dashboard?success=true",
-      cancel_url: "https://contentideamaker.com/pricing",
+      success_url: `${siteUrl}/dashboard?success=true`,
+      cancel_url: `${siteUrl}/pricing?checkout=cancelled`,
       allow_promotion_codes: true,
       customer_email: user.email,
       client_reference_id: user.id,

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -5,27 +6,57 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.database import init_db
 from app.routers import (
-    items, ingest, ideas, trends, trend_ideas, daily_trending,
+    ingest, ideas, trends, trend_ideas, daily_trending,
     youtube, instagram, tiktok,
     google_trends, google_news, hackernews, web_search, multi_reddit,
     pinterest, medium, ai_enhance,
 )
 
+DEFAULT_CORS_ALLOWED_ORIGINS = [
+    "https://contentideamaker.com",
+    "https://www.contentideamaker.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+
+def _csv_env(name: str, default: list[str]) -> list[str]:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    return [value.strip() for value in raw.split(",") if value.strip()]
+
+
+def _truthy_env(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+api_docs_enabled = _truthy_env("ENABLE_API_DOCS", default=False)
+
 app = FastAPI(
     title="Content Engine API",
     description="Reddit ingestion, trend detection, and AI-powered viral video idea generation",
     version="0.2.0",
+    docs_url="/docs" if api_docs_enabled else None,
+    redoc_url="/redoc" if api_docs_enabled else None,
+    openapi_url="/openapi.json" if api_docs_enabled else None,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_csv_env("CORS_ALLOWED_ORIGINS", DEFAULT_CORS_ALLOWED_ORIGINS),
+    allow_origin_regex=os.environ.get(
+        "CORS_ALLOWED_ORIGIN_REGEX",
+        r"https://.*\.vercel\.app",
+    ),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(items.router)
 app.include_router(ingest.router)
 app.include_router(ideas.router)
 app.include_router(trends.router)
