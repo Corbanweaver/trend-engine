@@ -3,10 +3,14 @@ create table if not exists public.user_subscriptions (
   plan text not null default 'free' check (plan in ('free', 'creator', 'pro')),
   stripe_customer_id text,
   stripe_subscription_id text,
+  stripe_subscription_status text not null default 'free',
   analyses_used_this_month integer not null default 0 check (analyses_used_this_month >= 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.user_subscriptions
+  add column if not exists stripe_subscription_status text not null default 'free';
 
 create unique index if not exists user_subscriptions_stripe_customer_id_idx
   on public.user_subscriptions(stripe_customer_id)
@@ -53,6 +57,7 @@ create policy "user_subscriptions_insert_own"
     and plan = 'free'
     and stripe_customer_id is null
     and stripe_subscription_id is null
+    and stripe_subscription_status = 'free'
     and analyses_used_this_month = 0
   );
 
@@ -68,6 +73,7 @@ begin
       or new.plan is distinct from old.plan
       or new.stripe_customer_id is distinct from old.stripe_customer_id
       or new.stripe_subscription_id is distinct from old.stripe_subscription_id
+      or new.stripe_subscription_status is distinct from old.stripe_subscription_status
     then
       raise exception 'Subscription plan and Stripe fields can only be changed by trusted server code.';
     end if;

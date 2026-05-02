@@ -78,6 +78,12 @@ export async function POST(request: Request) {
       allow_promotion_codes: true,
       customer_email: user.email,
       client_reference_id: user.id,
+      subscription_data: {
+        metadata: {
+          user_id: user.id,
+          plan: selectedPlan,
+        },
+      },
       metadata: {
         user_id: user.id,
         plan: selectedPlan,
