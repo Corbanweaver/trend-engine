@@ -47,6 +47,26 @@ export default function SignupPage() {
     }
   };
 
+  const signInWithGoogle = async () => {
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
+    try {
+      const supabase = getSupabaseClient();
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        },
+      });
+      if (oauthError) setError(oauthError.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign-up failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
       <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
@@ -152,6 +172,15 @@ export default function SignupPage() {
             {loading ? "Creating account..." : "Sign up"}
           </button>
         </form>
+
+        <button
+          type="button"
+          onClick={() => void signInWithGoogle()}
+          disabled={loading}
+          className="mt-4 w-full rounded-md border border-border bg-card px-4 py-2 font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-800"
+        >
+          Sign up with Google
+        </button>
 
         <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
           Already have an account?{" "}

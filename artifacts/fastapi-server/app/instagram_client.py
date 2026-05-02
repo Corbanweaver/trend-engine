@@ -85,6 +85,23 @@ def _candidate_hashtags(query: str, limit: int = 4) -> list[str]:
     return candidates[:limit]
 
 
+def _fallback_hashtag_results(query: str, max_results: int) -> list[dict]:
+    return [
+        {
+            "id": f"instagram-hashtag-{tag}",
+            "caption": f"Instagram hashtag scan for #{tag}",
+            "media_type": "hashtag",
+            "media_url": "",
+            "permalink": f"https://www.instagram.com/explore/tags/{quote(tag, safe='')}/",
+            "thumbnail_url": "",
+            "timestamp": "",
+            "like_count": 0,
+            "comments_count": 0,
+        }
+        for tag in _candidate_hashtags(query, max_results)
+    ][:max_results]
+
+
 def _map_instagram_item(item: dict) -> dict | None:
     shortcode = _first_str(item, ["shortCode", "shortcode", "code"])
     post_id = _first_str(item, ["id", "pk", "postId", "post_id"]) or shortcode
@@ -130,11 +147,12 @@ def _map_instagram_item(item: dict) -> dict | None:
 async def search_instagram(query: str, max_results: int = 5) -> list[dict]:
     token = os.environ.get("APIFY_API_TOKEN", "").strip()
     if not token:
-        return []
+        logger.warning("APIFY_API_TOKEN is not configured; returning Instagram hashtag fallback links.")
+        return _fallback_hashtag_results(query, max_results)
     try:
         tags = _candidate_hashtags(query)
         if not tags:
-            return []
+            return _fallback_hashtag_results(query, max_results)
         actor_id = os.environ.get("APIFY_INSTAGRAM_ACTOR_ID", DEFAULT_INSTAGRAM_ACTOR_ID).strip()
         actor_input = {
             "directUrls": [
@@ -152,10 +170,10 @@ async def search_instagram(query: str, max_results: int = 5) -> list[dict]:
             resp = await client.post(url, params={"token": token}, json=actor_input)
             if resp.status_code != 200:
                 logger.warning("Instagram Apify request failed with status %s", resp.status_code)
-                return []
+                return _fallback_hashtag_results(query, max_results)
             data = resp.json()
             if not isinstance(data, list):
-                return []
+                return _fallback_hashtag_results(query, max_results)
             normalized = []
             seen: set[str] = set()
             for item in data:
@@ -171,7 +189,7 @@ async def search_instagram(query: str, max_results: int = 5) -> list[dict]:
                 normalized.append(mapped)
                 if len(normalized) >= max_results:
                     break
-            return normalized
+            return normalized or _fallback_hashtag_results(query, max_results)
     except Exception as e:
         logger.warning("Instagram search failed: %s", e)
-        return []
+        return _fallback_hashtag_results(query, max_results)

@@ -116,6 +116,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
   const checkoutStatus = resolvedSearchParams?.checkout;
   const isCheckoutSuccess = checkoutStatus === "success";
   const isCheckoutCancelled = checkoutStatus === "cancelled";
+  const isCheckoutError = checkoutStatus === "error";
 
   return (
     <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
@@ -150,6 +151,13 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
         {isCheckoutCancelled ? (
           <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-amber-400/40 bg-amber-500/10 px-5 py-4 text-center text-sm text-amber-100">
             Checkout canceled. No charge was made.
+          </div>
+        ) : null}
+
+        {isCheckoutError ? (
+          <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-red-400/40 bg-red-500/10 px-5 py-4 text-center text-sm text-red-100">
+            Stripe checkout could not start. Make sure you are signed in and try
+            again, or contact support if it keeps happening.
           </div>
         ) : null}
 

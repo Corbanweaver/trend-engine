@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -13,8 +13,6 @@ import {
   Search,
   Sparkles,
   Star,
-  Moon,
-  Sun,
   Info,
   Instagram,
   Calendar,
@@ -66,10 +64,12 @@ const NICHE_FAVORITES_KEY = "trend_dashboard:niche_favorites";
 const NICHE_HISTORY_KEY = "trend_dashboard:niche_history";
 const CALENDAR_PLAN_STORAGE_KEY = "calendar:plans";
 const ANALYSIS_PROGRESS_STEPS = [
-  "Scanning TikTok...",
-  "Scanning Reddit...",
-  "Generating AI ideas...",
-  "Almost done...",
+  "Starting live trend scan...",
+  "Checking TikTok, Instagram, and YouTube signals...",
+  "Reading Reddit, news, and search momentum...",
+  "Generating creator-ready ideas and scripts...",
+  "Creating AI idea-card images...",
+  "Packaging your trend cards...",
 ] as const;
 
 type SubscriptionPlan = "free" | "creator" | "pro";
@@ -549,22 +549,39 @@ function TrendCard({
   );
 }
 
-function LoadingState({ niche }: { niche: string }) {
+function LoadingState({
+  niche,
+  step,
+  progress,
+}: {
+  niche: string;
+  step: string;
+  progress: number;
+}) {
   return (
-    <div className="flex flex-col items-center justify-center gap-5 py-24 text-center">
+    <div className="flex flex-col items-center justify-center gap-5 py-20 text-center">
       <div className="relative flex items-center justify-center">
-        <div className="absolute size-20 animate-ping rounded-full bg-primary/10 dark:bg-cyan-500/20" />
-        <div className="relative rounded-full border border-primary/25 bg-card p-5 shadow-sm dark:border-cyan-400/40 dark:bg-slate-900/80">
+        <div className="absolute size-28 animate-ping rounded-full bg-cyan-500/15" />
+        <div className="absolute size-20 animate-spin rounded-full border-2 border-cyan-300/20 border-t-cyan-300" />
+        <div className="relative rounded-full border border-cyan-400/40 bg-slate-900/80 p-5 shadow-[0_0_40px_rgba(34,211,238,0.18)]">
           <Sparkles className="size-8 text-primary dark:text-cyan-300" />
         </div>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-3">
         <p className="text-base font-semibold text-foreground dark:text-slate-100">
           Crafting ideas for {niche}
         </p>
         <p className="max-w-md text-sm text-muted-foreground dark:text-slate-400">
-          Scanning live trends across platforms and generating high-converting
-          short-form concepts.
+          {step}
+        </p>
+        <div className="mx-auto h-2 w-[min(28rem,80vw)] overflow-hidden rounded-full bg-slate-800">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-indigo-400 to-fuchsia-400 transition-all duration-700"
+            style={{ width: `${Math.max(8, progress)}%` }}
+          />
+        </div>
+        <p className="text-xs text-slate-400">
+          This can take 30-90 seconds because we are scanning sources and generating images.
         </p>
       </div>
       <div className="grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -650,12 +667,12 @@ export function TrendDashboard() {
   const [analysisStep, setAnalysisStep] = useState<(typeof ANALYSIS_PROGRESS_STEPS)[number]>(
     ANALYSIS_PROGRESS_STEPS[0],
   );
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [favoriteNiches, setFavoriteNiches] = useState<string[]>([]);
   const [nicheHistory, setNicheHistory] = useState<string[]>([]);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackSent, setFeedbackSent] = useState(false);
+  const saveIdeaLocksRef = useRef<Set<string>>(new Set());
 
   const applyCreditSnapshot = useCallback((snapshot: CreditSnapshot) => {
     setPlan(snapshot.plan);
@@ -678,10 +695,8 @@ export function TrendDashboard() {
 
   useEffect(() => {
     try {
-      const savedTheme = window.localStorage.getItem("theme");
-      const nextTheme = savedTheme === "light" ? "light" : "dark";
-      setTheme(nextTheme);
-      document.documentElement.classList.toggle("dark", nextTheme === "dark");
+      window.localStorage.setItem("theme", "dark");
+      document.documentElement.classList.add("dark");
       const fav = window.localStorage.getItem(NICHE_FAVORITES_KEY);
       if (fav) setFavoriteNiches(JSON.parse(fav) as string[]);
       const hist = window.localStorage.getItem(NICHE_HISTORY_KEY);
@@ -689,19 +704,6 @@ export function TrendDashboard() {
     } catch {
       /* ignore localStorage errors */
     }
-  }, []);
-
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const next = prev === "dark" ? "light" : "dark";
-      document.documentElement.classList.toggle("dark", next === "dark");
-      try {
-        window.localStorage.setItem("theme", next);
-      } catch {
-        /* ignore localStorage errors */
-      }
-      return next;
-    });
   }, []);
 
   const toggleFavoriteNiche = useCallback((value: string) => {
@@ -784,8 +786,8 @@ export function TrendDashboard() {
     const timer = window.setInterval(() => {
       stepIndex = Math.min(stepIndex + 1, ANALYSIS_PROGRESS_STEPS.length - 1);
       setAnalysisStep(ANALYSIS_PROGRESS_STEPS[stepIndex]);
-      setAnalysisProgress((prev) => Math.min(prev + 23, 92));
-    }, 1300);
+      setAnalysisProgress((prev) => Math.min(prev + 14, 94));
+    }, 3500);
     try {
       const res = await fetchTrendIdeas(effectiveNiche);
       setData(res);
@@ -928,6 +930,68 @@ export function TrendDashboard() {
   const canFavoriteNiche = nicheKey !== "custom" && !nicheKey.startsWith("__group_");
   const selectedNicheIsFavorite = favoriteSet.has(nicheKey);
 
+  const buildSavedIdeaContent = useCallback(
+    (trendName: string, idea: VideoIdea) => {
+      const sourceTrend = data?.trend_ideas.find((item) => item.trend === trendName);
+      const hookVariations = (idea as VideoIdea & { hook_variations?: string[] }).hook_variations ?? [];
+      const hashtags = idea.hashtags ?? [];
+      const sourceLinks = [
+        ...(sourceTrend?.instagram_posts ?? []).map((post) => ({
+          label: "Instagram",
+          url: (post.url || post.permalink || post.link || "") as string,
+          title: String(post.caption || post.title || "Instagram post"),
+        })),
+        ...(sourceTrend?.tiktok_videos ?? []).map((post) => ({
+          label: "TikTok",
+          url: String(post.url || post.link || post.webVideoUrl || ""),
+          title: String(post.title || post.desc || "TikTok video"),
+        })),
+        ...(sourceTrend?.example_videos ?? []).map((post) => ({
+          label: "YouTube",
+          url: String(post.url || post.link || ""),
+          title: String(post.title || "YouTube video"),
+        })),
+        ...(sourceTrend?.reddit_posts ?? []).map((post) => ({
+          label: "Reddit",
+          url: String(post.url || post.permalink || ""),
+          title: String(post.title || "Reddit discussion"),
+        })),
+        ...(sourceTrend?.google_news ?? []).map((post) => ({
+          label: "News",
+          url: String(post.url || post.link || ""),
+          title: String(post.title || "News result"),
+        })),
+        ...(sourceTrend?.web_results ?? []).map((post) => ({
+          label: "Web",
+          url: String(post.url || post.link || ""),
+          title: String(post.title || "Web result"),
+        })),
+      ].filter((item) => item.url);
+
+      return [
+        `Trend: ${trendName}`,
+        `Niche: ${effectiveNiche}`,
+        "",
+        idea.hook ? `Hook:\n${idea.hook}` : "",
+        idea.angle ? `Angle:\n${idea.angle}` : "",
+        idea.idea ? `Concept:\n${idea.idea}` : "",
+        idea.seo_description ? `SEO description:\n${idea.seo_description}` : "",
+        hashtags.length ? `Hashtags:\n${hashtags.map((tag) => (tag.startsWith("#") ? tag : `#${tag}`)).join(" ")}` : "",
+        hookVariations.length ? `Hook variations:\n${hookVariations.map((hook, index) => `${index + 1}. ${hook}`).join("\n")}` : "",
+        idea.script ? `Script:\n${idea.script}` : "",
+        sourceLinks.length
+          ? `Source links:\n${sourceLinks
+              .slice(0, 16)
+              .map((item) => `- ${item.label}: ${item.title}\n  ${item.url}`)
+              .join("\n")}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+    },
+    [data, effectiveNiche],
+  );
+
   const saveIdea = useCallback(
     async ({
       trend,
@@ -947,35 +1011,44 @@ export function TrendDashboard() {
         throw new Error("You must be logged in to save ideas.");
       }
 
-      const { data: inserted, error: insertError } = await supabase
-        .from("saved_ideas")
-        .insert({
-          user_id: user.id,
-          idea_title: idea.optimized_title?.trim() || idea.hook || trend || "Saved idea",
-          idea_content: idea.script?.trim() || idea.idea,
-          thumbnail_url: getVideoIdeaThumbnailUrls(idea)[0] ?? "",
-          niche: effectiveNiche,
-        })
-        .select("id")
-        .single<{ id: string }>();
+      const title = idea.optimized_title?.trim() || idea.hook || trend || "Saved idea";
+      const lockKey = `${mode}:${user.id}:${trend}:${title}`;
+      if (saveIdeaLocksRef.current.has(lockKey)) return;
+      saveIdeaLocksRef.current.add(lockKey);
 
-      if (insertError) {
-        throw new Error(insertError.message);
-      }
+      try {
+        const { data: inserted, error: insertError } = await supabase
+          .from("saved_ideas")
+          .insert({
+            user_id: user.id,
+            idea_title: title,
+            idea_content: buildSavedIdeaContent(trend, idea),
+            thumbnail_url: getVideoIdeaThumbnailUrls(idea)[0] ?? "",
+            niche: effectiveNiche,
+          })
+          .select("id")
+          .single<{ id: string }>();
 
-      if (mode === "calendar" && inserted?.id) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const dayKey = tomorrow.toISOString().slice(0, 10);
-        const raw = window.localStorage.getItem(CALENDAR_PLAN_STORAGE_KEY);
-        const map = raw ? (JSON.parse(raw) as Record<string, string[]>) : {};
-        const existing = new Set(map[dayKey] ?? []);
-        existing.add(inserted.id);
-        map[dayKey] = [...existing];
-        window.localStorage.setItem(CALENDAR_PLAN_STORAGE_KEY, JSON.stringify(map));
+        if (insertError) {
+          throw new Error(insertError.message);
+        }
+
+        if (mode === "calendar" && inserted?.id) {
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const dayKey = tomorrow.toISOString().slice(0, 10);
+          const raw = window.localStorage.getItem(CALENDAR_PLAN_STORAGE_KEY);
+          const map = raw ? (JSON.parse(raw) as Record<string, string[]>) : {};
+          const existing = new Set(map[dayKey] ?? []);
+          existing.add(inserted.id);
+          map[dayKey] = [...existing];
+          window.localStorage.setItem(CALENDAR_PLAN_STORAGE_KEY, JSON.stringify(map));
+        }
+      } finally {
+        window.setTimeout(() => saveIdeaLocksRef.current.delete(lockKey), 1500);
       }
     },
-    [effectiveNiche],
+    [buildSavedIdeaContent, effectiveNiche],
   );
 
   return (
@@ -1129,11 +1202,10 @@ export function TrendDashboard() {
           <Button
             type="button"
             variant="outline"
-            onClick={toggleTheme}
+            asChild
             className="h-9 border-border bg-card px-2.5 text-foreground hover:bg-muted dark:border-white/20 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800 sm:px-3"
           >
-            {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            <span className="hidden sm:inline">{theme === "dark" ? "Light" : "Dark"}</span>
+            <Link href="/support">Support</Link>
           </Button>
           <div className="grid w-full grid-cols-1 gap-2 pt-1 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:pt-0">
             <span className="text-xs text-muted-foreground dark:text-slate-400">Niche</span>
@@ -1304,7 +1376,11 @@ export function TrendDashboard() {
       <div className="relative z-10 flex min-h-0 flex-1">
         <div className="min-w-0 flex-1 overflow-y-auto p-3 sm:p-4">
           {loading && !data ? (
-            <LoadingState niche={effectiveNiche} />
+            <LoadingState
+              niche={effectiveNiche}
+              step={analysisStep}
+              progress={analysisProgress}
+            />
           ) : null}
 
           {!loading && !data && !error ? (

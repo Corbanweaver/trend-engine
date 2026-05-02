@@ -334,7 +334,7 @@ async def discover_trends(niche: str) -> tuple[list[str], dict]:
 
 async def gather_topic_media(niche: str, topic: str) -> dict:
     search_query = f"{niche} {topic}"
-    instagram_query = niche.strip()
+    instagram_query = search_query.strip()
     logger.info("Starting media gather for topic '%s'", topic)
     logger.info("Calling Instagram search for niche '%s'", instagram_query)
     coros = [

@@ -21,6 +21,10 @@ const planToPriceId: Record<string, string | undefined> = {
   pro: proPriceId,
 };
 
+type UserSubscriptionRow = {
+  stripe_customer_id: string | null;
+};
+
 export async function POST(request: Request) {
   if (!stripeSecretKey) {
     return NextResponse.json(
@@ -69,6 +73,12 @@ export async function POST(request: Request) {
       );
     }
 
+    const { data: subscription } = await supabase
+      .from("user_subscriptions")
+      .select("stripe_customer_id")
+      .eq("user_id", user.id)
+      .maybeSingle<UserSubscriptionRow>();
+
     const stripe = new Stripe(stripeSecretKey);
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -76,7 +86,9 @@ export async function POST(request: Request) {
       success_url: `${siteUrl}/dashboard?success=true`,
       cancel_url: `${siteUrl}/pricing?checkout=cancelled`,
       allow_promotion_codes: true,
-      customer_email: user.email,
+      ...(subscription?.stripe_customer_id
+        ? { customer: subscription.stripe_customer_id }
+        : { customer_email: user.email }),
       client_reference_id: user.id,
       subscription_data: {
         metadata: {
@@ -111,9 +123,9 @@ export async function POST(request: Request) {
     } else {
       console.error("Stripe checkout unexpected error:", error);
     }
-    return NextResponse.json(
-      { error: "Unable to create Stripe checkout session" },
-      { status: 500 },
+    return NextResponse.redirect(
+      `${siteUrl}/pricing?checkout=error`,
+      303,
     );
   }
 }

@@ -59,6 +59,28 @@ function LoginForm() {
     }
   };
 
+  const signInWithGoogle = async () => {
+    setError(null);
+    setStatus(null);
+    setLoading(true);
+    try {
+      const supabase = getSupabaseClient();
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(
+            safeRedirectTarget,
+          )}`,
+        },
+      });
+      if (oauthError) setError(oauthError.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign-in failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
       <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
@@ -112,6 +134,23 @@ function LoginForm() {
             {loading ? "Logging in..." : "Log in"}
           </button>
         </form>
+
+        <div className="mt-4 space-y-3">
+          <button
+            type="button"
+            onClick={() => void signInWithGoogle()}
+            disabled={loading}
+            className="w-full rounded-md border border-border bg-card px-4 py-2 font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-800"
+          >
+            Sign in with Google
+          </button>
+          <Link
+            href="/forgot-password"
+            className="block text-center text-sm text-primary hover:underline dark:text-cyan-300"
+          >
+            Forgot password?
+          </Link>
+        </div>
 
         <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
           No account?{" "}

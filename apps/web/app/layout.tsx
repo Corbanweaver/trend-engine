@@ -75,17 +75,15 @@ export default async function RootLayout({
   const showFloatingAssistant = await hasAuthenticatedUser();
 
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `
 (() => {
   try {
-    const saved = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const theme = saved === "light" || saved === "dark" ? saved : (prefersDark ? "dark" : "light");
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", "dark");
+    document.documentElement.classList.add("dark");
   } catch {}
 })();
 `,

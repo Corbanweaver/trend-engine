@@ -417,7 +417,17 @@ export function IdeaPanel({
     if (mode === "saved") setSavingIdeaIndex(index);
     else setSavingCalendarIndex(index);
     try {
-      await onSaveIdea({ trend: trend.trend, idea, mode });
+      const savePayload = {
+        ...idea,
+        script: fullScriptByIndex[index]
+          ? `${fullScriptByIndex[index]}\n\nQuick script:\n${idea.script ?? ""}`.trim()
+          : idea.script,
+        hashtags: trendingTagsByIndex[index]?.length
+          ? trendingTagsByIndex[index]
+          : idea.hashtags,
+        hook_variations: hookListsByIndex[index] ?? [],
+      } as VideoIdea & { hook_variations?: string[] };
+      await onSaveIdea({ trend: trend.trend, idea: savePayload, mode });
       if (mode === "saved") setSavedIndexes((prev) => ({ ...prev, [index]: true }));
       else setCalendarSavedIndexes((prev) => ({ ...prev, [index]: true }));
       trackUiEvent({
