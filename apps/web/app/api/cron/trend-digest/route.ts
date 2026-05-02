@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-import { getApiBaseUrl } from "@/lib/api";
 import { createGmailTransporter } from "@/lib/gmail-transporter";
 import { NICHE_OPTIONS } from "@/lib/niches";
+import { getBackendHeaders, getBackendUrl } from "@/lib/server-api";
 import type { TrendDigestTopicsResponse } from "@/lib/trend-ideas-types";
 
 export const runtime = "nodejs";
@@ -34,11 +34,10 @@ function getSiteBaseUrl(): string {
 }
 
 async function fetchDigestTopics(niche: string): Promise<string[]> {
-  const base = getApiBaseUrl();
   const digestKey = process.env.TREND_DIGEST_KEY?.trim();
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (digestKey) headers["X-Trend-Digest-Key"] = digestKey;
-  const res = await fetch(`${base}/trend-ideas/digest-topics`, {
+  const headers = getBackendHeaders({ "Content-Type": "application/json" });
+  if (digestKey) headers.set("X-Trend-Digest-Key", digestKey);
+  const res = await fetch(getBackendUrl("/trend-ideas/digest-topics"), {
     method: "POST",
     headers,
     body: JSON.stringify({ niche }),

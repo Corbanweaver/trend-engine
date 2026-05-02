@@ -44,6 +44,19 @@ def require_operational_key(
         raise HTTPException(status_code=401, detail="Invalid or missing operational key.")
 
 
+def require_operational_key_if_configured(
+    x_operational_key: str | None = Header(default=None, alias="X-Operational-Key"),
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> None:
+    expected = os.environ.get("OPERATIONAL_API_KEY", "").strip()
+    if not expected:
+        return
+
+    provided = (x_operational_key or x_api_key or "").strip()
+    if not provided or not hmac.compare_digest(provided, expected):
+        raise HTTPException(status_code=401, detail="Invalid or missing operational key.")
+
+
 def require_digest_key(x_trend_digest_key: str | None) -> None:
     expected = os.environ.get("TREND_DIGEST_KEY", "").strip()
     if not expected:

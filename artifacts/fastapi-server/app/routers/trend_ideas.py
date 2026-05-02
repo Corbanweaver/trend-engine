@@ -9,7 +9,11 @@ _image_semaphore = asyncio.Semaphore(2)
 
 from fastapi import APIRouter, Depends, HTTPException, Header
 from openai import OpenAI
-from app.security import expensive_endpoint_rate_limit, require_digest_key
+from app.security import (
+    expensive_endpoint_rate_limit,
+    require_digest_key,
+    require_operational_key_if_configured,
+)
 from app.openai_client import get_openai_client, get_openai_image_client
 
 from app.models import (
@@ -37,7 +41,10 @@ from app.medium_client import medium_search
 router = APIRouter(
     prefix="/trend-ideas",
     tags=["trend-ideas"],
-    dependencies=[Depends(expensive_endpoint_rate_limit("trend-ideas"))],
+    dependencies=[
+        Depends(require_operational_key_if_configured),
+        Depends(expensive_endpoint_rate_limit("trend-ideas")),
+    ],
 )
 RECENCY_DAYS = 7
 OPENAI_IMAGE_MODEL = os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-1")

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { getApiBaseUrl } from "@/lib/api";
 import { CREDIT_COSTS } from "@/lib/credits";
+import { getBackendHeaders, getBackendUrl } from "@/lib/server-api";
 
 import { isInsufficientCreditsError, loadUsage, refundCredits, spendCredits } from "../usage";
 
@@ -67,9 +67,9 @@ export async function POST(request: Request) {
     const reservedCredits = await spendCredits(usage.admin, usage.user.id, cost);
     charged = true;
 
-    const backend = await fetch(`${getApiBaseUrl()}/trend-ideas/${body.path}`, {
+    const backend = await fetch(getBackendUrl(`/trend-ideas/${body.path}`), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getBackendHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(payload),
     });
 
