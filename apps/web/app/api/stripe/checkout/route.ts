@@ -25,12 +25,21 @@ type UserSubscriptionRow = {
   stripe_customer_id: string | null;
 };
 
+function redirectToPricing(request: Request, checkout: string) {
+  return NextResponse.redirect(
+    new URL(`/pricing?checkout=${checkout}`, request.url),
+    303,
+  );
+}
+
+export function GET(request: Request) {
+  return redirectToPricing(request, "choose-plan");
+}
+
 export async function POST(request: Request) {
   if (!stripeSecretKey) {
-    return NextResponse.json(
-      { error: "Missing STRIPE_SECRET_KEY" },
-      { status: 500 },
-    );
+    console.error("Stripe checkout missing STRIPE_SECRET_KEY");
+    return redirectToPricing(request, "configuration");
   }
 
   const formData = await request.formData();
@@ -38,18 +47,18 @@ export async function POST(request: Request) {
   const priceId = planToPriceId[selectedPlan];
 
   if (!priceId) {
-    return NextResponse.json(
-      { error: "Unknown plan or missing price id configuration" },
-      { status: 400 },
-    );
+    console.error("Stripe checkout missing or unknown plan configuration", {
+      selectedPlan,
+      hasCreatorPriceId: Boolean(creatorPriceId),
+      hasProPriceId: Boolean(proPriceId),
+    });
+    return redirectToPricing(request, "configuration");
   }
 
   try {
     if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json(
-        { error: "Missing Supabase configuration" },
-        { status: 500 },
-      );
+      console.error("Stripe checkout missing Supabase configuration");
+      return redirectToPricing(request, "configuration");
     }
     const cookieStore = await cookies();
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -123,9 +132,6 @@ export async function POST(request: Request) {
     } else {
       console.error("Stripe checkout unexpected error:", error);
     }
-    return NextResponse.redirect(
-      `${siteUrl}/pricing?checkout=error`,
-      303,
-    );
+    return redirectToPricing(request, "error");
   }
 }

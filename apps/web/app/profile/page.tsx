@@ -83,6 +83,16 @@ export default function ProfilePage() {
     if (billingStatus === "returned") {
       setBillingMessage("Returned from Stripe billing.");
     }
+    if (billingStatus === "configuration") {
+      setBillingMessage(
+        "Billing is not fully configured yet. Please contact support if this keeps happening.",
+      );
+    }
+    if (billingStatus === "error" || billingStatus === "portal-error") {
+      setBillingMessage(
+        "Stripe billing could not open. If you just subscribed, wait a moment and refresh your profile.",
+      );
+    }
   }, []);
 
   useEffect(() => {
@@ -262,7 +272,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   className="fluid-transition rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!ready || !email}
+                  disabled={!ready || !email || !hasStripeBilling}
                 >
                   Manage billing
                 </button>

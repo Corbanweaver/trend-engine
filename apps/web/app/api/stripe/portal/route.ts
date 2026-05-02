@@ -19,6 +19,13 @@ type UserSubscriptionRow = {
   stripe_subscription_id: string | null;
 };
 
+function redirectToProfile(request: Request, billing: string) {
+  return NextResponse.redirect(
+    new URL(`/profile?billing=${billing}`, request.url),
+    303,
+  );
+}
+
 async function getCustomerId(
   stripe: Stripe,
   subscription: UserSubscriptionRow | null,
@@ -31,9 +38,21 @@ async function getCustomerId(
     return null;
   }
 
-  const stripeSubscription = await stripe.subscriptions.retrieve(
-    subscription.stripe_subscription_id,
-  );
+  let stripeSubscription: Stripe.Subscription;
+  try {
+    stripeSubscription = await stripe.subscriptions.retrieve(
+      subscription.stripe_subscription_id,
+    );
+  } catch (error) {
+    if (error instanceof Stripe.errors.StripeError && error.code === "resource_missing") {
+      console.error("Stored Stripe subscription could not be found", {
+        subscriptionId: subscription.stripe_subscription_id,
+        requestId: error.requestId,
+      });
+      return null;
+    }
+    throw error;
+  }
   const { customer } = stripeSubscription;
 
   if (typeof customer === "string") {
@@ -49,17 +68,13 @@ async function getCustomerId(
 
 export async function POST(request: Request) {
   if (!stripeSecretKey) {
-    return NextResponse.json(
-      { error: "Missing STRIPE_SECRET_KEY" },
-      { status: 500 },
-    );
+    console.error("Stripe billing portal missing STRIPE_SECRET_KEY");
+    return redirectToProfile(request, "configuration");
   }
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.json(
-      { error: "Missing Supabase configuration" },
-      { status: 500 },
-    );
+    console.error("Stripe billing portal missing Supabase configuration");
+    return redirectToProfile(request, "configuration");
   }
 
   try {
@@ -94,20 +109,14 @@ export async function POST(request: Request) {
 
     if (subscriptionError) {
       console.error("Supabase lookup failed for billing portal:", subscriptionError);
-      return NextResponse.json(
-        { error: "Unable to look up subscription" },
-        { status: 500 },
-      );
+      return redirectToProfile(request, "error");
     }
 
     const stripe = new Stripe(stripeSecretKey);
     const customerId = await getCustomerId(stripe, subscription);
 
     if (!customerId) {
-      return NextResponse.redirect(
-        `${siteUrl}/profile?billing=setup-needed`,
-        303,
-      );
+      return redirectToProfile(request, "setup-needed");
     }
 
     const portalSession = await stripe.billingPortal.sessions.create({
@@ -130,9 +139,6 @@ export async function POST(request: Request) {
       console.error("Stripe billing portal unexpected error:", error);
     }
 
-    return NextResponse.json(
-      { error: "Unable to create Stripe billing portal session" },
-      { status: 500 },
-    );
+    return redirectToProfile(request, "portal-error");
   }
 }
