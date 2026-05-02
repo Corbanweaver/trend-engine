@@ -31,25 +31,25 @@
 
 :root {
   --radius: 0.625rem;
-  --background: #f3f4f0;
-  --foreground: #22272f;
+  --background: #f1f3ee;
+  --foreground: #141a23;
   --card: #fbfaf6;
-  --card-foreground: #22272f;
+  --card-foreground: #141a23;
   --popover: #fbfaf6;
-  --popover-foreground: #22272f;
-  --primary: #365f7d;
+  --popover-foreground: #141a23;
+  --primary: #244f6a;
   --primary-foreground: #fbfaf6;
   --secondary: #e9ece6;
-  --secondary-foreground: #29313a;
+  --secondary-foreground: #1c2530;
   --muted: #e8ebe5;
-  --muted-foreground: #5d6772;
+  --muted-foreground: #424d59;
   --accent: #dde7e3;
-  --accent-foreground: #244154;
+  --accent-foreground: #17364a;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
   --border: #d9ded6;
   --input: #d4dad2;
-  --ring: #4f7894;
+  --ring: #2c6687;
 }
 
 .dark {
