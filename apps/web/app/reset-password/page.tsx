@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
 import { getSupabaseClient } from "@/lib/supabase";
@@ -15,6 +16,7 @@ export default function ResetPasswordPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [verifyingLink, setVerifyingLink] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -25,6 +27,7 @@ export default function ResetPasswordPage() {
       const access_token = hashParams.get("access_token");
       const refresh_token = hashParams.get("refresh_token");
       const code = searchParams.get("code");
+      const tokenHash = searchParams.get("token_hash");
       const errorDescription = searchParams.get("error_description") ?? searchParams.get("error");
 
       if (errorDescription) {
@@ -32,7 +35,7 @@ export default function ResetPasswordPage() {
         return;
       }
 
-      if (!access_token && !refresh_token && !code) {
+      if (!access_token && !refresh_token && !code && !tokenHash) {
         const supabase = getSupabaseClient();
         const {
           data: { session },
@@ -49,10 +52,16 @@ export default function ResetPasswordPage() {
       setMessage("Verifying your reset link...");
 
       try {
+        const supabase = getSupabaseClient();
         if (code) {
-          const supabase = getSupabaseClient();
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) throw exchangeError;
+        } else if (tokenHash) {
+          const { error: verifyError } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: "recovery",
+          });
+          if (verifyError) throw verifyError;
         } else {
           if (!access_token || !refresh_token) throw new Error("That reset link is missing its secure tokens.");
           const response = await fetch("/auth/session", {
@@ -120,15 +129,25 @@ export default function ResetPasswordPage() {
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm">
             <span className="mb-1 block text-muted-foreground dark:text-slate-300">New password</span>
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="new-password"
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={6}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="new-password"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 pr-11 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 dark:focus:ring-cyan-300/60"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+              </button>
+            </div>
           </label>
           {error ? (
             <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
