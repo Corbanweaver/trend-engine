@@ -9,6 +9,7 @@ from sqlalchemy import text
 
 from app.database import get_db
 from app.models import IngestResponse, RedditPost
+from app.security import require_operational_key
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
 
@@ -44,7 +45,7 @@ def extract_post_id(entry: dict) -> str:
     return link.split("/")[-1] if link else ""
 
 
-@router.post("/reddit", response_model=IngestResponse)
+@router.post("/reddit", response_model=IngestResponse, dependencies=[Depends(require_operational_key)])
 def ingest_reddit(db: Session = Depends(get_db)):
     feed = feedparser.parse(RSS_URL)
 

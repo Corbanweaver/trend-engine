@@ -12,6 +12,7 @@ import {
   Music2,
   Search,
   Sparkles,
+  Star,
   Moon,
   Sun,
   Info,
@@ -552,7 +553,7 @@ function FilterChip({
       onMouseMove={handleMove}
       onMouseLeave={() => setOffset({ x: 0, y: 0 })}
       className={cn(
-        "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
+        "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
         active
           ? "border-cyan-300/70 bg-cyan-400/20 text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.25)]"
           : "border-white/10 bg-white/5 text-slate-300 hover:border-white/25 hover:text-white",
@@ -863,6 +864,8 @@ export function TrendDashboard() {
   const favoriteSet = new Set(favoriteNiches);
   const favoriteOptions = NICHE_OPTIONS.filter((o) => favoriteSet.has(o.value));
   const regularOptions = NICHE_OPTIONS.filter((o) => !favoriteSet.has(o.value));
+  const canFavoriteNiche = nicheKey !== "custom" && !nicheKey.startsWith("__group_");
+  const selectedNicheIsFavorite = favoriteSet.has(nicheKey);
 
   const saveIdea = useCallback(
     async ({ trend, idea }: { trend: string; idea: VideoIdea }) => {
@@ -891,7 +894,7 @@ export function TrendDashboard() {
   );
 
   return (
-    <div className="relative flex min-h-svh flex-col overflow-hidden bg-background pb-16 text-foreground lg:pb-0">
+    <div className="relative flex min-h-svh flex-col overflow-x-hidden bg-background pb-[calc(4.75rem+env(safe-area-inset-bottom))] text-foreground lg:pb-0">
       {showOnboarding ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
           <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-slate-900 p-6 shadow-2xl">
@@ -937,71 +940,71 @@ export function TrendDashboard() {
             </div>
           </div>
         ) : null}
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2 px-3 py-3 sm:gap-3 sm:px-4">
           <Link
             href="/"
-            className="fluid-transition rounded-md px-1 text-sm font-medium text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-white"
+            className="fluid-transition rounded-md px-1 text-xs font-medium text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-white sm:text-sm"
           >
             ← Home
           </Link>
           <div className="hidden h-6 w-px bg-border sm:block dark:bg-white/10" aria-hidden />
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <div className="rounded-lg border border-blue-200 bg-blue-100 p-1.5 dark:border-cyan-300/30 dark:bg-cyan-400/10">
               <Sparkles className="size-4 text-blue-600 dark:text-cyan-300" />
             </div>
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight">
+            <div className="min-w-0">
+              <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">
                 Trend Engine
               </h1>
-              <p className="text-xs text-muted-foreground dark:text-slate-400">
+              <p className="hidden text-xs text-muted-foreground dark:text-slate-400 sm:block">
                 AI trend intelligence for creators
               </p>
             </div>
           </div>
           <div className="ml-auto" />
-          <div className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs text-blue-700 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-100">
+          <div className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] text-blue-700 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-100 sm:px-3 sm:text-xs">
             Plan: {formatPlanLabel(plan)}
             {plan === "free" ? ` (${analysesUsedThisMonth}/${FREE_ANALYSIS_LIMIT})` : ""}
           </div>
           <Link
             href="/analytics"
-            className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="fluid-transition hidden rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800 lg:inline-flex"
           >
             Analytics
           </Link>
           <Link
             href="/profile"
-            className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="fluid-transition hidden rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800 lg:inline-flex"
           >
             Profile
           </Link>
           <Link
             href="/saved"
-            className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="fluid-transition hidden rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800 lg:inline-flex"
           >
             Saved Ideas
           </Link>
           <Link
             href="/trending"
-            className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="fluid-transition hidden rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800 lg:inline-flex"
           >
             Trending
           </Link>
           <Link
             href="/alerts"
-            className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="fluid-transition hidden rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800 lg:inline-flex"
           >
             Trend Alerts
           </Link>
           <Link
             href="/calendar"
-            className="fluid-transition rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="fluid-transition hidden rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800 lg:inline-flex"
           >
             Calendar
           </Link>
           <Link
             href="/profile"
-            className="fluid-transition flex max-w-[220px] items-center gap-2 rounded-full border border-border bg-card px-2 py-1 text-xs text-foreground hover:bg-muted dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="fluid-transition hidden max-w-[220px] items-center gap-2 rounded-full border border-border bg-card px-2 py-1 text-xs text-foreground hover:bg-muted dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-slate-800 md:flex"
           >
             {userAvatar ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -1022,17 +1025,17 @@ export function TrendDashboard() {
             variant="outline"
             disabled={signingOut}
             onClick={signOut}
-            className="h-9 border-border bg-card text-foreground hover:bg-muted dark:border-white/20 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800"
+            className="h-9 border-border bg-card px-2.5 text-foreground hover:bg-muted dark:border-white/20 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800 sm:px-3"
           >
             {signingOut ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Signing out...
+                <span className="hidden sm:inline">Signing out...</span>
               </>
             ) : (
               <>
                 <LogOut className="size-4" />
-                Logout
+                <span className="hidden sm:inline">Logout</span>
               </>
             )}
           </Button>
@@ -1040,12 +1043,12 @@ export function TrendDashboard() {
             type="button"
             variant="outline"
             onClick={toggleTheme}
-            className="h-9 border-border bg-card text-foreground hover:bg-muted dark:border-white/20 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800"
+            className="h-9 border-border bg-card px-2.5 text-foreground hover:bg-muted dark:border-white/20 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800 sm:px-3"
           >
             {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            {theme === "dark" ? "Light" : "Dark"}
+            <span className="hidden sm:inline">{theme === "dark" ? "Light" : "Dark"}</span>
           </Button>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid w-full grid-cols-1 gap-2 pt-1 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:pt-0">
             <span className="text-xs text-muted-foreground dark:text-slate-400">Niche</span>
             <label className="sr-only" htmlFor="niche-select">
               Niche
@@ -1056,7 +1059,7 @@ export function TrendDashboard() {
               onChange={(e) => setNicheKey(e.target.value)}
               disabled={loading}
               className={cn(
-                "h-9 rounded-md border border-border bg-card px-3 text-sm text-foreground shadow-sm",
+                "h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground shadow-sm sm:h-9 sm:w-auto",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/15 dark:bg-slate-900 dark:text-slate-100 dark:focus-visible:ring-cyan-300",
               )}
             >
@@ -1083,6 +1086,27 @@ export function TrendDashboard() {
                 </option>
               ))}
             </select>
+            {canFavoriteNiche ? (
+              <button
+                type="button"
+                onClick={() => toggleFavoriteNiche(nicheKey)}
+                className={cn(
+                  "inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border px-3 text-xs font-medium transition-colors sm:h-9 sm:w-auto",
+                  selectedNicheIsFavorite
+                    ? "border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200 dark:border-amber-300/40 dark:bg-amber-400/15 dark:text-amber-100 dark:hover:bg-amber-400/25"
+                    : "border-border bg-card text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800",
+                )}
+                aria-pressed={selectedNicheIsFavorite}
+              >
+                <Star
+                  className={cn(
+                    "size-4",
+                    selectedNicheIsFavorite && "fill-current",
+                  )}
+                />
+                <span>{selectedNicheIsFavorite ? "Favorite" : "Save niche"}</span>
+              </button>
+            ) : null}
             {nicheKey === "custom" ? (
               <input
                 type="text"
@@ -1091,7 +1115,7 @@ export function TrendDashboard() {
                 placeholder="Your niche…"
                 disabled={loading}
                 className={cn(
-                  "h-9 w-40 rounded-md border border-border bg-card px-3 text-sm text-foreground shadow-sm sm:w-48",
+                  "h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground shadow-sm sm:h-9 sm:w-48",
                   "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/15 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus-visible:ring-cyan-300",
                 )}
               />
@@ -1100,7 +1124,7 @@ export function TrendDashboard() {
               type="button"
               disabled={loading || freeLimitReached || subscriptionLoading}
               onClick={runAnalysis}
-              className="bg-primary text-white hover:opacity-90 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
+              className="h-10 w-full bg-primary text-white hover:opacity-90 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 sm:h-9 sm:w-auto"
             >
               {loading ? (
                 <>
@@ -1133,23 +1157,23 @@ export function TrendDashboard() {
             ) : null}
           </div>
         </div>
-        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-3 px-4 pb-4">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-3 px-3 pb-3 sm:px-4 sm:pb-4">
           {nicheHistory.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="-mx-3 flex items-center gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
               <span className="text-xs text-muted-foreground dark:text-slate-500">Recent niches:</span>
               {nicheHistory.map((entry) => (
                 <button
                   key={entry}
                   type="button"
                   onClick={() => setNicheKey(entry)}
-                  className="fluid-transition rounded-full border border-border bg-card px-2.5 py-1 text-xs text-foreground hover:border-blue-300 hover:text-blue-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:border-cyan-300/40 dark:hover:text-cyan-100"
+                  className="fluid-transition shrink-0 rounded-full border border-border bg-card px-2.5 py-1 text-xs text-foreground hover:border-blue-300 hover:text-blue-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:border-cyan-300/40 dark:hover:text-cyan-100"
                 >
                   {entry}
                 </button>
               ))}
             </div>
           ) : null}
-          <div className="relative max-w-xl">
+          <div className="relative w-full max-w-xl">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground dark:text-slate-500" />
             <input
               value={query}
@@ -1158,7 +1182,7 @@ export function TrendDashboard() {
               className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-cyan-300/60"
             />
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
             {PLATFORM_CHIPS.map((chip) => {
               const active = platformFilter === chip;
               return (
@@ -1191,7 +1215,7 @@ export function TrendDashboard() {
       ) : null}
 
       <div className="relative z-10 flex min-h-0 flex-1">
-        <div className="min-w-0 flex-1 overflow-y-auto p-4">
+        <div className="min-w-0 flex-1 overflow-y-auto p-3 sm:p-4">
           {loading && !data ? (
             <LoadingState niche={effectiveNiche} />
           ) : null}
@@ -1209,7 +1233,7 @@ export function TrendDashboard() {
 
           {data ? (
             filteredTrends.length > 0 ? (
-              <div className="mx-auto max-w-[1100px] columns-1 gap-4 sm:columns-2 xl:columns-3">
+              <div className="mx-auto max-w-[1100px] columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
                 {filteredTrends.map((trend, index) => {
                   const realIndex = data.trend_ideas.findIndex(
                     (t) => t.trend === trend.trend,
@@ -1344,8 +1368,8 @@ export function TrendDashboard() {
           </div>
         </div>
       ) : null}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-white/95 px-3 py-2 backdrop-blur dark:border-white/10 dark:bg-slate-950/95 lg:hidden">
-        <div className="mx-auto flex max-w-lg items-center justify-around">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-white/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur dark:border-white/10 dark:bg-slate-950/95 lg:hidden">
+        <div className="mx-auto grid max-w-lg grid-cols-6">
           <Link href="/" className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300">
             <Home className="mb-1 size-4" />
             Home

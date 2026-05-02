@@ -6,7 +6,7 @@ router = APIRouter(prefix="/reddit", tags=["reddit"])
 
 
 class RedditSearchRequest(BaseModel):
-    niche: str = "fitness"
+    niche: str = Field(default="fitness", min_length=1, max_length=80)
     max_per_sub: int = Field(default=10, ge=1, le=25)
 
 

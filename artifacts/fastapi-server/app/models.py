@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RedditPost(BaseModel):
@@ -19,8 +19,8 @@ class IngestResponse(BaseModel):
 
 
 class IdeasRequest(BaseModel):
-    text: str
-    niche: str = "fitness"
+    text: str = Field(min_length=1, max_length=2000)
+    niche: str = Field(default="fitness", max_length=80)
 
 
 class VideoIdea(BaseModel):
@@ -64,7 +64,7 @@ class TrendIdea(BaseModel):
 
 
 class TrendIdeasRequest(BaseModel):
-    niche: str = "fitness"
+    niche: str = Field(default="fitness", max_length=80)
 
 
 class TrendIdeasResponse(BaseModel):
@@ -82,13 +82,13 @@ class TrendDigestTopicsResponse(BaseModel):
 class IdeaEnrichmentRequest(BaseModel):
     """Context for per-idea hook, hashtag, and script generation."""
 
-    niche: str = "fitness"
-    trend: str
-    hook: str = ""
-    angle: str = ""
-    idea: str
-    optimized_title: str = ""
-    script: str = ""
+    niche: str = Field(default="fitness", max_length=80)
+    trend: str = Field(min_length=1, max_length=160)
+    hook: str = Field(default="", max_length=500)
+    angle: str = Field(default="", max_length=1200)
+    idea: str = Field(min_length=1, max_length=2000)
+    optimized_title: str = Field(default="", max_length=160)
+    script: str = Field(default="", max_length=6000)
 
 
 class HooksResponse(BaseModel):
@@ -122,8 +122,8 @@ class DailyTrendingResponse(BaseModel):
 
 
 class YouTubeSearchRequest(BaseModel):
-    query: str
-    max_results: int = 5
+    query: str = Field(min_length=1, max_length=200)
+    max_results: int = Field(default=5, ge=1, le=20)
 
 
 class YouTubeVideo(BaseModel):

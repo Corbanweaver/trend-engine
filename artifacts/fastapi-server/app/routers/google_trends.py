@@ -1,4 +1,6 @@
 from fastapi import APIRouter, HTTPException
+from typing import Annotated
+
 from pydantic import BaseModel, Field
 from app.google_trends_client import google_trends_search, google_trends_interest
 
@@ -6,8 +8,8 @@ router = APIRouter(prefix="/google-trends", tags=["google-trends"])
 
 
 class GoogleTrendsRequest(BaseModel):
-    query: str
-    geo: str = "US"
+    query: str = Field(min_length=1, max_length=200)
+    geo: str = Field(default="US", min_length=0, max_length=10)
 
 
 class GoogleTrendsResponse(BaseModel):
@@ -18,8 +20,11 @@ class GoogleTrendsResponse(BaseModel):
 
 
 class InterestRequest(BaseModel):
-    keywords: list[str] = Field(max_length=5)
-    geo: str = "US"
+    keywords: list[Annotated[str, Field(min_length=1, max_length=80)]] = Field(
+        min_length=1,
+        max_length=5,
+    )
+    geo: str = Field(default="US", min_length=0, max_length=10)
 
 
 @router.post("/search", response_model=GoogleTrendsResponse)

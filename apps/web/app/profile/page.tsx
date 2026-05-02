@@ -9,10 +9,31 @@ import { AchievementBadges } from "@/components/achievement-badges";
 import { getSupabaseClient } from "@/lib/supabase";
 import { computeEarnedBadgeIds, readTotalAnalyses } from "@/lib/user-stats";
 
+type SubscriptionPlan = "free" | "creator" | "pro";
+
+type UserSubscriptionRow = {
+  plan: SubscriptionPlan;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+};
+
+function formatPlanLabel(plan: SubscriptionPlan | null) {
+  if (plan === "creator") {
+    return "Creator";
+  }
+  if (plan === "pro") {
+    return "Pro";
+  }
+  return "Free";
+}
+
 export default function ProfilePage() {
   const [email, setEmail] = useState<string | null>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
   const [savedCount, setSavedCount] = useState<number | null>(null);
+  const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
+  const [hasStripeBilling, setHasStripeBilling] = useState(false);
+  const [billingMessage, setBillingMessage] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,6 +45,18 @@ export default function ProfilePage() {
 
   useEffect(() => {
     document.title = "Profile — Trend Engine";
+  }, []);
+
+  useEffect(() => {
+    const billingStatus = new URLSearchParams(window.location.search).get("billing");
+    if (billingStatus === "setup-needed") {
+      setBillingMessage(
+        "No Stripe billing profile is linked yet. Choose a paid plan to set one up.",
+      );
+    }
+    if (billingStatus === "returned") {
+      setBillingMessage("Returned from Stripe billing.");
+    }
   }, []);
 
   useEffect(() => {
@@ -40,6 +73,8 @@ export default function ProfilePage() {
           setEmail(null);
           setAvatar(null);
           setSavedCount(0);
+          setPlan(null);
+          setHasStripeBilling(false);
           setReady(true);
           return;
         }
@@ -57,9 +92,31 @@ export default function ProfilePage() {
         } else {
           setSavedCount(count ?? 0);
         }
+
+        const { data: subscription, error: subscriptionError } = await supabase
+          .from("user_subscriptions")
+          .select("plan,stripe_customer_id,stripe_subscription_id")
+          .eq("user_id", user.id)
+          .maybeSingle<UserSubscriptionRow>();
+
+        if (subscriptionError) {
+          setError(subscriptionError.message);
+          setPlan("free");
+          setHasStripeBilling(false);
+        } else {
+          setPlan(subscription?.plan ?? "free");
+          setHasStripeBilling(
+            Boolean(
+              subscription?.stripe_customer_id ??
+                subscription?.stripe_subscription_id,
+            ),
+          );
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load profile.");
         setSavedCount(0);
+        setPlan("free");
+        setHasStripeBilling(false);
       } finally {
         setReady(true);
       }
@@ -83,6 +140,12 @@ export default function ProfilePage() {
         {error ? (
           <p className="rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
             {error}
+          </p>
+        ) : null}
+
+        {billingMessage ? (
+          <p className="rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+            {billingMessage}
           </p>
         ) : null}
 
@@ -122,6 +185,39 @@ export default function ProfilePage() {
                 Open analytics
               </Link>
             </p>
+          </div>
+        </section>
+
+        <section className="glass-surface rounded-2xl border border-border p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-medium text-foreground">Account</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Current plan:{" "}
+                <span className="font-medium text-foreground">
+                  {ready ? formatPlanLabel(plan) : "Loading..."}
+                </span>
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <form action="/api/stripe/portal" method="POST">
+                <button
+                  type="submit"
+                  className="fluid-transition rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={!ready || !email}
+                >
+                  Manage billing
+                </button>
+              </form>
+              {!hasStripeBilling && ready ? (
+                <Link
+                  href="/pricing"
+                  className="fluid-transition rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted"
+                >
+                  View plans
+                </Link>
+              ) : null}
+            </div>
           </div>
         </section>
 

@@ -6,7 +6,7 @@ router = APIRouter(prefix="/web-search", tags=["web-search"])
 
 
 class WebSearchRequest(BaseModel):
-    query: str
+    query: str = Field(min_length=1, max_length=200)
     max_results: int = Field(default=10, ge=1, le=20)
 
 

@@ -6,7 +6,7 @@ router = APIRouter(prefix="/instagram", tags=["instagram"])
 
 
 class InstagramSearchRequest(BaseModel):
-    query: str
+    query: str = Field(min_length=1, max_length=120)
     max_results: int = Field(default=5, ge=1, le=20)
 
 

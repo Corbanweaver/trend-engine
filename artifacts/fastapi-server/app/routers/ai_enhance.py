@@ -2,12 +2,11 @@ import os
 import json
 import asyncio
 import logging
-import time
-from collections import defaultdict
 
-from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from openai import OpenAI
+from app.security import expensive_endpoint_rate_limit
 
 try:
     import anthropic
@@ -16,14 +15,18 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/ai", tags=["ai-enhance"])
+router = APIRouter(
+    prefix="/ai",
+    tags=["ai-enhance"],
+    dependencies=[Depends(expensive_endpoint_rate_limit("ai-enhance"))],
+)
 
 
 class RefineScriptRequest(BaseModel):
-    script: str
-    niche: str = "general"
-    hook: str = ""
-    idea: str = ""
+    script: str = Field(min_length=1, max_length=6000)
+    niche: str = Field(default="general", max_length=80)
+    hook: str = Field(default="", max_length=500)
+    idea: str = Field(default="", max_length=2000)
 
 
 class RefineScriptResponse(BaseModel):
@@ -33,26 +36,14 @@ class RefineScriptResponse(BaseModel):
 
 
 class ThumbnailRequest(BaseModel):
-    idea: str
-    hook: str = ""
-    niche: str = "general"
+    idea: str = Field(min_length=1, max_length=2000)
+    hook: str = Field(default="", max_length=500)
+    niche: str = Field(default="general", max_length=80)
 
 
 class ThumbnailResponse(BaseModel):
     image_b64: str
     prompt_used: str
-
-
-_rate_limits = defaultdict(list)
-RATE_LIMIT_WINDOW = 60
-RATE_LIMIT_MAX = 10
-
-def check_rate_limit(client_ip: str):
-    now = time.time()
-    _rate_limits[client_ip] = [t for t in _rate_limits[client_ip] if now - t < RATE_LIMIT_WINDOW]
-    if len(_rate_limits[client_ip]) >= RATE_LIMIT_MAX:
-        raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again later.")
-    _rate_limits[client_ip].append(now)
 
 
 def get_anthropic_client():
@@ -96,8 +87,7 @@ Return ONLY the JSON object, no other text."""
 
 
 @router.post("/refine-script", response_model=RefineScriptResponse)
-async def refine_script(body: RefineScriptRequest, request: Request):
-    check_rate_limit(request.client.host if request.client else "unknown")
+async def refine_script(body: RefineScriptRequest):
     claude = get_anthropic_client()
 
     prompt = REFINE_PROMPT.format(
@@ -169,8 +159,7 @@ Style: Bold, high-contrast, eye-catching social media thumbnail. Bright colors, 
 
 
 @router.post("/generate-thumbnail", response_model=ThumbnailResponse)
-async def generate_thumbnail(body: ThumbnailRequest, request: Request):
-    check_rate_limit(request.client.host if request.client else "unknown")
+async def generate_thumbnail(body: ThumbnailRequest):
     client = get_openai_client()
     prompt = THUMBNAIL_PROMPT_TEMPLATE.format(
         idea=body.idea,
@@ -195,4 +184,4 @@ async def generate_thumbnail(body: ThumbnailRequest, request: Request):
         return ThumbnailResponse(image_b64=image_data, prompt_used=prompt)
     except Exception as e:
         logger.error("Thumbnail generation failed: %s", e)
-        raise HTTPException(status_code=500, detail=f"Image generation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Image generation failed.")

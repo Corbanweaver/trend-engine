@@ -10,8 +10,9 @@ except ModuleNotFoundError:
 logger = logging.getLogger(__name__)
 _ai_semaphore = asyncio.Semaphore(3)
 
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header
 from openai import OpenAI
+from app.security import expensive_endpoint_rate_limit, require_digest_key
 
 from app.models import (
     TrendIdeasRequest,
@@ -35,7 +36,11 @@ from app.multi_reddit_client import multi_reddit_ingest
 from app.pinterest_client import pinterest_search
 from app.medium_client import medium_search
 
-router = APIRouter(prefix="/trend-ideas", tags=["trend-ideas"])
+router = APIRouter(
+    prefix="/trend-ideas",
+    tags=["trend-ideas"],
+    dependencies=[Depends(expensive_endpoint_rate_limit("trend-ideas"))],
+)
 REPLICATE_MODEL = "black-forest-labs/flux-schnell"
 RECENCY_DAYS = 7
 
@@ -133,14 +138,6 @@ def get_openai_client() -> OpenAI:
     return OpenAI(base_url=base_url, api_key=api_key)
 
 
-def _require_digest_key(x_trend_digest_key: str | None) -> None:
-    expected = os.environ.get("TREND_DIGEST_KEY", "").strip()
-    if not expected:
-        return
-    if (x_trend_digest_key or "").strip() != expected:
-        raise HTTPException(status_code=401, detail="Invalid or missing digest key")
-
-
 def parse_ideas_json(raw: str) -> list[VideoIdea]:
     cleaned = raw.strip()
     if cleaned.startswith("```"):
@@ -204,7 +201,7 @@ async def generate_idea_thumbnail(niche: str, topic: str, idea: VideoIdea) -> st
             "photorealistic, 16:9, bright lighting, eye-catching, "
             "no text, no words, no letters, no watermarks."
         )[:200]
-    logger.info("Replicate thumbnail prompt length=%s prompt='%s'", len(prompt), prompt)
+    logger.info("Replicate thumbnail prompt length=%s", len(prompt))
     try:
         def _run_replicate() -> str:
             os.environ["REPLICATE_API_TOKEN"] = token
@@ -345,8 +342,8 @@ async def discover_trends(niche: str) -> tuple[list[str], dict]:
 async def gather_topic_media(niche: str, topic: str) -> dict:
     search_query = f"{niche} {topic}"
     instagram_query = niche.strip()
-    print(f"STARTING MEDIA GATHER FOR: {topic}")
-    print(f"Calling Instagram search for niche: {instagram_query}")
+    logger.info("Starting media gather for topic '%s'", topic)
+    logger.info("Calling Instagram search for niche '%s'", instagram_query)
     coros = [
         _safe_fetch(youtube_search(search_query, max_results=4, days_back=RECENCY_DAYS), []),
         _safe_fetch(search_instagram(instagram_query, max_results=4), []),
@@ -358,7 +355,7 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
         _safe_fetch(medium_search(search_query, max_results=4), []),
     ]
     youtube, instagram_results, tiktok, news, hn, web, pins, articles = await asyncio.gather(*coros)
-    print(f"INSTAGRAM RESULTS: {len(instagram_results)} items")
+    logger.info("Instagram results for topic '%s': %s items", topic, len(instagram_results))
     youtube_tagged = [{**item, "platform": "youtube"} for item in youtube if isinstance(item, dict)]
     instagram_tagged = [{**item, "platform": "instagram"} for item in instagram_results if isinstance(item, dict)]
     tiktok_tagged = [{**item, "platform": "tiktok"} for item in tiktok if isinstance(item, dict)]
@@ -511,7 +508,7 @@ async def get_digest_topics(
     Returns the top 3 trending topic names for a niche without generating full video ideas.
     Used by the weekly email digest. Optional TREND_DIGEST_KEY env locks this endpoint.
     """
-    _require_digest_key(x_trend_digest_key)
+    require_digest_key(x_trend_digest_key)
     niche = body.niche or "fitness"
     client = get_openai_client()
 

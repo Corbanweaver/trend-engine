@@ -6,7 +6,7 @@ router = APIRouter(prefix="/hackernews", tags=["hackernews"])
 
 
 class HNSearchRequest(BaseModel):
-    query: str
+    query: str = Field(min_length=1, max_length=200)
     max_results: int = Field(default=10, ge=1, le=30)
 
 
@@ -45,8 +45,9 @@ async def search_hn(body: HNSearchRequest):
 
 @router.get("/top", response_model=HNTopResponse)
 async def top_stories(limit: int = 10):
+    limit = max(1, min(limit, 30))
     try:
-        results = await hn_top_stories(min(limit, 30))
+        results = await hn_top_stories(limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"HN top stories failed: {str(e)}")
 

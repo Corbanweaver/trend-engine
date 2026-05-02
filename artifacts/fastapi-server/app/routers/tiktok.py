@@ -6,7 +6,7 @@ router = APIRouter(prefix="/tiktok", tags=["tiktok"])
 
 
 class TikTokSearchRequest(BaseModel):
-    query: str
+    query: str = Field(min_length=1, max_length=200)
     max_results: int = Field(default=6, ge=1, le=20)
 
 
@@ -50,6 +50,9 @@ async def search_tiktok(body: TikTokSearchRequest):
 
 @router.get("/hashtag/{hashtag}", response_model=TikTokHashtagResponse)
 async def get_hashtag_info(hashtag: str):
+    hashtag = hashtag.strip().lstrip("#")
+    if not hashtag or len(hashtag) > 80:
+        raise HTTPException(status_code=422, detail="hashtag must be 1-80 characters.")
     try:
         info = await tiktok_hashtag_info(hashtag)
     except Exception as e:

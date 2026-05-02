@@ -1,9 +1,9 @@
 import os
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from app.database import init_db
 from app.routers import (
     ingest, ideas, trends, trend_ideas, daily_trending,
@@ -11,6 +11,7 @@ from app.routers import (
     google_trends, google_news, hackernews, web_search, multi_reddit,
     pinterest, medium, ai_enhance,
 )
+from app.security import max_request_bytes
 
 DEFAULT_CORS_ALLOWED_ORIGINS = [
     "https://contentideamaker.com",
@@ -53,9 +54,33 @@ app.add_middleware(
         r"https://.*\.vercel\.app",
     ),
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def enforce_request_size(request: Request, call_next):
+    content_length = request.headers.get("content-length")
+    max_bytes = max_request_bytes()
+    if content_length:
+        try:
+            if int(content_length) > max_bytes:
+                return JSONResponse(
+                    status_code=413,
+                    content={"detail": "Request body too large."},
+                )
+        except ValueError:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Invalid Content-Length header."},
+            )
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    return response
+
 
 app.include_router(ingest.router)
 app.include_router(ideas.router)
