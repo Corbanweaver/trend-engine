@@ -17,39 +17,68 @@ export default function ResetPasswordPage() {
   const [verifyingLink, setVerifyingLink] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    const access_token = params.get("access_token");
-    const refresh_token = params.get("refresh_token");
-
-    if (!access_token || !refresh_token) return;
-
     let active = true;
-    setVerifyingLink(true);
-    setError(null);
-    setMessage("Verifying your reset link...");
 
-    fetch("/auth/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ access_token, refresh_token, next: "/reset-password" }),
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          const body = await response.json().catch(() => null);
-          throw new Error(body?.error || "That reset link could not be verified.");
+    async function verifyResetSession() {
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const searchParams = new URLSearchParams(window.location.search);
+      const access_token = hashParams.get("access_token");
+      const refresh_token = hashParams.get("refresh_token");
+      const code = searchParams.get("code");
+      const errorDescription = searchParams.get("error_description") ?? searchParams.get("error");
+
+      if (errorDescription) {
+        setError(errorDescription);
+        return;
+      }
+
+      if (!access_token && !refresh_token && !code) {
+        const supabase = getSupabaseClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (active && !session) {
+          setError("This reset link is missing its secure token. Please request a fresh password reset email.");
         }
-        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        return;
+      }
+
+      setVerifyingLink(true);
+      setError(null);
+      setMessage("Verifying your reset link...");
+
+      try {
+        if (code) {
+          const supabase = getSupabaseClient();
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) throw exchangeError;
+        } else {
+          if (!access_token || !refresh_token) throw new Error("That reset link is missing its secure tokens.");
+          const response = await fetch("/auth/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ access_token, refresh_token, next: "/reset-password" }),
+          });
+          if (!response.ok) {
+            const body = await response.json().catch(() => null);
+            throw new Error(body?.error || "That reset link could not be verified.");
+          }
+        }
+
+        window.history.replaceState(null, "", window.location.pathname);
         if (active) setMessage("Reset link verified. Choose a new password.");
-      })
-      .catch((err) => {
+      } catch (err) {
         if (active) {
           setMessage(null);
           setError(err instanceof Error ? err.message : "That reset link could not be verified.");
         }
-      })
-      .finally(() => {
+      } finally {
         if (active) setVerifyingLink(false);
-      });
+      }
+    }
+
+    void verifyResetSession();
 
     return () => {
       active = false;

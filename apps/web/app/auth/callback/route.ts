@@ -53,8 +53,9 @@ function fragmentFallbackHtml(next: string) {
         const refresh_token = params.get("refresh_token");
         const type = params.get("type");
         const next = type === "recovery" ? "/reset-password" : destination;
+        const errorDestination = next === "/reset-password" ? "/forgot-password?reset=error" : "/login?auth=callback-error";
         if (!access_token || !refresh_token) {
-          window.location.replace("/login?auth=callback-error");
+          window.location.replace(errorDestination);
           return;
         }
         try {
@@ -68,7 +69,7 @@ function fragmentFallbackHtml(next: string) {
           window.location.replace(body.next || next);
         } catch (error) {
           if (message) message.textContent = "That link could not be confirmed. Please request a new email link.";
-          window.setTimeout(() => window.location.replace("/login?auth=callback-error"), 1200);
+          window.setTimeout(() => window.location.replace(errorDestination), 1200);
         }
       })();
     </script>
@@ -81,7 +82,9 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get("code");
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type");
-  const next = safeNext(requestUrl.searchParams.get("next"));
+  const requestedNext = safeNext(requestUrl.searchParams.get("next"));
+  const isRecoveryLink = type === "recovery" || requestedNext === "/reset-password";
+  const next = isRecoveryLink ? "/reset-password" : requestedNext;
   const response = NextResponse.redirect(new URL(next, requestUrl.origin));
 
   if (!code && !tokenHash) {
@@ -117,13 +120,13 @@ export async function GET(request: Request) {
 
     const { error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash ?? "",
-      type: getOtpType(type),
+      type: getOtpType(type ?? (isRecoveryLink ? "recovery" : null)),
     });
     if (error) throw error;
     return response;
   } catch (error) {
     console.error("Supabase auth callback failed:", error);
-    const fallback = type === "recovery" ? "/forgot-password?reset=error" : "/login?auth=callback-error";
+    const fallback = isRecoveryLink ? "/forgot-password?reset=error" : "/login?auth=callback-error";
     return NextResponse.redirect(new URL(fallback, requestUrl.origin));
   }
 }
