@@ -16,6 +16,7 @@ import {
   Moon,
   Sun,
   Info,
+  Instagram,
   Calendar,
   Home,
   Bookmark,
@@ -44,6 +45,7 @@ import {
 import { getApiBaseUrl } from "@/lib/api";
 import { NICHE_OPTIONS } from "@/lib/niches";
 import { getSupabaseClient } from "@/lib/supabase";
+import { getVideoIdeaThumbnailUrls } from "@/lib/trend-ideas-types";
 import type {
   TrendIdea,
   TrendIdeasResponse,
@@ -58,6 +60,7 @@ const FREE_ANALYSIS_LIMIT = 5;
 const ONBOARDING_DISMISSED_KEY = "trend_dashboard:onboarding_dismissed";
 const NICHE_FAVORITES_KEY = "trend_dashboard:niche_favorites";
 const NICHE_HISTORY_KEY = "trend_dashboard:niche_history";
+const CALENDAR_PLAN_STORAGE_KEY = "calendar:plans";
 const ANALYSIS_PROGRESS_STEPS = [
   "Scanning TikTok...",
   "Scanning Reddit...",
@@ -241,9 +244,9 @@ function getPlatformBadges(trend: TrendIdea): string[] {
 }
 
 function getCardVisual(trend: TrendIdea) {
-  const generatedIdeaThumb = trend.ideas.find(
-    (idea) => typeof idea.thumbnail_url === "string" && idea.thumbnail_url,
-  )?.thumbnail_url;
+  const generatedIdeaThumb = trend.ideas
+    .flatMap(getVideoIdeaThumbnailUrls)
+    .find((url) => url.length > 0);
   const youtubeThumb = trend.example_videos.find(
     (v) => typeof v.thumbnail === "string" && v.thumbnail,
   )?.thumbnail as string | undefined;
@@ -271,6 +274,14 @@ function getTikTokUrl(trend: TrendIdea): string | null {
   return candidate.url as string;
 }
 
+function normalizeExternalUrl(url: string, baseUrl: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith("/")) return `${baseUrl}${trimmed}`;
+  return trimmed;
+}
+
 function getRedditUrl(trend: TrendIdea): string | null {
   const candidate = trend.reddit_posts.find((post) => {
     const sourceKeys = ["url", "permalink", "link"] as const;
@@ -279,6 +290,21 @@ function getRedditUrl(trend: TrendIdea): string | null {
       return typeof value === "string" && value.trim().length > 0;
     });
   });
+  if (!candidate) return null;
+  const preferred = candidate.url ?? candidate.permalink ?? candidate.link;
+  return typeof preferred === "string" && preferred.trim().length > 0
+    ? normalizeExternalUrl(preferred, "https://www.reddit.com")
+    : null;
+}
+
+function getInstagramUrl(trend: TrendIdea): string | null {
+  const sourceKeys = ["url", "permalink", "link"] as const;
+  const candidate = trend.instagram_posts.find((post) =>
+    sourceKeys.some((key) => {
+      const value = post[key];
+      return typeof value === "string" && value.trim().length > 0;
+    }),
+  );
   if (!candidate) return null;
   const preferred = candidate.url ?? candidate.permalink ?? candidate.link;
   return typeof preferred === "string" && preferred.trim().length > 0 ? preferred : null;
@@ -302,6 +328,7 @@ function TrendCard({
   const youtubeUrl = getYouTubeUrl(trend);
   const tiktokUrl = getTikTokUrl(trend);
   const redditUrl = getRedditUrl(trend);
+  const instagramUrl = getInstagramUrl(trend);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const trendLabel = getTrendDetectedLabel(trend);
 
@@ -428,7 +455,7 @@ function TrendCard({
               style={{ width: raw > 0 ? `${heat}%` : "0%" }}
             />
           </div>
-          {youtubeUrl || tiktokUrl || redditUrl ? (
+          {youtubeUrl || tiktokUrl || redditUrl || instagramUrl ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {tiktokUrl ? (
                 <a
@@ -478,6 +505,23 @@ function TrendCard({
                 >
                   <span className="text-xs font-bold">R</span>
                   View on Reddit
+                  <ExternalLink className="size-3.5" />
+                </a>
+              ) : null}
+              {instagramUrl ? (
+                <a
+                  href={instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    platformIconStyles.Instagram,
+                    "hover:bg-purple-500/30",
+                  )}
+                >
+                  <Instagram className="size-3.5" />
+                  View on Instagram
                   <ExternalLink className="size-3.5" />
                 </a>
               ) : null}
@@ -871,7 +915,15 @@ export function TrendDashboard() {
   const selectedNicheIsFavorite = favoriteSet.has(nicheKey);
 
   const saveIdea = useCallback(
-    async ({ trend, idea }: { trend: string; idea: VideoIdea }) => {
+    async ({
+      trend,
+      idea,
+      mode = "saved",
+    }: {
+      trend: string;
+      idea: VideoIdea;
+      mode?: "saved" | "calendar";
+    }) => {
       const supabase = getSupabaseClient();
       const {
         data: { user },
@@ -881,16 +933,32 @@ export function TrendDashboard() {
         throw new Error("You must be logged in to save ideas.");
       }
 
-      const { error: insertError } = await supabase.from("saved_ideas").insert({
-        user_id: user.id,
-        idea_title: idea.optimized_title?.trim() || idea.hook || trend || "Saved idea",
-        idea_content: idea.script?.trim() || idea.idea,
-        thumbnail_url: idea.thumbnail_url?.trim() || "",
-        niche: effectiveNiche,
-      });
+      const { data: inserted, error: insertError } = await supabase
+        .from("saved_ideas")
+        .insert({
+          user_id: user.id,
+          idea_title: idea.optimized_title?.trim() || idea.hook || trend || "Saved idea",
+          idea_content: idea.script?.trim() || idea.idea,
+          thumbnail_url: getVideoIdeaThumbnailUrls(idea)[0] ?? "",
+          niche: effectiveNiche,
+        })
+        .select("id")
+        .single<{ id: string }>();
 
       if (insertError) {
         throw new Error(insertError.message);
+      }
+
+      if (mode === "calendar" && inserted?.id) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const dayKey = tomorrow.toISOString().slice(0, 10);
+        const raw = window.localStorage.getItem(CALENDAR_PLAN_STORAGE_KEY);
+        const map = raw ? (JSON.parse(raw) as Record<string, string[]>) : {};
+        const existing = new Set(map[dayKey] ?? []);
+        existing.add(inserted.id);
+        map[dayKey] = [...existing];
+        window.localStorage.setItem(CALENDAR_PLAN_STORAGE_KEY, JSON.stringify(map));
       }
     },
     [effectiveNiche],

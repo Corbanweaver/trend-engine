@@ -5,7 +5,6 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { getSupabaseClient } from "@/lib/supabase";
 import { getSelectableNicheOptions, NICHE_OPTIONS } from "@/lib/niches";
 import { trackUiEvent } from "@/lib/telemetry";
 
@@ -13,6 +12,13 @@ type SubscriptionRow = {
   id: string;
   niche: string;
   created_at: string;
+};
+
+type SubscriptionsResponse = {
+  subscriptions?: SubscriptionRow[];
+  subscription?: SubscriptionRow;
+  duplicate?: boolean;
+  error?: string;
 };
 
 function nicheLabel(niche: string): string {
@@ -44,36 +50,26 @@ export default function TrendAlertsPage() {
     setLoading(true);
     setError(null);
     try {
-      const supabase = getSupabaseClient();
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      if (userError || !user) {
-        setError("Please log in to manage trend alerts.");
-        setRows([]);
-        return;
-      }
+      const response = await fetch("/api/alerts/subscriptions", {
+        method: "GET",
+        credentials: "same-origin",
+      });
+      const data = (await response.json().catch(() => ({}))) as SubscriptionsResponse;
 
-      const { data, error: fetchError } = await supabase
-        .from("trend_alert_subscriptions")
-        .select("id, niche, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: true });
-
-      if (fetchError) {
+      if (!response.ok) {
+        const message = data.error ?? "Unable to load trend alert subscriptions.";
         trackUiEvent({
           area: "alerts",
           action: "load_failed",
           level: "error",
-          message: fetchError.message,
+          message,
         });
-        setError(fetchError.message);
+        setError(message);
         setRows([]);
         return;
       }
 
-      setRows((data as SubscriptionRow[]) ?? []);
+      setRows(data.subscriptions ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load subscriptions.");
       setRows([]);
@@ -106,33 +102,36 @@ export default function TrendAlertsPage() {
     setAdding(true);
     setError(null);
     try {
-      const supabase = getSupabaseClient();
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      if (userError || !user) {
-        setError("Please log in to add subscriptions.");
-        return;
-      }
+      const response = await fetch("/api/alerts/subscriptions", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ niche: stored }),
+      });
+      const data = (await response.json().catch(() => ({}))) as SubscriptionsResponse;
 
-      const { data: inserted, error: insertError } = await supabase
-        .from("trend_alert_subscriptions")
-        .insert({ user_id: user.id, niche: stored })
-        .select("id, niche, created_at")
-        .single();
-
-      if (insertError) {
-        if (insertError.code === "23505") {
+      if (!response.ok) {
+        if (response.status === 409) {
           showToast("Already subscribed to this niche");
           return;
         }
-        setError(insertError.message);
+        setError(data.error ?? "Unable to save trend alert subscription.");
         return;
       }
 
-      if (inserted) {
-        setRows((prev) => [...prev, inserted as SubscriptionRow]);
+      if (data.duplicate) {
+        const subscription = data.subscription;
+        if (subscription) {
+          setRows((prev) =>
+            prev.some((row) => row.id === subscription.id) ? prev : [...prev, subscription],
+          );
+        }
+        showToast("Already subscribed to this niche");
+        return;
+      }
+
+      if (data.subscription) {
+        setRows((prev) => [...prev, data.subscription as SubscriptionRow]);
         showToast("Niche added");
         trackUiEvent({ area: "alerts", action: "subscribe", context: { niche: stored } });
       }
@@ -148,24 +147,14 @@ export default function TrendAlertsPage() {
     setRemovingId(id);
     setError(null);
     try {
-      const supabase = getSupabaseClient();
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      if (userError || !user) {
-        setError("Please log in.");
-        return;
-      }
+      const response = await fetch(`/api/alerts/subscriptions?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+      const data = (await response.json().catch(() => ({}))) as SubscriptionsResponse;
 
-      const { error: deleteError } = await supabase
-        .from("trend_alert_subscriptions")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
-
-      if (deleteError) {
-        setError(deleteError.message);
+      if (!response.ok) {
+        setError(data.error ?? "Unable to remove trend alert subscription.");
         return;
       }
 

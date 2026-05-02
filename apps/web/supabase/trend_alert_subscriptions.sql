@@ -11,17 +11,44 @@ create index if not exists trend_alert_subscriptions_user_id_idx
 
 alter table public.trend_alert_subscriptions enable row level security;
 
-create policy if not exists "trend_alert_subscriptions_select_own"
-  on public.trend_alert_subscriptions
-  for select
-  using (auth.uid() = user_id);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'trend_alert_subscriptions'
+      and policyname = 'trend_alert_subscriptions_select_own'
+  ) then
+    create policy "trend_alert_subscriptions_select_own"
+      on public.trend_alert_subscriptions
+      for select
+      to authenticated
+      using ((select auth.uid()) = user_id);
+  end if;
 
-create policy if not exists "trend_alert_subscriptions_insert_own"
-  on public.trend_alert_subscriptions
-  for insert
-  with check (auth.uid() = user_id);
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'trend_alert_subscriptions'
+      and policyname = 'trend_alert_subscriptions_insert_own'
+  ) then
+    create policy "trend_alert_subscriptions_insert_own"
+      on public.trend_alert_subscriptions
+      for insert
+      to authenticated
+      with check ((select auth.uid()) = user_id);
+  end if;
 
-create policy if not exists "trend_alert_subscriptions_delete_own"
-  on public.trend_alert_subscriptions
-  for delete
-  using (auth.uid() = user_id);
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'trend_alert_subscriptions'
+      and policyname = 'trend_alert_subscriptions_delete_own'
+  ) then
+    create policy "trend_alert_subscriptions_delete_own"
+      on public.trend_alert_subscriptions
+      for delete
+      to authenticated
+      using ((select auth.uid()) = user_id);
+  end if;
+end $$;

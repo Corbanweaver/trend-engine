@@ -55,7 +55,7 @@ def int_env(name: str, default: int, minimum: int, maximum: int) -> int:
 
 
 OPENAI_IDEA_IMAGE_COMPRESSION = int_env("OPENAI_IDEA_IMAGE_COMPRESSION", 70, 0, 100)
-OPENAI_IDEA_IMAGES_PER_TOPIC = int_env("OPENAI_IDEA_IMAGES_PER_TOPIC", 1, 0, 3)
+OPENAI_IDEA_IMAGES_PER_TOPIC = int_env("OPENAI_IDEA_IMAGES_PER_TOPIC", 3, 0, 3)
 
 SYSTEM_PROMPT = """You are a world-class short-form content creator and strategist known for making ideas feel human, bold, and impossible to scroll past.
 
@@ -376,9 +376,21 @@ def build_context_prompt(niche: str, topic: str, discovery_context: list[str], t
     if ig:
         parts.append("Popular Instagram posts:\n" + "\n".join(f"- {p.get('caption', '')}" for p in ig[:4]))
 
+    tt = topic_media.get("tiktok", [])
+    if tt:
+        parts.append("Popular TikTok videos:\n" + "\n".join(f"- {v.get('title', '')}" for v in tt[:3]))
+
     news = topic_media.get("google_news", [])
     if news:
         parts.append("Topic news:\n" + "\n".join(f"- {a['title']}" for a in news[:4]))
+
+    hn = topic_media.get("hackernews", [])
+    if hn:
+        parts.append("Hacker News stories:\n" + "\n".join(f"- {s.get('title', '')}" for s in hn[:3]))
+
+    web = topic_media.get("web_search", [])
+    if web:
+        parts.append("Web articles:\n" + "\n".join(f"- {r.get('title', '')}" for r in web[:4]))
 
     pins = topic_media.get("pinterest", [])
     if pins:
