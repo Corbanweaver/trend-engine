@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { AchievementBadges } from "@/components/achievement-badges";
@@ -36,6 +37,7 @@ function formatPlanLabel(plan: SubscriptionPlan | null) {
 }
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
   const [savedCount, setSavedCount] = useState<number | null>(null);
@@ -45,6 +47,7 @@ export default function ProfilePage() {
   const [analysesUsedThisMonth, setAnalysesUsedThisMonth] = useState(0);
   const [hasStripeBilling, setHasStripeBilling] = useState(false);
   const [billingMessage, setBillingMessage] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,6 +56,18 @@ export default function ProfilePage() {
     () => computeEarnedBadgeIds(totalAnalyses, savedCount ?? 0),
     [totalAnalyses, savedCount],
   );
+
+  const signOut = async () => {
+    setSigningOut(true);
+    try {
+      const supabase = getSupabaseClient();
+      await supabase.auth.signOut();
+      router.replace("/login");
+      router.refresh();
+    } finally {
+      setSigningOut(false);
+    }
+  };
 
   useEffect(() => {
     document.title = "Profile — Trend Engine";
@@ -260,6 +275,14 @@ export default function ProfilePage() {
                   View plans
                 </Link>
               ) : null}
+              <button
+                type="button"
+                onClick={signOut}
+                disabled={!ready || signingOut}
+                className="fluid-transition rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {signingOut ? "Signing out..." : "Logout"}
+              </button>
             </div>
           </div>
         </section>
