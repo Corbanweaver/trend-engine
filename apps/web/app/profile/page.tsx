@@ -6,6 +6,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { AchievementBadges } from "@/components/achievement-badges";
+import {
+  getMonthlyCreditLimit,
+  getRemainingCredits,
+  shouldResetMonthlyUsage,
+} from "@/lib/credits";
 import { getSupabaseClient } from "@/lib/supabase";
 import { computeEarnedBadgeIds, readTotalAnalyses } from "@/lib/user-stats";
 
@@ -15,6 +20,9 @@ type UserSubscriptionRow = {
   plan: SubscriptionPlan;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  analyses_used_this_month: number;
+  credits_used_this_month: number;
+  credits_reset_at: string;
 };
 
 function formatPlanLabel(plan: SubscriptionPlan | null) {
@@ -32,6 +40,9 @@ export default function ProfilePage() {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [savedCount, setSavedCount] = useState<number | null>(null);
   const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
+  const [creditsUsed, setCreditsUsed] = useState(0);
+  const [creditsLimit, setCreditsLimit] = useState(getMonthlyCreditLimit("free"));
+  const [analysesUsedThisMonth, setAnalysesUsedThisMonth] = useState(0);
   const [hasStripeBilling, setHasStripeBilling] = useState(false);
   const [billingMessage, setBillingMessage] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -74,6 +85,9 @@ export default function ProfilePage() {
           setAvatar(null);
           setSavedCount(0);
           setPlan(null);
+          setCreditsUsed(0);
+          setCreditsLimit(getMonthlyCreditLimit("free"));
+          setAnalysesUsedThisMonth(0);
           setHasStripeBilling(false);
           setReady(true);
           return;
@@ -95,16 +109,29 @@ export default function ProfilePage() {
 
         const { data: subscription, error: subscriptionError } = await supabase
           .from("user_subscriptions")
-          .select("plan,stripe_customer_id,stripe_subscription_id")
+          .select(
+            "plan,stripe_customer_id,stripe_subscription_id,analyses_used_this_month,credits_used_this_month,credits_reset_at",
+          )
           .eq("user_id", user.id)
           .maybeSingle<UserSubscriptionRow>();
 
         if (subscriptionError) {
           setError(subscriptionError.message);
           setPlan("free");
+          setCreditsUsed(0);
+          setCreditsLimit(getMonthlyCreditLimit("free"));
+          setAnalysesUsedThisMonth(0);
           setHasStripeBilling(false);
         } else {
-          setPlan(subscription?.plan ?? "free");
+          const nextPlan = subscription?.plan ?? "free";
+          const staleMonth = shouldResetMonthlyUsage(subscription?.credits_reset_at);
+          const nextCreditsUsed = staleMonth ? 0 : subscription?.credits_used_this_month ?? 0;
+          setPlan(nextPlan);
+          setCreditsUsed(nextCreditsUsed);
+          setCreditsLimit(getMonthlyCreditLimit(nextPlan));
+          setAnalysesUsedThisMonth(
+            staleMonth ? 0 : subscription?.analyses_used_this_month ?? 0,
+          );
           setHasStripeBilling(
             Boolean(
               subscription?.stripe_customer_id ??
@@ -116,6 +143,9 @@ export default function ProfilePage() {
         setError(e instanceof Error ? e.message : "Failed to load profile.");
         setSavedCount(0);
         setPlan("free");
+        setCreditsUsed(0);
+        setCreditsLimit(getMonthlyCreditLimit("free"));
+        setAnalysesUsedThisMonth(0);
         setHasStripeBilling(false);
       } finally {
         setReady(true);
@@ -197,6 +227,19 @@ export default function ProfilePage() {
                 <span className="font-medium text-foreground">
                   {ready ? formatPlanLabel(plan) : "Loading..."}
                 </span>
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Monthly credits:{" "}
+                <span className="font-medium text-foreground">
+                  {ready
+                    ? `${getRemainingCredits(plan, creditsUsed)} remaining of ${creditsLimit}`
+                    : "Loading..."}
+                </span>
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {ready
+                  ? `${creditsUsed} credits used across ${analysesUsedThisMonth} analyses this month.`
+                  : "Loading usage..."}
               </p>
             </div>
             <div className="flex flex-wrap gap-3">

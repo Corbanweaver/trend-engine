@@ -61,8 +61,8 @@ const featureCards = [
   },
   {
     icon: Bot,
-    title: "Creator copilot",
-    body: "Ask questions in-app and iterate on ideas without breaking your flow.",
+    title: "Member idea tools",
+    body: "Logged-in creators can expand ideas into hooks, hashtags, and scripts.",
   },
 ] as const;
 
@@ -423,6 +423,30 @@ export default function Home() {
                     className="fluid-transition text-muted-foreground hover:text-foreground"
                   >
                     FAQ
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/support"
+                    className="fluid-transition text-muted-foreground hover:text-foreground"
+                  >
+                    Support
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/privacy"
+                    className="fluid-transition text-muted-foreground hover:text-foreground"
+                  >
+                    Privacy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/terms"
+                    className="fluid-transition text-muted-foreground hover:text-foreground"
+                  >
+                    Terms
                   </Link>
                 </li>
               </ul>

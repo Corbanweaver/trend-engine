@@ -111,12 +111,14 @@ async function upsertUserSubscription({
   stripeCustomerId,
   stripeSubscriptionId,
   stripeSubscriptionStatus,
+  resetUsage = false,
 }: {
   userId: string;
   plan: SubscriptionPlan;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   stripeSubscriptionStatus: string;
+  resetUsage?: boolean;
 }) {
   const supabase = getSupabaseAdmin();
   if (!supabase) {
@@ -135,6 +137,13 @@ async function upsertUserSubscription({
         stripe_customer_id: stripeCustomerId,
         stripe_subscription_id: stripeSubscriptionId,
         stripe_subscription_status: stripeSubscriptionStatus,
+        ...(resetUsage
+          ? {
+              analyses_used_this_month: 0,
+              credits_used_this_month: 0,
+              credits_reset_at: new Date().toISOString(),
+            }
+          : {}),
       },
       { onConflict: "user_id" },
     );
@@ -290,6 +299,7 @@ export async function POST(request: Request) {
           typeof session.customer === "string" ? session.customer : null,
         stripeSubscriptionId: subscriptionId,
         stripeSubscriptionStatus: status,
+        resetUsage: true,
       });
       if (result) return result;
     }

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Check } from "lucide-react";
 
+import { CREDIT_LIMITS } from "@/lib/credits";
+
 export const metadata: Metadata = {
   title: "Pricing — Trend Engine",
   description:
@@ -16,9 +18,10 @@ const plans = [
     description: "Try the essentials and explore trends.",
     featured: false,
     features: [
-      "5 trend analyses per month",
+      `${CREDIT_LIMITS.free} monthly credits`,
+      "1 full AI-image analysis",
       "Basic niches only",
-      "No saved ideas",
+      "Explore before upgrading",
     ],
     ctaHref: "/signup",
     planKey: "free",
@@ -32,7 +35,8 @@ const plans = [
     featured: true,
     popularLabel: "Most Popular",
     features: [
-      "50 trend analyses per month",
+      `${CREDIT_LIMITS.creator} monthly credits`,
+      "About 20 full AI-image analyses",
       "All niches",
       "Save unlimited ideas",
       "AI thumbnails",
@@ -48,7 +52,8 @@ const plans = [
     description: "Maximum throughput for teams and power creators.",
     featured: false,
     features: [
-      "Unlimited analyses",
+      `${CREDIT_LIMITS.pro.toLocaleString()} monthly credits`,
+      "About 60 full AI-image analyses",
       "All niches",
       "Saved ideas",
       "AI thumbnails",
@@ -131,8 +136,8 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
             Plans that scale with your creativity
           </h1>
           <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-            Pick the tier that matches your workflow. Upgrade or downgrade
-            anytime.
+            Pick the tier that matches your workflow. Credits reset monthly and
+            keep AI image generation fair for everyone.
           </p>
         </div>
 
@@ -220,10 +225,22 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           ))}
         </div>
 
-        <p className="mt-16 text-center text-sm text-muted-foreground">
-          Questions? We&apos;re here to help — reach out anytime after you sign
-          up.
+        <p className="mt-10 text-center text-sm text-muted-foreground">
+          Full image analyses cost 30 credits. Smaller AI tools such as hooks,
+          hashtags, and scripts use fewer credits.
         </p>
+
+        <nav className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+          <Link href="/support" className="hover:text-foreground">
+            Support
+          </Link>
+          <Link href="/privacy" className="hover:text-foreground">
+            Privacy
+          </Link>
+          <Link href="/terms" className="hover:text-foreground">
+            Terms
+          </Link>
+        </nav>
       </div>
     </main>
   );

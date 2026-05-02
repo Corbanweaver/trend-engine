@@ -5,12 +5,19 @@ create table if not exists public.user_subscriptions (
   stripe_subscription_id text,
   stripe_subscription_status text not null default 'free',
   analyses_used_this_month integer not null default 0 check (analyses_used_this_month >= 0),
+  credits_used_this_month integer not null default 0 check (credits_used_this_month >= 0),
+  credits_reset_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
 alter table public.user_subscriptions
   add column if not exists stripe_subscription_status text not null default 'free';
+
+alter table public.user_subscriptions
+  add column if not exists credits_used_this_month integer not null default 0
+    check (credits_used_this_month >= 0),
+  add column if not exists credits_reset_at timestamptz not null default now();
 
 create unique index if not exists user_subscriptions_stripe_customer_id_idx
   on public.user_subscriptions(stripe_customer_id)
@@ -74,8 +81,11 @@ begin
       or new.stripe_customer_id is distinct from old.stripe_customer_id
       or new.stripe_subscription_id is distinct from old.stripe_subscription_id
       or new.stripe_subscription_status is distinct from old.stripe_subscription_status
+      or new.analyses_used_this_month is distinct from old.analyses_used_this_month
+      or new.credits_used_this_month is distinct from old.credits_used_this_month
+      or new.credits_reset_at is distinct from old.credits_reset_at
     then
-      raise exception 'Subscription plan and Stripe fields can only be changed by trusted server code.';
+      raise exception 'Subscription plan, Stripe fields, and usage can only be changed by trusted server code.';
     end if;
   end if;
 
@@ -94,12 +104,6 @@ drop policy if exists "user_subscriptions_update_own"
 
 drop policy if exists "user_subscriptions_update_own_usage"
   on public.user_subscriptions;
-
-create policy "user_subscriptions_update_own_usage"
-  on public.user_subscriptions
-  for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
 
 -- Optional backfill: create a default free subscription row for any existing auth user.
 insert into public.user_subscriptions (user_id, plan, analyses_used_this_month)

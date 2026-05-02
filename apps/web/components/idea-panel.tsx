@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { useEffect, useRef, useState } from "react";
 
-import { getApiBaseUrl } from "@/lib/api";
 import { trackUiEvent } from "@/lib/telemetry";
 import { getVideoIdeaThumbnailUrls } from "@/lib/trend-ideas-types";
 import type { TrendIdea, VideoIdea } from "@/lib/trend-ideas-types";
@@ -26,28 +25,29 @@ async function postIdeaEnrichment<T>(
   path: "generate-hooks" | "generate-hashtags" | "generate-full-script",
   body: Record<string, string>,
 ): Promise<T> {
-  const base = getApiBaseUrl();
-  const res = await fetch(`${base}/trend-ideas/${path}`, {
+  const res = await fetch("/api/trend-ideas/enrich", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ path, payload: body }),
   });
   if (!res.ok) {
     let detail = res.statusText;
     try {
-      const errBody = (await res.json()) as { detail?: unknown };
-      if (errBody?.detail != null) {
+      const errBody = (await res.json()) as { detail?: unknown; error?: unknown };
+      const errorDetail = errBody?.error ?? errBody?.detail;
+      if (errorDetail != null) {
         detail =
-          typeof errBody.detail === "string"
-            ? errBody.detail
-            : JSON.stringify(errBody.detail);
+          typeof errorDetail === "string"
+            ? errorDetail
+            : JSON.stringify(errorDetail);
       }
     } catch {
       /* ignore */
     }
     throw new Error(detail || `Request failed (${res.status})`);
   }
-  return res.json() as Promise<T>;
+  const json = (await res.json()) as { data?: T } & T;
+  return (json.data ?? json) as T;
 }
 
 function estimateVideoLength(idea: VideoIdea): string {

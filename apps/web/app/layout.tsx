@@ -17,8 +17,27 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trend Engine",
-  description: "Trend intelligence and video ideas for creators",
+  metadataBase: new URL("https://www.contentideamaker.com"),
+  title: {
+    default: "Trend Engine - AI Content Ideas From Live Trends",
+    template: "%s | Trend Engine",
+  },
+  description:
+    "Find live content trends, generate official-looking idea cards, and turn them into hooks, scripts, and hashtags.",
+  openGraph: {
+    title: "Trend Engine - AI Content Ideas From Live Trends",
+    description:
+      "Analyze trends across creator platforms and generate AI-powered content ideas with thumbnails.",
+    url: "https://www.contentideamaker.com",
+    siteName: "Trend Engine",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Trend Engine - AI Content Ideas From Live Trends",
+    description:
+      "Find live trends and turn them into AI-assisted content ideas.",
+  },
 };
 
 async function hasAuthenticatedUser() {

@@ -42,7 +42,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { getApiBaseUrl } from "@/lib/api";
+import {
+  CREDIT_COSTS,
+  getMonthlyCreditLimit,
+  getRemainingCredits,
+  shouldResetMonthlyUsage,
+} from "@/lib/credits";
 import { NICHE_OPTIONS } from "@/lib/niches";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getVideoIdeaThumbnailUrls } from "@/lib/trend-ideas-types";
@@ -56,7 +61,6 @@ import { cn } from "@/lib/utils";
 import { recordTrendAnalysis } from "@/lib/user-stats";
 
 const TREND_RESULTS_STORAGE_KEY = "trend_dashboard:last_results";
-const FREE_ANALYSIS_LIMIT = 5;
 const ONBOARDING_DISMISSED_KEY = "trend_dashboard:onboarding_dismissed";
 const NICHE_FAVORITES_KEY = "trend_dashboard:niche_favorites";
 const NICHE_HISTORY_KEY = "trend_dashboard:niche_history";
@@ -74,21 +78,28 @@ type UserSubscriptionRow = {
   user_id: string;
   plan: SubscriptionPlan;
   analyses_used_this_month: number;
-  updated_at: string;
+  credits_used_this_month: number;
+  credits_reset_at: string;
+};
+
+type CreditSnapshot = {
+  plan: SubscriptionPlan;
+  creditsUsed: number;
+  creditsLimit: number;
+  creditsRemaining: number;
+  analysesUsedThisMonth: number;
+};
+
+type TrendIdeasApiResponse = TrendIdeasResponse & {
+  credits?: CreditSnapshot;
+  requiredCredits?: number;
+  error?: string;
 };
 
 function formatPlanLabel(plan: SubscriptionPlan): "Free" | "Creator" | "Pro" {
   if (plan === "creator") return "Creator";
   if (plan === "pro") return "Pro";
   return "Free";
-}
-
-function isSameMonth(timestamp: string, now = new Date()): boolean {
-  const date = new Date(timestamp);
-  return (
-    date.getUTCFullYear() === now.getUTCFullYear() &&
-    date.getUTCMonth() === now.getUTCMonth()
-  );
 }
 
 function parseTimestampCandidate(value: unknown): Date | null {
@@ -151,9 +162,8 @@ function useIsMobile(breakpoint = 1023) {
   return isMobile;
 }
 
-async function fetchTrendIdeas(niche: string): Promise<TrendIdeasResponse> {
-  const base = getApiBaseUrl();
-  const res = await fetch(`${base}/trend-ideas/`, {
+async function fetchTrendIdeas(niche: string): Promise<TrendIdeasApiResponse> {
+  const res = await fetch("/api/trend-ideas/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ niche }),
@@ -162,12 +172,13 @@ async function fetchTrendIdeas(niche: string): Promise<TrendIdeasResponse> {
   if (!res.ok) {
     let detail = res.statusText;
     try {
-      const body = (await res.json()) as { detail?: unknown };
-      if (body?.detail != null) {
+      const body = (await res.json()) as { detail?: unknown; error?: unknown };
+      const errorDetail = body?.error ?? body?.detail;
+      if (errorDetail != null) {
         detail =
-          typeof body.detail === "string"
-            ? body.detail
-            : JSON.stringify(body.detail);
+          typeof errorDetail === "string"
+            ? errorDetail
+            : JSON.stringify(errorDetail);
       }
     } catch {
       /* ignore */
@@ -175,7 +186,7 @@ async function fetchTrendIdeas(niche: string): Promise<TrendIdeasResponse> {
     throw new Error(detail || `Request failed (${res.status})`);
   }
 
-  return res.json() as Promise<TrendIdeasResponse>;
+  return res.json() as Promise<TrendIdeasApiResponse>;
 }
 
 type PlatformChip = "All" | "TikTok" | "YouTube" | "Reddit" | "Instagram" | "Twitter";
@@ -628,9 +639,11 @@ export function TrendDashboard() {
   const [signingOut, setSigningOut] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [userAvatar, setUserAvatar] = useState("");
-  const [userId, setUserId] = useState<string | null>(null);
   const [plan, setPlan] = useState<SubscriptionPlan>("free");
   const [analysesUsedThisMonth, setAnalysesUsedThisMonth] = useState(0);
+  const [creditsUsedThisMonth, setCreditsUsedThisMonth] = useState(0);
+  const [creditsLimit, setCreditsLimit] = useState(getMonthlyCreditLimit("free"));
+  const [creditsRemaining, setCreditsRemaining] = useState(getMonthlyCreditLimit("free"));
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -643,6 +656,14 @@ export function TrendDashboard() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackSent, setFeedbackSent] = useState(false);
+
+  const applyCreditSnapshot = useCallback((snapshot: CreditSnapshot) => {
+    setPlan(snapshot.plan);
+    setAnalysesUsedThisMonth(snapshot.analysesUsedThisMonth);
+    setCreditsUsedThisMonth(snapshot.creditsUsed);
+    setCreditsLimit(snapshot.creditsLimit);
+    setCreditsRemaining(snapshot.creditsRemaining);
+  }, []);
 
   useEffect(() => {
     try {
@@ -747,9 +768,9 @@ export function TrendDashboard() {
   });
 
   const runAnalysis = useCallback(async () => {
-    if (plan === "free" && analysesUsedThisMonth >= FREE_ANALYSIS_LIMIT) {
+    if (creditsRemaining < CREDIT_COSTS.analysisWithImages) {
       setError(
-        "You have reached your free plan limit (5 analyses this month). Upgrade to continue.",
+        `You need ${CREDIT_COSTS.analysisWithImages} credits to run a full analysis with images. Upgrade for more monthly credits.`,
       );
       return;
     }
@@ -768,6 +789,9 @@ export function TrendDashboard() {
     try {
       const res = await fetchTrendIdeas(effectiveNiche);
       setData(res);
+      if (res.credits) {
+        applyCreditSnapshot(res.credits);
+      }
       setAnalysisProgress(100);
       recordTrendAnalysis(effectiveNiche);
       setNicheHistory((prev) => {
@@ -780,18 +804,6 @@ export function TrendDashboard() {
         return next;
       });
 
-      if (userId && plan === "free") {
-        const nextCount = analysesUsedThisMonth + 1;
-        const supabase = getSupabaseClient();
-        const { error: updateError } = await supabase
-          .from("user_subscriptions")
-          .update({ analyses_used_this_month: nextCount })
-          .eq("user_id", userId);
-        if (updateError) {
-          throw new Error(updateError.message);
-        }
-        setAnalysesUsedThisMonth(nextCount);
-      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -801,7 +813,7 @@ export function TrendDashboard() {
         setAnalysisProgress(0);
       }, 450);
     }
-  }, [analysesUsedThisMonth, effectiveNiche, plan, userId]);
+  }, [applyCreditSnapshot, creditsRemaining, effectiveNiche]);
 
   useEffect(() => {
     try {
@@ -830,7 +842,6 @@ export function TrendDashboard() {
   useEffect(() => {
     const supabase = getSupabaseClient();
     const setUserState = (user: User | null) => {
-      setUserId(user?.id ?? null);
       setUserEmail(user?.email ?? "");
       setUserAvatar((user?.user_metadata?.avatar_url as string | undefined) ?? "");
     };
@@ -839,6 +850,9 @@ export function TrendDashboard() {
       if (!uid) {
         setPlan("free");
         setAnalysesUsedThisMonth(0);
+        setCreditsUsedThisMonth(0);
+        setCreditsLimit(getMonthlyCreditLimit("free"));
+        setCreditsRemaining(getMonthlyCreditLimit("free"));
         setSubscriptionLoading(false);
         return;
       }
@@ -846,7 +860,7 @@ export function TrendDashboard() {
       setSubscriptionLoading(true);
       const { data, error } = await supabase
         .from("user_subscriptions")
-        .select("user_id, plan, analyses_used_this_month, updated_at")
+        .select("user_id, plan, analyses_used_this_month, credits_used_this_month, credits_reset_at")
         .eq("user_id", uid)
         .maybeSingle<UserSubscriptionRow>();
 
@@ -859,8 +873,13 @@ export function TrendDashboard() {
       if (!row) {
         const { data: inserted, error: insertError } = await supabase
           .from("user_subscriptions")
-          .insert({ user_id: uid, plan: "free", analyses_used_this_month: 0 })
-          .select("user_id, plan, analyses_used_this_month, updated_at")
+          .insert({
+            user_id: uid,
+            plan: "free",
+            analyses_used_this_month: 0,
+            credits_used_this_month: 0,
+          })
+          .select("user_id, plan, analyses_used_this_month, credits_used_this_month, credits_reset_at")
           .single<UserSubscriptionRow>();
         if (!insertError && inserted) {
           row = inserted;
@@ -868,19 +887,14 @@ export function TrendDashboard() {
       }
 
       if (row) {
-        let usage = row.analyses_used_this_month ?? 0;
-        if (row.plan === "free" && !isSameMonth(row.updated_at)) {
-          usage = 0;
-          const { error: resetError } = await supabase
-            .from("user_subscriptions")
-            .update({ analyses_used_this_month: 0 })
-            .eq("user_id", uid);
-          if (resetError) {
-            console.error("Failed to reset monthly usage:", resetError.message);
-          }
-        }
+        const planValue = row.plan ?? "free";
+        const staleMonth = shouldResetMonthlyUsage(row.credits_reset_at);
+        const usage = staleMonth ? 0 : Math.max(0, row.credits_used_this_month ?? 0);
         setPlan(row.plan);
-        setAnalysesUsedThisMonth(usage);
+        setAnalysesUsedThisMonth(staleMonth ? 0 : row.analyses_used_this_month ?? 0);
+        setCreditsUsedThisMonth(usage);
+        setCreditsLimit(getMonthlyCreditLimit(planValue));
+        setCreditsRemaining(getRemainingCredits(planValue, usage));
       }
 
       setSubscriptionLoading(false);
@@ -907,7 +921,7 @@ export function TrendDashboard() {
     };
   }, []);
 
-  const freeLimitReached = plan === "free" && analysesUsedThisMonth >= FREE_ANALYSIS_LIMIT;
+  const analysisCreditBlocked = creditsRemaining < CREDIT_COSTS.analysisWithImages;
   const favoriteSet = new Set(favoriteNiches);
   const favoriteOptions = NICHE_OPTIONS.filter((o) => favoriteSet.has(o.value));
   const regularOptions = NICHE_OPTIONS.filter((o) => !favoriteSet.has(o.value));
@@ -1033,9 +1047,11 @@ export function TrendDashboard() {
             </div>
           </div>
           <div className="ml-auto" />
-          <div className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] text-primary dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-100 sm:px-3 sm:text-xs">
-            Plan: {formatPlanLabel(plan)}
-            {plan === "free" ? ` (${analysesUsedThisMonth}/${FREE_ANALYSIS_LIMIT})` : ""}
+          <div
+            className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] text-primary dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-100 sm:px-3 sm:text-xs"
+            title={`${creditsUsedThisMonth} credits used this month across ${analysesUsedThisMonth} analyses`}
+          >
+            {formatPlanLabel(plan)}: {creditsRemaining}/{creditsLimit} credits
           </div>
           <Link
             href="/analytics"
@@ -1193,7 +1209,7 @@ export function TrendDashboard() {
             ) : null}
             <Button
               type="button"
-              disabled={loading || freeLimitReached || subscriptionLoading}
+              disabled={loading || analysisCreditBlocked || subscriptionLoading}
               onClick={runAnalysis}
                 className="h-10 w-full bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 sm:h-9 sm:w-auto"
             >
@@ -1206,7 +1222,7 @@ export function TrendDashboard() {
                 "Analyze trends"
               )}
             </Button>
-            {freeLimitReached ? (
+            {analysisCreditBlocked ? (
               <Link
                 href="/pricing"
                 className="rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/15 dark:border-fuchsia-300/40 dark:bg-fuchsia-500/15 dark:text-fuchsia-100 dark:hover:bg-fuchsia-500/25"
@@ -1275,10 +1291,10 @@ export function TrendDashboard() {
         </div>
       ) : null}
 
-      {freeLimitReached ? (
+      {analysisCreditBlocked ? (
         <div className="mx-4 mt-4 rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary dark:border-fuchsia-400/40 dark:bg-fuchsia-500/10 dark:text-fuchsia-100">
-          You have used all 5 free analyses this month. Upgrade to Creator or Pro
-          for higher limits.
+          You need {CREDIT_COSTS.analysisWithImages} credits for another full analysis
+          with images. Upgrade to Creator or Pro for higher monthly credits.
           <Link href="/pricing" className="ml-2 underline underline-offset-2">
             View pricing
           </Link>
