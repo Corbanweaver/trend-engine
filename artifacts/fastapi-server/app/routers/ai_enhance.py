@@ -5,8 +5,8 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from openai import OpenAI
 from app.security import expensive_endpoint_rate_limit
+from app.openai_client import get_openai_client, get_openai_image_client
 
 try:
     import anthropic
@@ -54,14 +54,6 @@ def get_anthropic_client():
     if not base_url:
         return None
     return anthropic.Anthropic(base_url=base_url, api_key=api_key)
-
-
-def get_openai_client():
-    base_url = os.environ.get("AI_INTEGRATIONS_OPENAI_BASE_URL")
-    api_key = os.environ.get("AI_INTEGRATIONS_OPENAI_API_KEY", "placeholder")
-    if not base_url:
-        raise HTTPException(status_code=503, detail="OpenAI integration not configured.")
-    return OpenAI(base_url=base_url, api_key=api_key)
 
 
 REFINE_PROMPT = """You are a world-class short-form video scriptwriter. Take this script and make it significantly better.
@@ -157,10 +149,14 @@ Niche: {niche}
 
 Style: Bold, high-contrast, eye-catching social media thumbnail. Bright colors, dramatic lighting, clean composition. No text overlay. Professional quality, attention-grabbing."""
 
+OPENAI_IMAGE_MODEL = os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-1")
+OPENAI_IMAGE_SIZE = os.environ.get("OPENAI_IMAGE_SIZE", "1024x1024")
+OPENAI_IMAGE_QUALITY = os.environ.get("OPENAI_IMAGE_QUALITY", "low")
+
 
 @router.post("/generate-thumbnail", response_model=ThumbnailResponse)
 async def generate_thumbnail(body: ThumbnailRequest):
-    client = get_openai_client()
+    client = get_openai_image_client()
     prompt = THUMBNAIL_PROMPT_TEMPLATE.format(
         idea=body.idea,
         hook=body.hook,
@@ -172,10 +168,11 @@ async def generate_thumbnail(body: ThumbnailRequest):
         response = await loop.run_in_executor(
             None,
             lambda: client.images.generate(
-                model="gpt-image-1",
+                model=OPENAI_IMAGE_MODEL,
                 prompt=prompt,
                 n=1,
-                size="1024x1024",
+                size=OPENAI_IMAGE_SIZE,
+                quality=OPENAI_IMAGE_QUALITY,
             ),
         )
         image_data = response.data[0].b64_json

@@ -11,7 +11,7 @@ Trend Engine is a SaaS app for content creators at `contentideamaker.com`.
 - Database/auth: Supabase project `trend-engine` (`dzbbwcbnltbgigepkpaq`).
 - Payments: Stripe checkout and webhooks through the Next.js app.
 - Trend/data providers: Apify-style scrapers and API clients for TikTok, Reddit, YouTube, Google Trends, Google News, Hacker News, Pinterest, Medium, and web search.
-- AI providers: OpenAI for chat/idea generation and Replicate for image generation.
+- AI providers: OpenAI for chat, idea generation, and AI idea-card images.
 
 ## Production
 

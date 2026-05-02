@@ -2,17 +2,15 @@ import os
 import json
 import asyncio
 import logging
-try:
-    import replicate
-except ModuleNotFoundError:
-    replicate = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 _ai_semaphore = asyncio.Semaphore(3)
+_image_semaphore = asyncio.Semaphore(2)
 
 from fastapi import APIRouter, Depends, HTTPException, Header
 from openai import OpenAI
 from app.security import expensive_endpoint_rate_limit, require_digest_key
+from app.openai_client import get_openai_client, get_openai_image_client
 
 from app.models import (
     TrendIdeasRequest,
@@ -41,8 +39,22 @@ router = APIRouter(
     tags=["trend-ideas"],
     dependencies=[Depends(expensive_endpoint_rate_limit("trend-ideas"))],
 )
-REPLICATE_MODEL = "black-forest-labs/flux-schnell"
 RECENCY_DAYS = 7
+OPENAI_IMAGE_MODEL = os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-1")
+OPENAI_IMAGE_SIZE = os.environ.get("OPENAI_IMAGE_SIZE", "1536x1024")
+OPENAI_IMAGE_QUALITY = os.environ.get("OPENAI_IMAGE_QUALITY", "low")
+OPENAI_IDEA_IMAGE_FORMAT = os.environ.get("OPENAI_IDEA_IMAGE_FORMAT", "webp")
+
+
+def int_env(name: str, default: int, minimum: int, maximum: int) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except ValueError:
+        return default
+    return max(minimum, min(maximum, value))
+
+
+OPENAI_IDEA_IMAGE_COMPRESSION = int_env("OPENAI_IDEA_IMAGE_COMPRESSION", 70, 0, 100)
 
 SYSTEM_PROMPT = """You are a world-class short-form content creator and strategist known for making ideas feel human, bold, and impossible to scroll past.
 
@@ -130,14 +142,6 @@ Concept: {idea}
 Existing short script (may extend or replace as needed for length): {script}"""
 
 
-def get_openai_client() -> OpenAI:
-    base_url = os.environ.get("AI_INTEGRATIONS_OPENAI_BASE_URL")
-    api_key = os.environ.get("AI_INTEGRATIONS_OPENAI_API_KEY", "placeholder")
-    if not base_url:
-        raise HTTPException(status_code=503, detail="OpenAI integration not configured.")
-    return OpenAI(base_url=base_url, api_key=api_key)
-
-
 def parse_ideas_json(raw: str) -> list[VideoIdea]:
     cleaned = raw.strip()
     if cleaned.startswith("```"):
@@ -165,63 +169,51 @@ def parse_ideas_json(raw: str) -> list[VideoIdea]:
     return [VideoIdea(hook=cleaned[:100], angle="", idea=cleaned, script="")]
 
 
-def _extract_replicate_output_url(output) -> str:
-    if isinstance(output, str):
-        return output
-    if isinstance(output, list) and output:
-        first = output[0]
-        return str(first) if first else ""
-    return ""
-
-
-async def generate_idea_thumbnail(niche: str, topic: str, idea: VideoIdea) -> str:
-    if replicate is None:
-        logger.warning("Replicate package not installed; skipping thumbnail generation.")
-        return ""
-
-    token = os.environ.get("REPLICATE_API_TOKEN", "").strip()
-    logger.info("Replicate token found: %s", "yes" if bool(token) else "no")
-    if not token:
-        logger.warning("Skipping Replicate thumbnail generation because REPLICATE_API_TOKEN is missing.")
-        return ""
-
+def build_thumbnail_prompt(niche: str, topic: str, idea: VideoIdea) -> str:
     title = (idea.optimized_title or "").strip() or (idea.hook or "").strip() or "viral short-form video"
     concept = (idea.idea or "").strip()
+    angle = (idea.angle or "").strip()
     visual_subject = " ".join(
-        part.strip() for part in [niche, topic, title, concept] if part and part.strip()
-    )[:80]
-    prompt = (
-        f"Clean professional YouTube/TikTok thumbnail of {visual_subject}; "
-        "photorealistic, high quality, 16:9, bright lighting, eye-catching, "
-        "no text, no words, no letters, no watermarks."
+        part.strip()
+        for part in [niche, topic, title, concept, angle]
+        if part and part.strip()
+    )[:420]
+    return (
+        "Create a polished vertical-social idea card image for a content creator.\n"
+        f"Niche: {niche}\n"
+        f"Trend: {topic}\n"
+        f"Idea: {visual_subject}\n\n"
+        "Visual direction: premium editorial thumbnail, cinematic lighting, vivid but tasteful colors, "
+        "clear focal subject, high contrast, realistic detail, modern creator economy aesthetic. "
+        "No text, no captions, no logos, no watermarks, no UI mockups, no letterforms."
     )
-    if len(prompt) > 200:
-        prompt = (
-            f"Professional YouTube/TikTok thumbnail: {visual_subject[:70]}; "
-            "photorealistic, 16:9, bright lighting, eye-catching, "
-            "no text, no words, no letters, no watermarks."
-        )[:200]
-    logger.info("Replicate thumbnail prompt length=%s", len(prompt))
-    try:
-        def _run_replicate() -> str:
-            os.environ["REPLICATE_API_TOKEN"] = token
-            output = replicate.run(
-                REPLICATE_MODEL,
-                input={
-                    "prompt": prompt,
-                    "aspect_ratio": "16:9",
-                    "output_format": "jpg",
-                    "output_quality": 85,
-                },
-            )
-            return _extract_replicate_output_url(output)
 
-        loop = asyncio.get_event_loop()
-        url = await loop.run_in_executor(None, _run_replicate)
-        logger.info("Replicate thumbnail generated successfully for topic '%s': %s", topic, bool(url))
-        return url
+
+async def generate_idea_thumbnail(client: OpenAI, niche: str, topic: str, idea: VideoIdea) -> str:
+    prompt = build_thumbnail_prompt(niche, topic, idea)
+    try:
+        async with _image_semaphore:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: client.images.generate(
+                    model=OPENAI_IMAGE_MODEL,
+                    prompt=prompt,
+                    n=1,
+                    size=OPENAI_IMAGE_SIZE,
+                    quality=OPENAI_IMAGE_QUALITY,
+                    output_format=OPENAI_IDEA_IMAGE_FORMAT,
+                    output_compression=OPENAI_IDEA_IMAGE_COMPRESSION,
+                ),
+            )
+        image_data = response.data[0].b64_json
+        if not image_data:
+            logger.warning("OpenAI image generation returned no image data for topic '%s'.", topic)
+            return ""
+        logger.info("OpenAI idea-card image generated for topic '%s'.", topic)
+        return f"data:image/{OPENAI_IDEA_IMAGE_FORMAT};base64,{image_data}"
     except Exception as e:
-        logger.exception("Replicate thumbnail generation failed with exception: %s", e)
+        logger.warning("OpenAI idea-card image generation failed for topic '%s': %s", topic, e)
 
     return ""
 
@@ -418,7 +410,8 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
             )
         raw = response.choices[0].message.content or ""
         ideas = parse_ideas_json(raw)
-        thumbnail_coros = [generate_idea_thumbnail(niche, topic, idea) for idea in ideas]
+        image_client = get_openai_image_client()
+        thumbnail_coros = [generate_idea_thumbnail(image_client, niche, topic, idea) for idea in ideas]
         thumbnail_results = await asyncio.gather(*thumbnail_coros, return_exceptions=True)
         for idx, result in enumerate(thumbnail_results):
             if isinstance(result, str):
@@ -427,7 +420,7 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
                 logger.warning("Thumbnail generation error for topic '%s': %s", topic, result)
         generated_count = sum(1 for idea in ideas if (idea.thumbnail_url or "").strip())
         logger.info(
-            "Replicate thumbnails generated for topic '%s': %s/%s",
+            "OpenAI idea-card images generated for topic '%s': %s/%s",
             topic,
             generated_count,
             len(ideas),
