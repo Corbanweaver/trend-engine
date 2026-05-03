@@ -8,6 +8,8 @@ export interface VideoIdea {
   hashtags?: string[];
   optimized_title?: string;
   seo_description?: string;
+  hook_variations?: string[];
+  full_script?: string;
   thumbnail_url?: string;
   thumbnail_urls?: string[];
   thumbnails?: string[];
@@ -52,5 +54,7 @@ export function getVideoIdeaThumbnailUrls(idea: VideoIdea): string[] {
     ...(idea.thumbnails ?? []),
   ];
 
-  return [...new Set(candidates.map((url) => url?.trim()).filter(Boolean))] as string[];
+  return [
+    ...new Set(candidates.map((url) => url?.trim()).filter(Boolean)),
+  ] as string[];
 }

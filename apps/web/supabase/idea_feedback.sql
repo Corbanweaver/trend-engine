@@ -46,18 +46,27 @@ alter table public.idea_feedback
 
 alter table public.idea_feedback enable row level security;
 
+drop policy if exists "idea_feedback_select_own"
+  on public.idea_feedback;
+
 create policy "idea_feedback_select_own"
   on public.idea_feedback
   for select
-  using (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id);
+
+drop policy if exists "idea_feedback_insert_own"
+  on public.idea_feedback;
 
 create policy "idea_feedback_insert_own"
   on public.idea_feedback
   for insert
-  with check (auth.uid() = user_id);
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "idea_feedback_update_own"
+  on public.idea_feedback;
 
 create policy "idea_feedback_update_own"
   on public.idea_feedback
   for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);

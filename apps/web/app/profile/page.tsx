@@ -21,6 +21,8 @@ type UserSubscriptionRow = {
   plan: SubscriptionPlan;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  stripe_cancel_at_period_end?: boolean | null;
+  stripe_current_period_end?: string | null;
   analyses_used_this_month: number;
   credits_used_this_month: number;
   credits_reset_at: string;
@@ -36,6 +38,29 @@ function formatPlanLabel(plan: SubscriptionPlan | null) {
   return "Free";
 }
 
+function formatShortDate(value: string | null | undefined) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+function formatCurrentPlanLabel(
+  plan: SubscriptionPlan | null,
+  cancelAtPeriodEnd: boolean,
+  currentPeriodEnd: string | null,
+) {
+  const label = formatPlanLabel(plan);
+  if (!plan || plan === "free" || !cancelAtPeriodEnd) return label;
+  const cancelDate = formatShortDate(currentPeriodEnd);
+  return cancelDate
+    ? `${label} - cancels ${cancelDate}`
+    : `${label} - canceling`;
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
@@ -43,15 +68,22 @@ export default function ProfilePage() {
   const [savedCount, setSavedCount] = useState<number | null>(null);
   const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
   const [creditsUsed, setCreditsUsed] = useState(0);
-  const [creditsLimit, setCreditsLimit] = useState(getMonthlyCreditLimit("free"));
+  const [creditsLimit, setCreditsLimit] = useState(
+    getMonthlyCreditLimit("free"),
+  );
   const [analysesUsedThisMonth, setAnalysesUsedThisMonth] = useState(0);
+  const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
   const [hasStripeBilling, setHasStripeBilling] = useState(false);
   const [billingMessage, setBillingMessage] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const totalAnalyses = useMemo(() => (ready ? readTotalAnalyses() : 0), [ready]);
+  const totalAnalyses = useMemo(
+    () => (ready ? readTotalAnalyses() : 0),
+    [ready],
+  );
   const earned = useMemo(
     () => computeEarnedBadgeIds(totalAnalyses, savedCount ?? 0),
     [totalAnalyses, savedCount],
@@ -74,7 +106,9 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
-    const billingStatus = new URLSearchParams(window.location.search).get("billing");
+    const billingStatus = new URLSearchParams(window.location.search).get(
+      "billing",
+    );
     if (billingStatus === "setup-needed") {
       setBillingMessage(
         "No Stripe billing profile is linked yet. Choose a paid plan to set one up.",
@@ -113,12 +147,16 @@ export default function ProfilePage() {
           setCreditsUsed(0);
           setCreditsLimit(getMonthlyCreditLimit("free"));
           setAnalysesUsedThisMonth(0);
+          setCancelAtPeriodEnd(false);
+          setCurrentPeriodEnd(null);
           setHasStripeBilling(false);
           setReady(true);
           return;
         }
         setEmail(user.email ?? null);
-        setAvatar((user.user_metadata?.avatar_url as string | undefined) ?? null);
+        setAvatar(
+          (user.user_metadata?.avatar_url as string | undefined) ?? null,
+        );
 
         const { count, error: countError } = await supabase
           .from("saved_ideas")
@@ -135,7 +173,7 @@ export default function ProfilePage() {
         const { data: subscription, error: subscriptionError } = await supabase
           .from("user_subscriptions")
           .select(
-            "plan,stripe_customer_id,stripe_subscription_id,analyses_used_this_month,credits_used_this_month,credits_reset_at",
+            "plan,stripe_customer_id,stripe_subscription_id,stripe_cancel_at_period_end,stripe_current_period_end,analyses_used_this_month,credits_used_this_month,credits_reset_at",
           )
           .eq("user_id", user.id)
           .maybeSingle<UserSubscriptionRow>();
@@ -146,21 +184,31 @@ export default function ProfilePage() {
           setCreditsUsed(0);
           setCreditsLimit(getMonthlyCreditLimit("free"));
           setAnalysesUsedThisMonth(0);
+          setCancelAtPeriodEnd(false);
+          setCurrentPeriodEnd(null);
           setHasStripeBilling(false);
         } else {
           const nextPlan = subscription?.plan ?? "free";
-          const staleMonth = shouldResetMonthlyUsage(subscription?.credits_reset_at);
-          const nextCreditsUsed = staleMonth ? 0 : subscription?.credits_used_this_month ?? 0;
+          const staleMonth = shouldResetMonthlyUsage(
+            subscription?.credits_reset_at,
+          );
+          const nextCreditsUsed = staleMonth
+            ? 0
+            : (subscription?.credits_used_this_month ?? 0);
           setPlan(nextPlan);
           setCreditsUsed(nextCreditsUsed);
           setCreditsLimit(getMonthlyCreditLimit(nextPlan));
           setAnalysesUsedThisMonth(
-            staleMonth ? 0 : subscription?.analyses_used_this_month ?? 0,
+            staleMonth ? 0 : (subscription?.analyses_used_this_month ?? 0),
           );
+          setCancelAtPeriodEnd(
+            Boolean(subscription?.stripe_cancel_at_period_end),
+          );
+          setCurrentPeriodEnd(subscription?.stripe_current_period_end ?? null);
           setHasStripeBilling(
             Boolean(
               subscription?.stripe_customer_id ??
-                subscription?.stripe_subscription_id,
+              subscription?.stripe_subscription_id,
             ),
           );
         }
@@ -171,6 +219,8 @@ export default function ProfilePage() {
         setCreditsUsed(0);
         setCreditsLimit(getMonthlyCreditLimit("free"));
         setAnalysesUsedThisMonth(0);
+        setCancelAtPeriodEnd(false);
+        setCurrentPeriodEnd(null);
         setHasStripeBilling(false);
       } finally {
         setReady(true);
@@ -224,9 +274,11 @@ export default function ProfilePage() {
             <p className="mt-1 text-sm text-muted-foreground">
               {ready ? (
                 <>
-                  <span className="tabular-nums">{totalAnalyses}</span> analyses on this device
+                  <span className="tabular-nums">{totalAnalyses}</span> analyses
+                  on this device
                   {" · "}
-                  <span className="tabular-nums">{savedCount ?? 0}</span> saved ideas
+                  <span className="tabular-nums">{savedCount ?? 0}</span> saved
+                  ideas
                 </>
               ) : (
                 "Loading…"
@@ -250,9 +302,23 @@ export default function ProfilePage() {
               <p className="mt-1 text-sm text-muted-foreground">
                 Current plan:{" "}
                 <span className="font-medium text-foreground">
-                  {ready ? formatPlanLabel(plan) : "Loading..."}
+                  {ready
+                    ? formatCurrentPlanLabel(
+                        plan,
+                        cancelAtPeriodEnd,
+                        currentPeriodEnd,
+                      )
+                    : "Loading..."}
                 </span>
               </p>
+              {ready && plan && plan !== "free" && cancelAtPeriodEnd ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Paid access and credits stay active until{" "}
+                  {formatShortDate(currentPeriodEnd) ??
+                    "the end of this billing period"}
+                  .
+                </p>
+              ) : null}
               <p className="mt-1 text-sm text-muted-foreground">
                 Monthly credits:{" "}
                 <span className="font-medium text-foreground">

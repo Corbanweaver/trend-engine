@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { SavedIdeaContent } from "@/components/saved-idea-content";
 import { Button } from "@/components/ui/button";
 import { getSupabaseClient } from "@/lib/supabase";
 import { trackUiEvent } from "@/lib/telemetry";
@@ -70,20 +71,26 @@ export default function SavedIdeasPage() {
     const cleanQuery = query.trim().toLowerCase();
     return ideas
       .filter((item) => {
-        const matchesQuery = !cleanQuery || getIdeaText(item).includes(cleanQuery);
-        const matchesNiche = nicheFilter === "all" || item.niche === nicheFilter;
+        const matchesQuery =
+          !cleanQuery || getIdeaText(item).includes(cleanQuery);
+        const matchesNiche =
+          nicheFilter === "all" || item.niche === nicheFilter;
         return matchesQuery && matchesNiche;
       })
       .sort((a, b) => {
         if (sortMode === "oldest") {
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          return (
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
         }
         if (sortMode === "title") {
           return (a.idea_title || "Saved idea").localeCompare(
             b.idea_title || "Saved idea",
           );
         }
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
       });
   }, [ideas, nicheFilter, query, sortMode]);
 
@@ -154,7 +161,9 @@ export default function SavedIdeasPage() {
 
         const { data, error: fetchError } = await supabase
           .from("saved_ideas")
-          .select("id, created_at, idea_title, idea_content, thumbnail_url, niche")
+          .select(
+            "id, created_at, idea_title, idea_content, thumbnail_url, niche",
+          )
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
@@ -178,7 +187,9 @@ export default function SavedIdeasPage() {
           level: "error",
           message: err instanceof Error ? err.message : "unknown",
         });
-        setError(err instanceof Error ? err.message : "Failed to load saved ideas.");
+        setError(
+          err instanceof Error ? err.message : "Failed to load saved ideas.",
+        );
       } finally {
         setLoading(false);
       }
@@ -235,7 +246,9 @@ export default function SavedIdeasPage() {
         message: err instanceof Error ? err.message : "unknown",
         context: { ideaId },
       });
-      setError(err instanceof Error ? err.message : "Failed to remove saved idea.");
+      setError(
+        err instanceof Error ? err.message : "Failed to remove saved idea.",
+      );
     } finally {
       setDeletingId(null);
     }
@@ -293,7 +306,11 @@ export default function SavedIdeasPage() {
     const shareUrl = `${SHARE_BASE_URL}/saved?idea=${encodeURIComponent(item.id)}`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: item.idea_title, text: shareText, url: shareUrl });
+        await navigator.share({
+          title: item.idea_title,
+          text: shareText,
+          url: shareUrl,
+        });
         showToast("Shared");
         trackUiEvent({
           area: "saved",
@@ -342,7 +359,9 @@ export default function SavedIdeasPage() {
       window.localStorage.setItem(PLAN_KEY, JSON.stringify(map));
       showToast("Saved to Calendar");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save idea to calendar.");
+      setError(
+        err instanceof Error ? err.message : "Failed to save idea to calendar.",
+      );
     }
   };
 
@@ -360,7 +379,9 @@ export default function SavedIdeasPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary dark:text-cyan-200/80">
               Library
             </p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight">Saved Ideas</h1>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight">
+              Saved Ideas
+            </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
               {ideas.length
                 ? `${ideas.length} saved idea${ideas.length === 1 ? "" : "s"} ready to reuse.`
@@ -390,10 +411,13 @@ export default function SavedIdeasPage() {
           <div className="glass-surface overflow-hidden rounded-2xl border border-border dark:border-white/10">
             <div className="grid gap-0 md:grid-cols-[1.2fr_0.8fr]">
               <div className="p-8 sm:p-10">
-                <p className="text-lg font-semibold text-foreground dark:text-slate-100">No saved ideas yet</p>
+                <p className="text-lg font-semibold text-foreground dark:text-slate-100">
+                  No saved ideas yet
+                </p>
                 <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground dark:text-slate-400">
-                  Save a concept from the dashboard when it feels worth testing. It will
-                  show up here with sharing, download, and calendar actions.
+                  Save a concept from the dashboard when it feels worth testing.
+                  It will show up here with sharing, download, and calendar
+                  actions.
                 </p>
                 <Button asChild className="mt-5">
                   <Link href="/dashboard">Find Ideas</Link>
@@ -479,9 +503,14 @@ export default function SavedIdeasPage() {
           </section>
         ) : null}
 
-        {!loading && !error && ideas.length > 0 && filteredIdeas.length === 0 ? (
+        {!loading &&
+        !error &&
+        ideas.length > 0 &&
+        filteredIdeas.length === 0 ? (
           <div className="glass-surface rounded-2xl border border-border p-8 text-center dark:border-white/10">
-            <p className="text-sm font-medium text-foreground dark:text-slate-200">No matches found</p>
+            <p className="text-sm font-medium text-foreground dark:text-slate-200">
+              No matches found
+            </p>
             <p className="mt-1 text-xs text-muted-foreground dark:text-slate-400">
               Try a different search term or remove the niche filter.
             </p>
@@ -654,12 +683,20 @@ export default function SavedIdeasPage() {
                   />
                 </div>
               ) : null}
-              <div className="mt-4 whitespace-pre-wrap rounded-xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-foreground">
-                {detailIdea.idea_content || "No script/content available for this idea."}
-              </div>
+              <SavedIdeaContent
+                content={
+                  detailIdea.idea_content ||
+                  "No script/content available for this idea."
+                }
+                className="mt-4 rounded-xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-foreground"
+              />
             </div>
             <div className="flex flex-wrap gap-2 border-t border-border p-4 dark:border-white/10 sm:p-5">
-              <Button type="button" size="sm" onClick={() => void copyIdea(detailIdea)}>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => void copyIdea(detailIdea)}
+              >
                 <Copy aria-hidden="true" />
                 Copy Link
               </Button>

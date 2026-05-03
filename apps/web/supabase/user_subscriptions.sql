@@ -4,6 +4,8 @@ create table if not exists public.user_subscriptions (
   stripe_customer_id text,
   stripe_subscription_id text,
   stripe_subscription_status text not null default 'free',
+  stripe_cancel_at_period_end boolean not null default false,
+  stripe_current_period_end timestamptz,
   analyses_used_this_month integer not null default 0 check (analyses_used_this_month >= 0),
   credits_used_this_month integer not null default 0 check (credits_used_this_month >= 0),
   credits_reset_at timestamptz not null default now(),
@@ -13,6 +15,10 @@ create table if not exists public.user_subscriptions (
 
 alter table public.user_subscriptions
   add column if not exists stripe_subscription_status text not null default 'free';
+
+alter table public.user_subscriptions
+  add column if not exists stripe_cancel_at_period_end boolean not null default false,
+  add column if not exists stripe_current_period_end timestamptz;
 
 alter table public.user_subscriptions
   add column if not exists credits_used_this_month integer not null default 0
@@ -30,6 +36,7 @@ create unique index if not exists user_subscriptions_stripe_subscription_id_idx
 create or replace function public.set_user_subscriptions_updated_at()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   new.updated_at = now();
@@ -51,7 +58,7 @@ drop policy if exists "user_subscriptions_select_own"
 create policy "user_subscriptions_select_own"
   on public.user_subscriptions
   for select
-  using (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id);
 
 drop policy if exists "user_subscriptions_insert_own"
   on public.user_subscriptions;
@@ -60,12 +67,15 @@ create policy "user_subscriptions_insert_own"
   on public.user_subscriptions
   for insert
   with check (
-    auth.uid() = user_id
+    (select auth.uid()) = user_id
     and plan = 'free'
     and stripe_customer_id is null
     and stripe_subscription_id is null
     and stripe_subscription_status = 'free'
+    and stripe_cancel_at_period_end = false
+    and stripe_current_period_end is null
     and analyses_used_this_month = 0
+    and credits_used_this_month = 0
   );
 
 create or replace function public.prevent_user_subscription_tampering()
@@ -81,11 +91,13 @@ begin
       or new.stripe_customer_id is distinct from old.stripe_customer_id
       or new.stripe_subscription_id is distinct from old.stripe_subscription_id
       or new.stripe_subscription_status is distinct from old.stripe_subscription_status
+      or new.stripe_cancel_at_period_end is distinct from old.stripe_cancel_at_period_end
+      or new.stripe_current_period_end is distinct from old.stripe_current_period_end
       or new.analyses_used_this_month is distinct from old.analyses_used_this_month
       or new.credits_used_this_month is distinct from old.credits_used_this_month
       or new.credits_reset_at is distinct from old.credits_reset_at
     then
-      raise exception 'Subscription plan, Stripe fields, and usage can only be changed by trusted server code.';
+      raise exception 'Subscription plan, Stripe fields, cancellation state, and usage can only be changed by trusted server code.';
     end if;
   end if;
 
@@ -105,6 +117,8 @@ drop policy if exists "user_subscriptions_update_own"
 drop policy if exists "user_subscriptions_update_own_usage"
   on public.user_subscriptions;
 
+revoke execute on function public.prevent_user_subscription_tampering() from public, anon, authenticated;
+
 -- Optional backfill: create a default free subscription row for any existing auth user.
 insert into public.user_subscriptions (user_id, plan, analyses_used_this_month)
 select id, 'free', 0
@@ -115,6 +129,7 @@ create or replace function public.credit_limit_for_plan(p_plan text)
 returns integer
 language sql
 immutable
+set search_path = public
 as $$
   select case
     when p_plan = 'pro' then 1800

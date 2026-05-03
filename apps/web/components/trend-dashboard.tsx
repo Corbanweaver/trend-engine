@@ -59,6 +59,7 @@ import { cn } from "@/lib/utils";
 import { recordTrendAnalysis } from "@/lib/user-stats";
 
 const TREND_RESULTS_STORAGE_KEY = "trend_dashboard:last_results";
+const LAST_ANALYZED_STORAGE_KEY = "trend_dashboard:last_analyzed";
 const ONBOARDING_DISMISSED_KEY = "trend_dashboard:onboarding_dismissed";
 const NICHE_FAVORITES_KEY = "trend_dashboard:niche_favorites";
 const NICHE_HISTORY_KEY = "trend_dashboard:niche_history";
@@ -80,6 +81,9 @@ type UserSubscriptionRow = {
   analyses_used_this_month: number;
   credits_used_this_month: number;
   credits_reset_at: string;
+  stripe_subscription_status?: string | null;
+  stripe_cancel_at_period_end?: boolean | null;
+  stripe_current_period_end?: string | null;
 };
 
 type CreditSnapshot = {
@@ -88,6 +92,13 @@ type CreditSnapshot = {
   creditsLimit: number;
   creditsRemaining: number;
   analysesUsedThisMonth: number;
+};
+
+type LastAnalyzedSnapshot = {
+  niche: string;
+  analyzedAt: string;
+  trendCount: number;
+  ideaCount: number;
 };
 
 type TrendIdeasApiResponse = TrendIdeasResponse & {
@@ -189,7 +200,65 @@ async function fetchTrendIdeas(niche: string): Promise<TrendIdeasApiResponse> {
   return res.json() as Promise<TrendIdeasApiResponse>;
 }
 
-type PlatformChip = "All" | "TikTok" | "YouTube" | "Reddit" | "Instagram" | "Twitter";
+function formatShortDate(value: string | null | undefined) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+function formatShortDateTime(value: string | null | undefined) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function formatCurrentPlanLabel(
+  plan: SubscriptionPlan,
+  cancelAtPeriodEnd: boolean,
+  currentPeriodEnd: string | null,
+) {
+  const label = formatPlanLabel(plan);
+  if (plan === "free" || !cancelAtPeriodEnd) return label;
+  const cancelDate = formatShortDate(currentPeriodEnd);
+  return cancelDate ? `${label} cancels ${cancelDate}` : `${label} canceling`;
+}
+
+function hashString(value: string) {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function buildIdeaSaveKey(trend: string, idea: VideoIdea) {
+  const raw = [trend, idea.optimized_title, idea.hook, idea.angle, idea.idea]
+    .filter(Boolean)
+    .join("\n")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+  return `idea_${hashString(raw || trend || "saved_idea")}`;
+}
+
+type PlatformChip =
+  | "All"
+  | "TikTok"
+  | "YouTube"
+  | "Reddit"
+  | "Instagram"
+  | "Twitter";
 
 const PLATFORM_CHIPS: PlatformChip[] = [
   "All",
@@ -216,29 +285,40 @@ const platformGlyph: Record<string, string> = {
   Twitter: "X",
 };
 
-function hasPlatform(trend: TrendIdea, platform: Exclude<PlatformChip, "All">): boolean {
+function hasPlatform(
+  trend: TrendIdea,
+  platform: Exclude<PlatformChip, "All">,
+): boolean {
   if (platform === "TikTok") {
     return (
       trend.tiktok_videos.length > 0 ||
-      trend.tiktok_videos.some((v) => (v as { platform?: string }).platform === "tiktok")
+      trend.tiktok_videos.some(
+        (v) => (v as { platform?: string }).platform === "tiktok",
+      )
     );
   }
   if (platform === "YouTube") {
     return (
       trend.example_videos.length > 0 ||
-      trend.example_videos.some((v) => (v as { platform?: string }).platform === "youtube")
+      trend.example_videos.some(
+        (v) => (v as { platform?: string }).platform === "youtube",
+      )
     );
   }
   if (platform === "Reddit") {
     return (
       trend.reddit_posts.length > 0 ||
-      trend.reddit_posts.some((p) => (p as { platform?: string }).platform === "reddit")
+      trend.reddit_posts.some(
+        (p) => (p as { platform?: string }).platform === "reddit",
+      )
     );
   }
   if (platform === "Instagram") {
     return (
       trend.instagram_posts.length > 0 ||
-      trend.instagram_posts.some((p) => (p as { platform?: string }).platform === "instagram")
+      trend.instagram_posts.some(
+        (p) => (p as { platform?: string }).platform === "instagram",
+      )
     );
   }
   return trend.web_results.length > 0 || trend.hackernews_stories.length > 0;
@@ -318,7 +398,9 @@ function getInstagramUrl(trend: TrendIdea): string | null {
   );
   if (!candidate) return null;
   const preferred = candidate.url ?? candidate.permalink ?? candidate.link;
-  return typeof preferred === "string" && preferred.trim().length > 0 ? preferred : null;
+  return typeof preferred === "string" && preferred.trim().length > 0
+    ? preferred
+    : null;
 }
 
 function TrendCard({
@@ -375,8 +457,8 @@ function TrendCard({
     >
       <Card
         className={cn(
-    "group relative cursor-pointer overflow-hidden border-border bg-card text-foreground shadow-lg shadow-slate-900/10 dark:border-white/10 dark:bg-gradient-to-br dark:from-slate-900/95 dark:to-slate-950/95 dark:text-slate-100 dark:shadow-black/30",
-    "transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:border-primary/25 hover:shadow-primary/10 dark:hover:border-cyan-300/40 dark:hover:shadow-cyan-500/20",
+          "group relative cursor-pointer overflow-hidden border-border bg-card text-foreground shadow-lg shadow-slate-900/10 dark:border-white/10 dark:bg-gradient-to-br dark:from-slate-900/95 dark:to-slate-950/95 dark:text-slate-100 dark:shadow-black/30",
+          "transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:border-primary/25 hover:shadow-primary/10 dark:hover:border-cyan-300/40 dark:hover:shadow-cyan-500/20",
           selected &&
             "ring-2 ring-cyan-300/80 shadow-[0_0_0_1px_rgba(56,189,248,0.5),0_0_36px_rgba(56,189,248,0.28)]",
         )}
@@ -387,7 +469,7 @@ function TrendCard({
         {selected ? (
           <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_20%_15%,rgba(34,211,238,0.22),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(99,102,241,0.18),transparent_55%)]" />
         ) : null}
-      <div className="relative h-32 overflow-hidden border-b border-border dark:border-white/10">
+        <div className="relative h-32 overflow-hidden border-b border-border dark:border-white/10">
           {visual ? (
             // Using API-provided thumbnails when available.
             // eslint-disable-next-line @next/next/no-img-element
@@ -457,7 +539,9 @@ function TrendCard({
           <CardTitle className="text-base leading-snug text-foreground dark:text-slate-100">
             {trend.trend}
           </CardTitle>
-          <p className="text-[11px] text-primary/80 dark:text-cyan-200/80">{trendLabel}</p>
+          <p className="text-[11px] text-primary/80 dark:text-cyan-200/80">
+            {trendLabel}
+          </p>
         </CardHeader>
         <CardContent className="pb-2">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
@@ -581,7 +665,8 @@ function LoadingState({
           />
         </div>
         <p className="text-xs text-slate-400">
-          This can take 30-90 seconds because we are scanning sources and generating images.
+          This can take 30-90 seconds because we are scanning sources and
+          generating images.
         </p>
       </div>
       <div className="grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -630,8 +715,8 @@ function FilterChip({
       className={cn(
         "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
         active
-        ? "border-primary/30 bg-primary/10 text-primary shadow-sm dark:border-cyan-300/70 dark:bg-cyan-400/20 dark:text-cyan-100 dark:shadow-[0_0_18px_rgba(34,211,238,0.25)]"
-        : "border-border bg-card text-muted-foreground hover:border-primary/25 hover:text-foreground dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-white/25 dark:hover:text-white",
+          ? "border-primary/30 bg-primary/10 text-primary shadow-sm dark:border-cyan-300/70 dark:bg-cyan-400/20 dark:text-cyan-100 dark:shadow-[0_0_18px_rgba(34,211,238,0.25)]"
+          : "border-border bg-card text-muted-foreground hover:border-primary/25 hover:text-foreground dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-white/25 dark:hover:text-white",
       )}
       style={{
         transform: `translate(${offset.x}px, ${offset.y}px)`,
@@ -657,16 +742,27 @@ export function TrendDashboard() {
   const [userEmail, setUserEmail] = useState("");
   const [userAvatar, setUserAvatar] = useState("");
   const [plan, setPlan] = useState<SubscriptionPlan>("free");
+  const [stripeCancelAtPeriodEnd, setStripeCancelAtPeriodEnd] = useState(false);
+  const [stripeCurrentPeriodEnd, setStripeCurrentPeriodEnd] = useState<
+    string | null
+  >(null);
   const [analysesUsedThisMonth, setAnalysesUsedThisMonth] = useState(0);
   const [creditsUsedThisMonth, setCreditsUsedThisMonth] = useState(0);
-  const [creditsLimit, setCreditsLimit] = useState(getMonthlyCreditLimit("free"));
-  const [creditsRemaining, setCreditsRemaining] = useState(getMonthlyCreditLimit("free"));
+  const [creditsLimit, setCreditsLimit] = useState(
+    getMonthlyCreditLimit("free"),
+  );
+  const [creditsRemaining, setCreditsRemaining] = useState(
+    getMonthlyCreditLimit("free"),
+  );
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [analysisStep, setAnalysisStep] = useState<(typeof ANALYSIS_PROGRESS_STEPS)[number]>(
-    ANALYSIS_PROGRESS_STEPS[0],
+  const [lastAnalyzed, setLastAnalyzed] = useState<LastAnalyzedSnapshot | null>(
+    null,
   );
+  const [analysisStep, setAnalysisStep] = useState<
+    (typeof ANALYSIS_PROGRESS_STEPS)[number]
+  >(ANALYSIS_PROGRESS_STEPS[0]);
   const [favoriteNiches, setFavoriteNiches] = useState<string[]>([]);
   const [nicheHistory, setNicheHistory] = useState<string[]>([]);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -709,9 +805,14 @@ export function TrendDashboard() {
   const toggleFavoriteNiche = useCallback((value: string) => {
     if (!value || value === "custom") return;
     setFavoriteNiches((prev) => {
-      const next = prev.includes(value) ? prev.filter((x) => x !== value) : [value, ...prev];
+      const next = prev.includes(value)
+        ? prev.filter((x) => x !== value)
+        : [value, ...prev];
       try {
-        window.localStorage.setItem(NICHE_FAVORITES_KEY, JSON.stringify(next.slice(0, 8)));
+        window.localStorage.setItem(
+          NICHE_FAVORITES_KEY,
+          JSON.stringify(next.slice(0, 8)),
+        );
       } catch {
         /* ignore localStorage errors */
       }
@@ -731,10 +832,18 @@ export function TrendDashboard() {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(TREND_RESULTS_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as TrendIdeasResponse;
-      if (parsed?.trend_ideas && Array.isArray(parsed.trend_ideas)) {
-        setData(parsed);
+      if (raw) {
+        const parsed = JSON.parse(raw) as TrendIdeasResponse;
+        if (parsed?.trend_ideas && Array.isArray(parsed.trend_ideas)) {
+          setData(parsed);
+        }
+      }
+      const lastRaw = window.localStorage.getItem(LAST_ANALYZED_STORAGE_KEY);
+      if (lastRaw) {
+        const parsedLast = JSON.parse(lastRaw) as LastAnalyzedSnapshot;
+        if (parsedLast?.analyzedAt && parsedLast?.niche) {
+          setLastAnalyzed(parsedLast);
+        }
       }
     } catch {
       /* ignore malformed cache */
@@ -742,9 +851,7 @@ export function TrendDashboard() {
   }, []);
 
   const effectiveNiche =
-    nicheKey === "custom"
-      ? (customNiche.trim() || "fitness")
-      : nicheKey;
+    nicheKey === "custom" ? customNiche.trim() || "fitness" : nicheKey;
 
   const selectedTrend =
     data && selectedIndex !== null
@@ -791,13 +898,34 @@ export function TrendDashboard() {
     try {
       const res = await fetchTrendIdeas(effectiveNiche);
       setData(res);
+      const analyzedSnapshot = {
+        niche: effectiveNiche,
+        analyzedAt: new Date().toISOString(),
+        trendCount: res.trend_ideas.length,
+        ideaCount: res.trend_ideas.reduce(
+          (sum, trend) => sum + trend.ideas.length,
+          0,
+        ),
+      };
+      setLastAnalyzed(analyzedSnapshot);
+      try {
+        window.localStorage.setItem(
+          LAST_ANALYZED_STORAGE_KEY,
+          JSON.stringify(analyzedSnapshot),
+        );
+      } catch {
+        /* ignore localStorage errors */
+      }
       if (res.credits) {
         applyCreditSnapshot(res.credits);
       }
       setAnalysisProgress(100);
       recordTrendAnalysis(effectiveNiche);
       setNicheHistory((prev) => {
-        const next = [effectiveNiche, ...prev.filter((n) => n !== effectiveNiche)].slice(0, 5);
+        const next = [
+          effectiveNiche,
+          ...prev.filter((n) => n !== effectiveNiche),
+        ].slice(0, 5);
         try {
           window.localStorage.setItem(NICHE_HISTORY_KEY, JSON.stringify(next));
         } catch {
@@ -805,7 +933,6 @@ export function TrendDashboard() {
         }
         return next;
       });
-
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -820,7 +947,10 @@ export function TrendDashboard() {
   useEffect(() => {
     try {
       if (data) {
-        window.localStorage.setItem(TREND_RESULTS_STORAGE_KEY, JSON.stringify(data));
+        window.localStorage.setItem(
+          TREND_RESULTS_STORAGE_KEY,
+          JSON.stringify(data),
+        );
       } else {
         window.localStorage.removeItem(TREND_RESULTS_STORAGE_KEY);
       }
@@ -845,7 +975,9 @@ export function TrendDashboard() {
     const supabase = getSupabaseClient();
     const setUserState = (user: User | null) => {
       setUserEmail(user?.email ?? "");
-      setUserAvatar((user?.user_metadata?.avatar_url as string | undefined) ?? "");
+      setUserAvatar(
+        (user?.user_metadata?.avatar_url as string | undefined) ?? "",
+      );
     };
 
     const loadSubscription = async (uid: string | null) => {
@@ -855,6 +987,8 @@ export function TrendDashboard() {
         setCreditsUsedThisMonth(0);
         setCreditsLimit(getMonthlyCreditLimit("free"));
         setCreditsRemaining(getMonthlyCreditLimit("free"));
+        setStripeCancelAtPeriodEnd(false);
+        setStripeCurrentPeriodEnd(null);
         setSubscriptionLoading(false);
         return;
       }
@@ -862,7 +996,9 @@ export function TrendDashboard() {
       setSubscriptionLoading(true);
       const { data, error } = await supabase
         .from("user_subscriptions")
-        .select("user_id, plan, analyses_used_this_month, credits_used_this_month, credits_reset_at")
+        .select(
+          "user_id, plan, analyses_used_this_month, credits_used_this_month, credits_reset_at, stripe_subscription_status, stripe_cancel_at_period_end, stripe_current_period_end",
+        )
         .eq("user_id", uid)
         .maybeSingle<UserSubscriptionRow>();
 
@@ -881,7 +1017,9 @@ export function TrendDashboard() {
             analyses_used_this_month: 0,
             credits_used_this_month: 0,
           })
-          .select("user_id, plan, analyses_used_this_month, credits_used_this_month, credits_reset_at")
+          .select(
+            "user_id, plan, analyses_used_this_month, credits_used_this_month, credits_reset_at, stripe_subscription_status, stripe_cancel_at_period_end, stripe_current_period_end",
+          )
           .single<UserSubscriptionRow>();
         if (!insertError && inserted) {
           row = inserted;
@@ -891,12 +1029,18 @@ export function TrendDashboard() {
       if (row) {
         const planValue = row.plan ?? "free";
         const staleMonth = shouldResetMonthlyUsage(row.credits_reset_at);
-        const usage = staleMonth ? 0 : Math.max(0, row.credits_used_this_month ?? 0);
-        setPlan(row.plan);
-        setAnalysesUsedThisMonth(staleMonth ? 0 : row.analyses_used_this_month ?? 0);
+        const usage = staleMonth
+          ? 0
+          : Math.max(0, row.credits_used_this_month ?? 0);
+        setPlan(planValue);
+        setAnalysesUsedThisMonth(
+          staleMonth ? 0 : (row.analyses_used_this_month ?? 0),
+        );
         setCreditsUsedThisMonth(usage);
         setCreditsLimit(getMonthlyCreditLimit(planValue));
         setCreditsRemaining(getRemainingCredits(planValue, usage));
+        setStripeCancelAtPeriodEnd(Boolean(row.stripe_cancel_at_period_end));
+        setStripeCurrentPeriodEnd(row.stripe_current_period_end ?? null);
       }
 
       setSubscriptionLoading(false);
@@ -923,17 +1067,22 @@ export function TrendDashboard() {
     };
   }, []);
 
-  const analysisCreditBlocked = creditsRemaining < CREDIT_COSTS.analysisWithImages;
+  const analysisCreditBlocked =
+    creditsRemaining < CREDIT_COSTS.analysisWithImages;
   const favoriteSet = new Set(favoriteNiches);
   const favoriteOptions = NICHE_OPTIONS.filter((o) => favoriteSet.has(o.value));
   const regularOptions = NICHE_OPTIONS.filter((o) => !favoriteSet.has(o.value));
-  const canFavoriteNiche = nicheKey !== "custom" && !nicheKey.startsWith("__group_");
+  const canFavoriteNiche =
+    nicheKey !== "custom" && !nicheKey.startsWith("__group_");
   const selectedNicheIsFavorite = favoriteSet.has(nicheKey);
 
   const buildSavedIdeaContent = useCallback(
     (trendName: string, idea: VideoIdea) => {
-      const sourceTrend = data?.trend_ideas.find((item) => item.trend === trendName);
-      const hookVariations = (idea as VideoIdea & { hook_variations?: string[] }).hook_variations ?? [];
+      const sourceTrend = data?.trend_ideas.find(
+        (item) => item.trend === trendName,
+      );
+      const hookVariations = idea.hook_variations ?? [];
+      const fullScript = idea.full_script?.trim();
       const hashtags = idea.hashtags ?? [];
       const sourceLinks = [
         ...(sourceTrend?.instagram_posts ?? []).map((post) => ({
@@ -976,9 +1125,14 @@ export function TrendDashboard() {
         idea.angle ? `Angle:\n${idea.angle}` : "",
         idea.idea ? `Concept:\n${idea.idea}` : "",
         idea.seo_description ? `SEO description:\n${idea.seo_description}` : "",
-        hashtags.length ? `Hashtags:\n${hashtags.map((tag) => (tag.startsWith("#") ? tag : `#${tag}`)).join(" ")}` : "",
-        hookVariations.length ? `Hook variations:\n${hookVariations.map((hook, index) => `${index + 1}. ${hook}`).join("\n")}` : "",
-        idea.script ? `Script:\n${idea.script}` : "",
+        hashtags.length
+          ? `Hashtags:\n${hashtags.map((tag) => (tag.startsWith("#") ? tag : `#${tag}`)).join(" ")}`
+          : "",
+        hookVariations.length
+          ? `Generated hook variations:\n${hookVariations.map((hook, index) => `${index + 1}. ${hook}`).join("\n")}`
+          : "",
+        fullScript ? `Full script:\n${fullScript}` : "",
+        idea.script ? `Quick script:\n${idea.script}` : "",
         sourceLinks.length
           ? `Source links:\n${sourceLinks
               .slice(0, 16)
@@ -1011,21 +1165,27 @@ export function TrendDashboard() {
         throw new Error("You must be logged in to save ideas.");
       }
 
-      const title = idea.optimized_title?.trim() || idea.hook || trend || "Saved idea";
-      const lockKey = `${mode}:${user.id}:${trend}:${title}`;
+      const title =
+        idea.optimized_title?.trim() || idea.hook || trend || "Saved idea";
+      const saveKey = buildIdeaSaveKey(trend, idea);
+      const lockKey = `${mode}:${user.id}:${saveKey}`;
       if (saveIdeaLocksRef.current.has(lockKey)) return;
       saveIdeaLocksRef.current.add(lockKey);
 
       try {
         const { data: inserted, error: insertError } = await supabase
           .from("saved_ideas")
-          .insert({
-            user_id: user.id,
-            idea_title: title,
-            idea_content: buildSavedIdeaContent(trend, idea),
-            thumbnail_url: getVideoIdeaThumbnailUrls(idea)[0] ?? "",
-            niche: effectiveNiche,
-          })
+          .upsert(
+            {
+              user_id: user.id,
+              save_key: saveKey,
+              idea_title: title,
+              idea_content: buildSavedIdeaContent(trend, idea),
+              thumbnail_url: getVideoIdeaThumbnailUrls(idea)[0] ?? "",
+              niche: effectiveNiche,
+            },
+            { onConflict: "user_id,save_key" },
+          )
           .select("id")
           .single<{ id: string }>();
 
@@ -1042,7 +1202,10 @@ export function TrendDashboard() {
           const existing = new Set(map[dayKey] ?? []);
           existing.add(inserted.id);
           map[dayKey] = [...existing];
-          window.localStorage.setItem(CALENDAR_PLAN_STORAGE_KEY, JSON.stringify(map));
+          window.localStorage.setItem(
+            CALENDAR_PLAN_STORAGE_KEY,
+            JSON.stringify(map),
+          );
         }
       } finally {
         window.setTimeout(() => saveIdeaLocksRef.current.delete(lockKey), 1500);
@@ -1056,7 +1219,9 @@ export function TrendDashboard() {
       {showOnboarding ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 dark:bg-slate-950/80">
           <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl dark:border-white/15 dark:bg-slate-900">
-            <h2 className="text-xl font-semibold text-foreground dark:text-white">Welcome to Trend Engine</h2>
+            <h2 className="text-xl font-semibold text-foreground dark:text-white">
+              Welcome to Trend Engine
+            </h2>
             <p className="mt-2 text-sm text-muted-foreground dark:text-slate-300">
               Get started in under two minutes:
             </p>
@@ -1088,7 +1253,9 @@ export function TrendDashboard() {
         {loading ? (
           <div className="border-b border-primary/20 bg-accent/70 px-4 py-2 dark:border-cyan-400/20 dark:bg-cyan-500/5">
             <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-1">
-              <p className="text-xs font-medium text-primary dark:text-cyan-200">{analysisStep}</p>
+              <p className="text-xs font-medium text-primary dark:text-cyan-200">
+                {analysisStep}
+              </p>
               <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                 <div
                   className="h-full rounded-full bg-primary transition-all duration-500 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500"
@@ -1105,7 +1272,10 @@ export function TrendDashboard() {
           >
             ← Home
           </Link>
-          <div className="hidden h-6 w-px bg-border sm:block dark:bg-white/10" aria-hidden />
+          <div
+            className="hidden h-6 w-px bg-border sm:block dark:bg-white/10"
+            aria-hidden
+          />
           <div className="flex min-w-0 items-center gap-2">
             <div className="rounded-lg border border-primary/20 bg-primary/10 p-1.5 dark:border-cyan-300/30 dark:bg-cyan-400/10">
               <Sparkles className="size-4 text-primary dark:text-cyan-300" />
@@ -1124,7 +1294,12 @@ export function TrendDashboard() {
             className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] text-primary dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-100 sm:px-3 sm:text-xs"
             title={`${creditsUsedThisMonth} credits used this month across ${analysesUsedThisMonth} analyses`}
           >
-            {formatPlanLabel(plan)}: {creditsRemaining}/{creditsLimit} credits
+            {formatCurrentPlanLabel(
+              plan,
+              stripeCancelAtPeriodEnd,
+              stripeCurrentPeriodEnd,
+            )}
+            : {creditsRemaining}/{creditsLimit} credits
           </div>
           <Link
             href="/analytics"
@@ -1174,11 +1349,13 @@ export function TrendDashboard() {
                 className="size-6 rounded-full object-cover"
               />
             ) : (
-                <div className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary dark:bg-cyan-400/20 dark:text-cyan-200">
+              <div className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary dark:bg-cyan-400/20 dark:text-cyan-200">
                 {userEmail ? userEmail.slice(0, 1).toUpperCase() : "U"}
               </div>
             )}
-            <span className="min-w-0 truncate">{userEmail || "Logged in user"}</span>
+            <span className="min-w-0 truncate">
+              {userEmail || "Logged in user"}
+            </span>
           </Link>
           <Button
             type="button"
@@ -1208,7 +1385,9 @@ export function TrendDashboard() {
             <Link href="/support">Support</Link>
           </Button>
           <div className="grid w-full grid-cols-1 gap-2 pt-1 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:pt-0">
-            <span className="text-xs text-muted-foreground dark:text-slate-400">Niche</span>
+            <span className="text-xs text-muted-foreground dark:text-slate-400">
+              Niche
+            </span>
             <label className="sr-only" htmlFor="niche-select">
               Niche
             </label>
@@ -1263,7 +1442,9 @@ export function TrendDashboard() {
                     selectedNicheIsFavorite && "fill-current",
                   )}
                 />
-                <span>{selectedNicheIsFavorite ? "Favorite" : "Save niche"}</span>
+                <span>
+                  {selectedNicheIsFavorite ? "Favorite" : "Save niche"}
+                </span>
               </button>
             ) : null}
             {nicheKey === "custom" ? (
@@ -1283,7 +1464,7 @@ export function TrendDashboard() {
               type="button"
               disabled={loading || analysisCreditBlocked || subscriptionLoading}
               onClick={runAnalysis}
-                className="h-10 w-full bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 sm:h-9 sm:w-auto"
+              className="h-10 w-full bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 sm:h-9 sm:w-auto"
             >
               {loading ? (
                 <>
@@ -1311,7 +1492,20 @@ export function TrendDashboard() {
             </button>
             {loading ? (
               <p className="w-full text-xs text-muted-foreground dark:text-slate-400 sm:w-auto">
-                This may take a moment while we scan live trends across platforms.
+                This may take a moment while we scan live trends across
+                platforms.
+              </p>
+            ) : null}
+            {lastAnalyzed ? (
+              <p className="w-full text-xs text-muted-foreground dark:text-slate-400 sm:w-auto">
+                Last analyzed{" "}
+                <span className="font-medium text-foreground dark:text-slate-200">
+                  {lastAnalyzed.niche}
+                </span>{" "}
+                at {formatShortDateTime(lastAnalyzed.analyzedAt) ?? "just now"}{" "}
+                with{" "}
+                <span className="tabular-nums">{lastAnalyzed.trendCount}</span>{" "}
+                trends.
               </p>
             ) : null}
           </div>
@@ -1319,7 +1513,9 @@ export function TrendDashboard() {
         <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-3 px-3 pb-3 sm:px-4 sm:pb-4">
           {nicheHistory.length > 0 ? (
             <div className="-mx-3 flex items-center gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
-              <span className="text-xs text-muted-foreground dark:text-slate-500">Recent niches:</span>
+              <span className="text-xs text-muted-foreground dark:text-slate-500">
+                Recent niches:
+              </span>
               {nicheHistory.map((entry) => (
                 <button
                   key={entry}
@@ -1365,8 +1561,9 @@ export function TrendDashboard() {
 
       {analysisCreditBlocked ? (
         <div className="mx-4 mt-4 rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary dark:border-fuchsia-400/40 dark:bg-fuchsia-500/10 dark:text-fuchsia-100">
-          You need {CREDIT_COSTS.analysisWithImages} credits for another full analysis
-          with images. Upgrade to Creator or Pro for higher monthly credits.
+          You need {CREDIT_COSTS.analysisWithImages} credits for another full
+          analysis with images. Upgrade to Creator or Pro for higher monthly
+          credits.
           <Link href="/pricing" className="ml-2 underline underline-offset-2">
             View pricing
           </Link>
@@ -1386,7 +1583,9 @@ export function TrendDashboard() {
           {!loading && !data && !error ? (
             <div className="flex flex-col items-center justify-center gap-3 py-24 text-center text-muted-foreground dark:text-slate-400">
               <Sparkles className="size-8 text-primary dark:text-cyan-300" />
-              <p className="text-sm font-medium text-foreground dark:text-slate-200">No data yet</p>
+              <p className="text-sm font-medium text-foreground dark:text-slate-200">
+                No data yet
+              </p>
               <p className="max-w-sm text-xs">
                 Choose a niche and run <strong>Analyze trends</strong> to load
                 cards from your FastAPI backend.
@@ -1470,7 +1669,9 @@ export function TrendDashboard() {
       {feedbackOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 dark:bg-slate-950/75">
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-4 dark:border-white/15 dark:bg-slate-900">
-            <h3 className="text-base font-semibold text-foreground dark:text-slate-100">Send feedback</h3>
+            <h3 className="text-base font-semibold text-foreground dark:text-slate-100">
+              Send feedback
+            </h3>
             <textarea
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
@@ -1478,7 +1679,9 @@ export function TrendDashboard() {
               className="mt-3 h-28 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
             />
             {feedbackSent ? (
-              <p className="mt-2 text-xs text-emerald-300">Thanks! Feedback sent.</p>
+              <p className="mt-2 text-xs text-emerald-300">
+                Thanks! Feedback sent.
+              </p>
             ) : null}
             <div className="mt-3 flex justify-end gap-2">
               <button
@@ -1520,7 +1723,11 @@ export function TrendDashboard() {
                       setFeedbackOpen(false);
                     }, 900);
                   } catch (err) {
-                    setError(err instanceof Error ? err.message : "Failed to send feedback.");
+                    setError(
+                      err instanceof Error
+                        ? err.message
+                        : "Failed to send feedback.",
+                    );
                   }
                 }}
                 className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground dark:bg-cyan-400 dark:text-slate-950"
@@ -1533,7 +1740,10 @@ export function TrendDashboard() {
       ) : null}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur dark:border-white/10 dark:bg-slate-950/95 lg:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-6">
-          <Link href="/" className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300">
+          <Link
+            href="/"
+            className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300"
+          >
             <Home className="mb-1 size-4" />
             Home
           </Link>

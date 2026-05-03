@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { SavedIdeaContent } from "@/components/saved-idea-content";
 import { getSupabaseClient } from "@/lib/supabase";
 import { trackUiEvent } from "@/lib/telemetry";
 
@@ -77,7 +78,9 @@ export default function CalendarPage() {
         }
         const { data, error: fetchError } = await supabase
           .from("saved_ideas")
-          .select("id, idea_title, idea_content, thumbnail_url, niche, created_at")
+          .select(
+            "id, idea_title, idea_content, thumbnail_url, niche, created_at",
+          )
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
         if (fetchError) {
@@ -99,7 +102,9 @@ export default function CalendarPage() {
           level: "error",
           message: err instanceof Error ? err.message : "unknown",
         });
-        setError(err instanceof Error ? err.message : "Failed to load calendar ideas.");
+        setError(
+          err instanceof Error ? err.message : "Failed to load calendar ideas.",
+        );
       } finally {
         setLoading(false);
       }
@@ -199,13 +204,17 @@ export default function CalendarPage() {
     }
   };
 
-  const selectedIdea = selectedIdeaId ? ideaById.get(selectedIdeaId) ?? null : null;
+  const selectedIdea = selectedIdeaId
+    ? (ideaById.get(selectedIdeaId) ?? null)
+    : null;
 
   return (
     <main className="min-h-svh bg-background p-4 text-foreground">
       <div className="mx-auto max-w-7xl space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight">Content Calendar</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Content Calendar
+          </h1>
           <Link
             href="/dashboard"
             className="fluid-transition glass-surface rounded-xl border border-border px-3 py-2 text-sm text-foreground hover:bg-muted dark:border-white/20"
@@ -229,7 +238,8 @@ export default function CalendarPage() {
             <div className="space-y-2">
               {unscheduled.length === 0 ? (
                 <div className="rounded-xl border border-border bg-muted p-3 text-xs text-muted-foreground">
-                  All ideas are scheduled. Drag items between dates to reschedule.
+                  All ideas are scheduled. Drag items between dates to
+                  reschedule.
                 </div>
               ) : null}
               {unscheduled.map((idea, idx) => (
@@ -265,7 +275,9 @@ export default function CalendarPage() {
                       />
                     </div>
                   ) : null}
-                  <p className="font-medium">{idea.idea_title || "Saved idea"}</p>
+                  <p className="font-medium">
+                    {idea.idea_title || "Saved idea"}
+                  </p>
                   <p className="text-muted-foreground">{idea.niche}</p>
                 </div>
               ))}
@@ -274,16 +286,27 @@ export default function CalendarPage() {
           <section className="glass-surface rounded-2xl border border-border bg-card p-3.5">
             <div className="mb-3 flex items-center justify-between">
               <button
-                onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+                onClick={() =>
+                  setMonth(
+                    new Date(month.getFullYear(), month.getMonth() - 1, 1),
+                  )
+                }
                 className="fluid-transition rounded-lg border border-border bg-card px-2 py-1 text-xs hover:bg-muted dark:border-white/15 dark:hover:border-white/30"
               >
                 Prev
               </button>
               <h2 className="text-lg font-semibold">
-                {month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+                {month.toLocaleDateString(undefined, {
+                  month: "long",
+                  year: "numeric",
+                })}
               </h2>
               <button
-                onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+                onClick={() =>
+                  setMonth(
+                    new Date(month.getFullYear(), month.getMonth() + 1, 1),
+                  )
+                }
                 className="fluid-transition rounded-lg border border-border bg-card px-2 py-1 text-xs hover:bg-muted dark:border-white/15 dark:hover:border-white/30"
               >
                 Next
@@ -306,7 +329,9 @@ export default function CalendarPage() {
                       e.preventDefault();
                       setDragOverKey(key);
                     }}
-                    onDragLeave={() => setDragOverKey((prev) => (prev === key ? null : prev))}
+                    onDragLeave={() =>
+                      setDragOverKey((prev) => (prev === key ? null : prev))
+                    }
                     onDrop={() => {
                       if (dragIdeaId) assignIdea(key, dragIdeaId);
                       setDragOverKey(null);
@@ -316,10 +341,14 @@ export default function CalendarPage() {
                         ? "scale-[1.02] border-cyan-300/55 shadow-[0_0_0_1px_rgba(34,211,238,0.35),0_0_20px_rgba(34,211,238,0.2)]"
                         : ""
                     } ${
-                      inMonth ? "border-border bg-muted/60" : "border-border/70 bg-muted/40"
+                      inMonth
+                        ? "border-border bg-muted/60"
+                        : "border-border/70 bg-muted/40"
                     }`}
                   >
-                    <p className="mb-1 text-[11px] text-muted-foreground">{d.getDate()}</p>
+                    <p className="mb-1 text-[11px] text-muted-foreground">
+                      {d.getDate()}
+                    </p>
                     <div className="space-y-1">
                       {ids.map((id) => {
                         const idea = ideaById.get(id);
@@ -330,10 +359,12 @@ export default function CalendarPage() {
                             draggable
                             onDragStart={() => setDragIdeaId(id)}
                             onDragEnd={() => {
-                              blockDetailClickUntilRef.current = Date.now() + 250;
+                              blockDetailClickUntilRef.current =
+                                Date.now() + 250;
                             }}
                             onClick={() => {
-                              if (Date.now() < blockDetailClickUntilRef.current) return;
+                              if (Date.now() < blockDetailClickUntilRef.current)
+                                return;
                               setSelectedIdeaId(id);
                             }}
                             className="fluid-transition cursor-grab rounded-lg border border-primary/20 bg-primary/10 px-1.5 py-1 text-left text-[11px] text-accent-foreground hover:border-primary/35 dark:border-cyan-300/25 dark:bg-cyan-500/10 dark:text-cyan-100 dark:hover:border-cyan-300/40"
@@ -343,7 +374,9 @@ export default function CalendarPage() {
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={idea.thumbnail_url}
-                                  alt={idea.idea_title || "Saved idea thumbnail"}
+                                  alt={
+                                    idea.idea_title || "Saved idea thumbnail"
+                                  }
                                   className="absolute inset-0 size-full object-cover"
                                 />
                               </div>
@@ -401,7 +434,8 @@ export default function CalendarPage() {
             <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-3">
               <div className="min-w-0">
                 <p className="text-[11px] text-muted-foreground">
-                  {selectedIdea.niche} · {new Date(selectedIdea.created_at).toLocaleString()}
+                  {selectedIdea.niche} ·{" "}
+                  {new Date(selectedIdea.created_at).toLocaleString()}
                 </p>
                 <h3
                   id="calendar-idea-detail-title"
@@ -429,9 +463,13 @@ export default function CalendarPage() {
                   />
                 </div>
               ) : null}
-              <div className="whitespace-pre-wrap rounded-lg border border-border bg-muted/40 p-3 text-sm leading-relaxed text-foreground">
-                {selectedIdea.idea_content || "No script/content available for this idea."}
-              </div>
+              <SavedIdeaContent
+                content={
+                  selectedIdea.idea_content ||
+                  "No script/content available for this idea."
+                }
+                className="rounded-lg border border-border bg-muted/40 p-3 text-sm leading-relaxed text-foreground"
+              />
             </div>
           </div>
         </div>

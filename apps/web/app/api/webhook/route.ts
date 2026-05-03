@@ -21,6 +21,8 @@ type UserSubscriptionRow = {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   stripe_subscription_status?: string | null;
+  stripe_cancel_at_period_end?: boolean | null;
+  stripe_current_period_end?: string | null;
 };
 
 function getSupabaseAdmin() {
@@ -46,7 +48,9 @@ function getCustomerId(
   return customer.id;
 }
 
-function getSubscriptionId(subscription: string | Stripe.Subscription | null | undefined) {
+function getSubscriptionId(
+  subscription: string | Stripe.Subscription | null | undefined,
+) {
   if (!subscription) return null;
   return typeof subscription === "string" ? subscription : subscription.id;
 }
@@ -61,7 +65,9 @@ function planFromPriceId(priceId: string | null | undefined): SubscriptionPlan {
   return "free";
 }
 
-function planFromSubscription(subscription: Stripe.Subscription): SubscriptionPlan {
+function planFromSubscription(
+  subscription: Stripe.Subscription,
+): SubscriptionPlan {
   const metadataPlan = normalizePlan(subscription.metadata?.plan);
   if (metadataPlan !== "free") return metadataPlan;
 
@@ -69,12 +75,21 @@ function planFromSubscription(subscription: Stripe.Subscription): SubscriptionPl
   return planFromPriceId(firstPriceId);
 }
 
-function planForSubscriptionState(subscription: Stripe.Subscription): SubscriptionPlan {
+function planForSubscriptionState(
+  subscription: Stripe.Subscription,
+): SubscriptionPlan {
   const paidPlan = planFromSubscription(subscription);
   if (["active", "trialing", "past_due"].includes(subscription.status)) {
     return paidPlan;
   }
   return "free";
+}
+
+function subscriptionCurrentPeriodEnd(
+  subscription: Stripe.Subscription,
+): string | null {
+  const end = subscription.items.data[0]?.current_period_end;
+  return typeof end === "number" ? new Date(end * 1000).toISOString() : null;
 }
 
 async function findSubscriptionRow(
@@ -85,7 +100,9 @@ async function findSubscriptionRow(
   if (stripeSubscriptionId) {
     const { data, error } = await supabase
       .from("user_subscriptions")
-      .select("user_id,plan,stripe_customer_id,stripe_subscription_id,stripe_subscription_status")
+      .select(
+        "user_id,plan,stripe_customer_id,stripe_subscription_id,stripe_subscription_status,stripe_cancel_at_period_end,stripe_current_period_end",
+      )
       .eq("stripe_subscription_id", stripeSubscriptionId)
       .maybeSingle<UserSubscriptionRow>();
     if (error) throw error;
@@ -95,7 +112,9 @@ async function findSubscriptionRow(
   if (stripeCustomerId) {
     const { data, error } = await supabase
       .from("user_subscriptions")
-      .select("user_id,plan,stripe_customer_id,stripe_subscription_id,stripe_subscription_status")
+      .select(
+        "user_id,plan,stripe_customer_id,stripe_subscription_id,stripe_subscription_status,stripe_cancel_at_period_end,stripe_current_period_end",
+      )
       .eq("stripe_customer_id", stripeCustomerId)
       .maybeSingle<UserSubscriptionRow>();
     if (error) throw error;
@@ -111,6 +130,8 @@ async function upsertUserSubscription({
   stripeCustomerId,
   stripeSubscriptionId,
   stripeSubscriptionStatus,
+  stripeCancelAtPeriodEnd = false,
+  stripeCurrentPeriodEnd = null,
   resetUsage = false,
 }: {
   userId: string;
@@ -118,6 +139,8 @@ async function upsertUserSubscription({
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   stripeSubscriptionStatus: string;
+  stripeCancelAtPeriodEnd?: boolean;
+  stripeCurrentPeriodEnd?: string | null;
   resetUsage?: boolean;
 }) {
   const supabase = getSupabaseAdmin();
@@ -128,25 +151,25 @@ async function upsertUserSubscription({
     );
   }
 
-  const { error } = await supabase
-    .from("user_subscriptions")
-    .upsert(
-      {
-        user_id: userId,
-        plan,
-        stripe_customer_id: stripeCustomerId,
-        stripe_subscription_id: stripeSubscriptionId,
-        stripe_subscription_status: stripeSubscriptionStatus,
-        ...(resetUsage
-          ? {
-              analyses_used_this_month: 0,
-              credits_used_this_month: 0,
-              credits_reset_at: new Date().toISOString(),
-            }
-          : {}),
-      },
-      { onConflict: "user_id" },
-    );
+  const { error } = await supabase.from("user_subscriptions").upsert(
+    {
+      user_id: userId,
+      plan,
+      stripe_customer_id: stripeCustomerId,
+      stripe_subscription_id: stripeSubscriptionId,
+      stripe_subscription_status: stripeSubscriptionStatus,
+      stripe_cancel_at_period_end: stripeCancelAtPeriodEnd,
+      stripe_current_period_end: stripeCurrentPeriodEnd,
+      ...(resetUsage
+        ? {
+            analyses_used_this_month: 0,
+            credits_used_this_month: 0,
+            credits_reset_at: new Date().toISOString(),
+          }
+        : {}),
+    },
+    { onConflict: "user_id" },
+  );
 
   if (error) {
     console.error("Supabase upsert failed for user_subscriptions:", error);
@@ -194,12 +217,19 @@ async function syncSubscription(
     stripeCustomerId,
     stripeSubscriptionId,
     stripeSubscriptionStatus: subscription.status,
+    stripeCancelAtPeriodEnd:
+      options.forcePlan === "free" ? false : subscription.cancel_at_period_end,
+    stripeCurrentPeriodEnd:
+      options.forcePlan === "free"
+        ? null
+        : subscriptionCurrentPeriodEnd(subscription),
   });
 }
 
 async function syncInvoice(stripe: Stripe, invoice: Stripe.Invoice) {
   const subscriptionId = getInvoiceSubscriptionId(invoice);
-  const customerId = typeof invoice.customer === "string" ? invoice.customer : null;
+  const customerId =
+    typeof invoice.customer === "string" ? invoice.customer : null;
   if (subscriptionId) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     return syncSubscription(subscription);
@@ -220,7 +250,9 @@ async function syncInvoice(stripe: Stripe, invoice: Stripe.Invoice) {
     .from("user_subscriptions")
     .update({
       stripe_subscription_status:
-        invoice.status === "paid" ? "active" : invoice.status ?? "invoice_update",
+        invoice.status === "paid"
+          ? "active"
+          : (invoice.status ?? "invoice_update"),
     })
     .eq("user_id", existing.user_id);
 
@@ -256,17 +288,26 @@ export async function POST(request: Request) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(payload, signature, stripeWebhookSecret);
+    event = stripe.webhooks.constructEvent(
+      payload,
+      signature,
+      stripeWebhookSecret,
+    );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown webhook error";
+    const message =
+      error instanceof Error ? error.message : "Unknown webhook error";
     console.error("Stripe webhook signature verification failed:", message);
-    return NextResponse.json({ error: "Invalid Stripe signature" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid Stripe signature" },
+      { status: 400 },
+    );
   }
 
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.metadata?.user_id ?? session.client_reference_id ?? null;
+      const userId =
+        session.metadata?.user_id ?? session.client_reference_id ?? null;
       if (!userId) {
         console.error("Webhook checkout.session.completed missing user id", {
           sessionId: session.id,
@@ -281,11 +322,16 @@ export async function POST(request: Request) {
 
       let status = "active";
       let pricePlan: SubscriptionPlan = plan;
+      let cancelAtPeriodEnd = false;
+      let currentPeriodEnd: string | null = null;
       const subscriptionId =
         typeof session.subscription === "string" ? session.subscription : null;
       if (subscriptionId) {
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        const subscription =
+          await stripe.subscriptions.retrieve(subscriptionId);
         status = subscription.status;
+        cancelAtPeriodEnd = subscription.cancel_at_period_end;
+        currentPeriodEnd = subscriptionCurrentPeriodEnd(subscription);
         const subscriptionPlan = planFromSubscription(subscription);
         if (subscriptionPlan !== "free") {
           pricePlan = subscriptionPlan;
@@ -299,13 +345,17 @@ export async function POST(request: Request) {
           typeof session.customer === "string" ? session.customer : null,
         stripeSubscriptionId: subscriptionId,
         stripeSubscriptionStatus: status,
+        stripeCancelAtPeriodEnd: cancelAtPeriodEnd,
+        stripeCurrentPeriodEnd: currentPeriodEnd,
         resetUsage: true,
       });
       if (result) return result;
     }
 
     if (event.type === "customer.subscription.updated") {
-      const result = await syncSubscription(event.data.object as Stripe.Subscription);
+      const result = await syncSubscription(
+        event.data.object as Stripe.Subscription,
+      );
       if (result) return result;
     }
 
@@ -317,14 +367,23 @@ export async function POST(request: Request) {
       if (result) return result;
     }
 
-    if (event.type === "invoice.paid" || event.type === "invoice.payment_failed") {
-      const result = await syncInvoice(stripe, event.data.object as Stripe.Invoice);
+    if (
+      event.type === "invoice.paid" ||
+      event.type === "invoice.payment_failed"
+    ) {
+      const result = await syncInvoice(
+        stripe,
+        event.data.object as Stripe.Invoice,
+      );
       if (result) return result;
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error("Stripe webhook handler failed:", error);
-    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Webhook handler failed" },
+      { status: 500 },
+    );
   }
 }
