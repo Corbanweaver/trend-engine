@@ -38,7 +38,7 @@ const plans = [
       `${CREDIT_LIMITS.creator} monthly credits`,
       "About 20 full AI-image analyses",
       "All niches",
-      "Save unlimited ideas",
+      "Save and organize ideas",
       "AI thumbnails",
     ],
     ctaHref: "/api/stripe/checkout",
