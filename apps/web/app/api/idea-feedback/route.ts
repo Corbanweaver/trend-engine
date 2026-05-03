@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createGmailTransporter } from "@/lib/gmail-transporter";
+import { recordOperationalEvent } from "@/lib/server-events";
 import { checkRateLimits, rateLimitResponse } from "@/lib/server-rate-limit";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -198,6 +199,13 @@ export async function POST(request: Request) {
   );
 
   if (upsertError) {
+    await recordOperationalEvent(admin, {
+      level: "error",
+      source: "idea_feedback",
+      message: upsertError.message,
+      userId: user.id,
+      metadata: { ideaTitle, feedbackType },
+    });
     return NextResponse.json({ error: upsertError.message }, { status: 500 });
   }
 
@@ -209,6 +217,16 @@ export async function POST(request: Request) {
       message,
     });
   } catch (emailError) {
+    await recordOperationalEvent(admin, {
+      level: "error",
+      source: "idea_feedback",
+      message:
+        emailError instanceof Error
+          ? emailError.message
+          : "Failed to send feedback email",
+      userId: user.id,
+      metadata: { ideaTitle, feedbackType },
+    });
     return NextResponse.json(
       {
         error:

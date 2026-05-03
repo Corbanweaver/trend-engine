@@ -6,6 +6,7 @@ import {
   getClientIp,
   rateLimitResponse,
 } from "@/lib/server-rate-limit";
+import { recordOperationalEvent } from "@/lib/server-events";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -75,6 +76,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true });
     }
     console.error("Failed to insert waitlist email:", error);
+    await recordOperationalEvent(supabase, {
+      level: "error",
+      source: "email_waitlist",
+      message: error.message,
+      metadata: { code: error.code, ip },
+    });
     return NextResponse.json(
       { error: "Unable to save waitlist email" },
       { status: 500 },

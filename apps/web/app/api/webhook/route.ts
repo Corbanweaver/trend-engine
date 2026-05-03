@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
+import { recordOperationalEvent } from "@/lib/server-events";
+
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -173,6 +175,18 @@ async function upsertUserSubscription({
 
   if (error) {
     console.error("Supabase upsert failed for user_subscriptions:", error);
+    await recordOperationalEvent(supabase, {
+      level: "error",
+      source: "stripe_webhook",
+      message: "Failed to persist subscription",
+      userId,
+      metadata: {
+        plan,
+        stripeSubscriptionId,
+        stripeSubscriptionStatus,
+        error: error.message,
+      },
+    });
     return NextResponse.json(
       { error: "Failed to persist subscription" },
       { status: 500 },
@@ -381,6 +395,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error("Stripe webhook handler failed:", error);
+    const supabase = getSupabaseAdmin();
+    if (supabase) {
+      await recordOperationalEvent(supabase, {
+        level: "error",
+        source: "stripe_webhook",
+        message:
+          error instanceof Error ? error.message : "Webhook handler failed",
+        metadata: { eventType: event.type },
+      });
+    }
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 },

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { CREDIT_COSTS } from "@/lib/credits";
+import { recordOperationalEvent } from "@/lib/server-events";
 import { checkRateLimits, rateLimitResponse } from "@/lib/server-rate-limit";
 
 import {
@@ -153,6 +154,14 @@ export async function POST(request: Request) {
             console.error("Failed to refund assistant credits:", refundError),
         );
       }
+      await recordOperationalEvent(usage.admin, {
+        level: "error",
+        source: "assistant_chat",
+        message:
+          error instanceof Error ? error.message : "Assistant request failed",
+        userId: usage.user.id,
+        metadata: { messageCount: messages.length },
+      });
       if (isInsufficientCreditsError(error)) {
         return NextResponse.json(
           {
@@ -166,6 +175,13 @@ export async function POST(request: Request) {
       throw error;
     }
   } catch (error) {
+    await recordOperationalEvent(usage.admin, {
+      level: "error",
+      source: "assistant_chat",
+      message:
+        error instanceof Error ? error.message : "Assistant request failed",
+      userId: usage.user.id,
+    });
     return NextResponse.json(
       {
         error:

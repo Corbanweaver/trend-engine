@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { CREDIT_COSTS } from "@/lib/credits";
 import { getBackendHeaders, getBackendUrl } from "@/lib/server-api";
+import { recordOperationalEvent } from "@/lib/server-events";
 import { checkRateLimits, rateLimitResponse } from "@/lib/server-rate-limit";
 
 import {
@@ -119,6 +120,13 @@ export async function POST(request: Request) {
     > | null;
     if (!backend.ok) {
       const detail = data?.detail ?? data?.error ?? backend.statusText;
+      await recordOperationalEvent(usage.admin, {
+        level: "error",
+        source: "idea_enrichment",
+        message: "Backend idea enrichment failed",
+        userId: usage.user.id,
+        metadata: { path: body.path, status: backend.status, detail },
+      });
       await refundCredits(usage.admin, usage.user.id, cost).catch(
         (refundError) =>
           console.error("Failed to refund idea tool credits:", refundError),
@@ -149,6 +157,13 @@ export async function POST(request: Request) {
       );
     }
     console.error("Trend idea enrichment route failed:", error);
+    await recordOperationalEvent(usage.admin, {
+      level: "error",
+      source: "idea_enrichment",
+      message: error instanceof Error ? error.message : "Idea tool failed",
+      userId: usage.user.id,
+      metadata: { path: body.path },
+    });
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Idea tool failed." },
       { status: 500 },

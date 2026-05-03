@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { CREDIT_COSTS } from "@/lib/credits";
 import { getBackendHeaders, getBackendUrl } from "@/lib/server-api";
+import { recordOperationalEvent } from "@/lib/server-events";
 import { checkRateLimits, rateLimitResponse } from "@/lib/server-rate-limit";
 
 import {
@@ -91,6 +92,13 @@ export async function POST(request: Request) {
     > | null;
     if (!backend.ok) {
       const detail = payload?.detail ?? payload?.error ?? backend.statusText;
+      await recordOperationalEvent(usage.admin, {
+        level: "error",
+        source: "trend_analysis",
+        message: "Backend trend analysis failed",
+        userId: usage.user.id,
+        metadata: { status: backend.status, detail, niche },
+      });
       await refundCredits(usage.admin, usage.user.id, cost, {
         countAnalysis: true,
       }).catch((refundError) =>
@@ -123,6 +131,13 @@ export async function POST(request: Request) {
       );
     }
     console.error("Trend analysis route failed:", error);
+    await recordOperationalEvent(usage.admin, {
+      level: "error",
+      source: "trend_analysis",
+      message: error instanceof Error ? error.message : "Trend analysis failed",
+      userId: usage.user.id,
+      metadata: { niche },
+    });
     return NextResponse.json(
       {
         error:
