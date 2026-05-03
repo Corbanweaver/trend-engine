@@ -21,6 +21,7 @@ type UserSubscriptionRow = {
   plan: SubscriptionPlan;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  stripe_subscription_status?: string | null;
   stripe_cancel_at_period_end?: boolean | null;
   stripe_current_period_end?: string | null;
   analyses_used_this_month: number;
@@ -59,6 +60,20 @@ function formatCurrentPlanLabel(
   return cancelDate
     ? `${label} - cancels ${cancelDate}`
     : `${label} - canceling`;
+}
+
+function isPaidStripeStatus(status: string | null | undefined) {
+  return status === "active" || status === "trialing" || status === "past_due";
+}
+
+function getUsablePlan(
+  plan: SubscriptionPlan,
+  stripeSubscriptionId: string | null | undefined,
+  stripeSubscriptionStatus: string | null | undefined,
+): SubscriptionPlan {
+  if (plan === "free") return "free";
+  if (!stripeSubscriptionId) return plan;
+  return isPaidStripeStatus(stripeSubscriptionStatus) ? plan : "free";
 }
 
 export default function ProfilePage() {
@@ -173,7 +188,7 @@ export default function ProfilePage() {
         const { data: subscription, error: subscriptionError } = await supabase
           .from("user_subscriptions")
           .select(
-            "plan,stripe_customer_id,stripe_subscription_id,stripe_cancel_at_period_end,stripe_current_period_end,analyses_used_this_month,credits_used_this_month,credits_reset_at",
+            "plan,stripe_customer_id,stripe_subscription_id,stripe_subscription_status,stripe_cancel_at_period_end,stripe_current_period_end,analyses_used_this_month,credits_used_this_month,credits_reset_at",
           )
           .eq("user_id", user.id)
           .maybeSingle<UserSubscriptionRow>();
@@ -188,7 +203,11 @@ export default function ProfilePage() {
           setCurrentPeriodEnd(null);
           setHasStripeBilling(false);
         } else {
-          const nextPlan = subscription?.plan ?? "free";
+          const nextPlan = getUsablePlan(
+            subscription?.plan ?? "free",
+            subscription?.stripe_subscription_id,
+            subscription?.stripe_subscription_status,
+          );
           const staleMonth = shouldResetMonthlyUsage(
             subscription?.credits_reset_at,
           );
@@ -202,7 +221,8 @@ export default function ProfilePage() {
             staleMonth ? 0 : (subscription?.analyses_used_this_month ?? 0),
           );
           setCancelAtPeriodEnd(
-            Boolean(subscription?.stripe_cancel_at_period_end),
+            nextPlan !== "free" &&
+              Boolean(subscription?.stripe_cancel_at_period_end),
           );
           setCurrentPeriodEnd(subscription?.stripe_current_period_end ?? null);
           setHasStripeBilling(

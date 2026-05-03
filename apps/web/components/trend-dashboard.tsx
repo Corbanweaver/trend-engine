@@ -81,6 +81,7 @@ type UserSubscriptionRow = {
   analyses_used_this_month: number;
   credits_used_this_month: number;
   credits_reset_at: string;
+  stripe_subscription_id?: string | null;
   stripe_subscription_status?: string | null;
   stripe_cancel_at_period_end?: boolean | null;
   stripe_current_period_end?: string | null;
@@ -231,6 +232,20 @@ function formatCurrentPlanLabel(
   if (plan === "free" || !cancelAtPeriodEnd) return label;
   const cancelDate = formatShortDate(currentPeriodEnd);
   return cancelDate ? `${label} cancels ${cancelDate}` : `${label} canceling`;
+}
+
+function isPaidStripeStatus(status: string | null | undefined) {
+  return status === "active" || status === "trialing" || status === "past_due";
+}
+
+function getUsablePlan(
+  plan: SubscriptionPlan,
+  stripeSubscriptionId: string | null | undefined,
+  stripeSubscriptionStatus: string | null | undefined,
+): SubscriptionPlan {
+  if (plan === "free") return "free";
+  if (!stripeSubscriptionId) return plan;
+  return isPaidStripeStatus(stripeSubscriptionStatus) ? plan : "free";
 }
 
 function hashString(value: string) {
@@ -997,7 +1012,7 @@ export function TrendDashboard() {
       const { data, error } = await supabase
         .from("user_subscriptions")
         .select(
-          "user_id, plan, analyses_used_this_month, credits_used_this_month, credits_reset_at, stripe_subscription_status, stripe_cancel_at_period_end, stripe_current_period_end",
+          "user_id, plan, analyses_used_this_month, credits_used_this_month, credits_reset_at, stripe_subscription_id, stripe_subscription_status, stripe_cancel_at_period_end, stripe_current_period_end",
         )
         .eq("user_id", uid)
         .maybeSingle<UserSubscriptionRow>();
@@ -1018,7 +1033,7 @@ export function TrendDashboard() {
             credits_used_this_month: 0,
           })
           .select(
-            "user_id, plan, analyses_used_this_month, credits_used_this_month, credits_reset_at, stripe_subscription_status, stripe_cancel_at_period_end, stripe_current_period_end",
+            "user_id, plan, analyses_used_this_month, credits_used_this_month, credits_reset_at, stripe_subscription_id, stripe_subscription_status, stripe_cancel_at_period_end, stripe_current_period_end",
           )
           .single<UserSubscriptionRow>();
         if (!insertError && inserted) {
@@ -1027,7 +1042,11 @@ export function TrendDashboard() {
       }
 
       if (row) {
-        const planValue = row.plan ?? "free";
+        const planValue = getUsablePlan(
+          row.plan ?? "free",
+          row.stripe_subscription_id,
+          row.stripe_subscription_status,
+        );
         const staleMonth = shouldResetMonthlyUsage(row.credits_reset_at);
         const usage = staleMonth
           ? 0
@@ -1039,7 +1058,9 @@ export function TrendDashboard() {
         setCreditsUsedThisMonth(usage);
         setCreditsLimit(getMonthlyCreditLimit(planValue));
         setCreditsRemaining(getRemainingCredits(planValue, usage));
-        setStripeCancelAtPeriodEnd(Boolean(row.stripe_cancel_at_period_end));
+        setStripeCancelAtPeriodEnd(
+          planValue !== "free" && Boolean(row.stripe_cancel_at_period_end),
+        );
         setStripeCurrentPeriodEnd(row.stripe_current_period_end ?? null);
       }
 
