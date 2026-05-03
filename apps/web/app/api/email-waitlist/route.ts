@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+import {
+  checkRateLimits,
+  getClientIp,
+  rateLimitResponse,
+} from "@/lib/server-rate-limit";
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -32,12 +38,35 @@ export async function POST(request: Request) {
     const body = (await request.json()) as { email?: string };
     email = (body.email ?? "").trim().toLowerCase();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid JSON payload" },
+      { status: 400 },
+    );
   }
 
   if (!isValidEmail(email)) {
-    return NextResponse.json({ error: "Please provide a valid email address" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Please provide a valid email address" },
+      { status: 400 },
+    );
   }
+
+  const ip = getClientIp(request);
+  const rateLimit = await checkRateLimits(supabase, [
+    {
+      key: `ip:${ip}`,
+      action: "email_waitlist",
+      limit: 8,
+      windowSeconds: 60 * 60,
+    },
+    {
+      key: `ip:${ip}`,
+      action: "email_waitlist",
+      limit: 30,
+      windowSeconds: 24 * 60 * 60,
+    },
+  ]);
+  if (!rateLimit.ok) return rateLimitResponse(rateLimit);
 
   const { error } = await supabase.from("email_waitlist").insert({ email });
   if (error) {
@@ -46,7 +75,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true });
     }
     console.error("Failed to insert waitlist email:", error);
-    return NextResponse.json({ error: "Unable to save waitlist email" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Unable to save waitlist email" },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({ ok: true });

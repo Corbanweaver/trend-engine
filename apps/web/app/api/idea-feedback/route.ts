@@ -1,10 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createGmailTransporter } from "@/lib/gmail-transporter";
+import { checkRateLimits, rateLimitResponse } from "@/lib/server-rate-limit";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const gmailUser = process.env.GMAIL_USER;
 const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
 const feedbackAdminEmail = "corbanweaver5@gmail.com";
@@ -21,7 +24,9 @@ type FeedbackPayload = {
   feedback_text?: string;
 };
 
-function getFeedbackLabel(feedbackType: FeedbackPayload["feedback_type"]): string {
+function getFeedbackLabel(
+  feedbackType: FeedbackPayload["feedback_type"],
+): string {
   if (feedbackType === "thumbs_up") return "Thumbs up";
   if (feedbackType === "thumbs_down") return "Thumbs down";
   return "Written feedback";
@@ -34,6 +39,16 @@ function escapeHtml(value: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function createAdminClient(): SupabaseClient | null {
+  if (!supabaseUrl || !supabaseServiceRoleKey) return null;
+  return createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
 }
 
 async function sendFeedbackEmail({
@@ -111,10 +126,15 @@ export async function POST(request: Request) {
   const message = (body.message ?? body.feedback_text ?? "").trim();
 
   const feedbackIsValid =
-    feedbackType === "thumbs_up" || feedbackType === "thumbs_down" || feedbackType === "written";
+    feedbackType === "thumbs_up" ||
+    feedbackType === "thumbs_down" ||
+    feedbackType === "written";
 
   if (!ideaTitle || !feedbackIsValid) {
-    return NextResponse.json({ error: "Invalid feedback payload" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid feedback payload" },
+      { status: 400 },
+    );
   }
   if (feedbackType === "written" && !message) {
     return NextResponse.json(
@@ -143,17 +163,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { error: upsertError } = await supabase
-    .from("idea_feedback")
-    .upsert(
-      {
-        user_id: user.id,
-        idea_title: ideaTitle,
-        feedback_type: feedbackType,
-        message: message || null,
-      },
-      { onConflict: "user_id,idea_title" },
+  const admin = createAdminClient();
+  if (!admin) {
+    return NextResponse.json(
+      { error: "Missing Supabase service role configuration" },
+      { status: 500 },
     );
+  }
+
+  const rateLimit = await checkRateLimits(admin, [
+    {
+      key: `user:${user.id}`,
+      action: "idea_feedback",
+      limit: 12,
+      windowSeconds: 60 * 60,
+    },
+    {
+      key: `user:${user.id}`,
+      action: "idea_feedback",
+      limit: 40,
+      windowSeconds: 24 * 60 * 60,
+    },
+  ]);
+  if (!rateLimit.ok) return rateLimitResponse(rateLimit);
+
+  const { error: upsertError } = await supabase.from("idea_feedback").upsert(
+    {
+      user_id: user.id,
+      idea_title: ideaTitle,
+      feedback_type: feedbackType,
+      message: message || null,
+    },
+    { onConflict: "user_id,idea_title" },
+  );
 
   if (upsertError) {
     return NextResponse.json({ error: upsertError.message }, { status: 500 });
@@ -169,7 +211,10 @@ export async function POST(request: Request) {
   } catch (emailError) {
     return NextResponse.json(
       {
-        error: emailError instanceof Error ? emailError.message : "Failed to send feedback email",
+        error:
+          emailError instanceof Error
+            ? emailError.message
+            : "Failed to send feedback email",
       },
       { status: 500 },
     );

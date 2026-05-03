@@ -2,14 +2,23 @@ import { NextResponse } from "next/server";
 
 import { CREDIT_COSTS } from "@/lib/credits";
 import { getBackendHeaders, getBackendUrl } from "@/lib/server-api";
+import { checkRateLimits, rateLimitResponse } from "@/lib/server-rate-limit";
 
-import { isInsufficientCreditsError, loadUsage, refundCredits, spendCredits } from "../usage";
+import {
+  isInsufficientCreditsError,
+  loadUsage,
+  refundCredits,
+  spendCredits,
+} from "../usage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-type EnrichmentPath = "generate-hooks" | "generate-hashtags" | "generate-full-script";
+type EnrichmentPath =
+  | "generate-hooks"
+  | "generate-hashtags"
+  | "generate-full-script";
 
 const COST_BY_PATH: Record<EnrichmentPath, number> = {
   "generate-hooks": CREDIT_COSTS.hooks,
@@ -35,19 +44,30 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as { path?: unknown; payload?: unknown };
   } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid request body." },
+      { status: 400 },
+    );
   }
 
   if (!isEnrichmentPath(body.path)) {
-    return NextResponse.json({ error: "Unsupported idea tool." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Unsupported idea tool." },
+      { status: 400 },
+    );
   }
 
   const payload =
-    body.payload && typeof body.payload === "object" && !Array.isArray(body.payload)
+    body.payload &&
+    typeof body.payload === "object" &&
+    !Array.isArray(body.payload)
       ? (body.payload as Record<string, string>)
       : null;
   if (!payload) {
-    return NextResponse.json({ error: "Missing idea tool payload." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing idea tool payload." },
+      { status: 400 },
+    );
   }
 
   const cost = COST_BY_PATH[body.path];
@@ -62,9 +82,29 @@ export async function POST(request: Request) {
     );
   }
 
+  const rateLimit = await checkRateLimits(usage.admin, [
+    {
+      key: `user:${usage.user.id}`,
+      action: "idea_enrichment",
+      limit: 40,
+      windowSeconds: 10 * 60,
+    },
+    {
+      key: `user:${usage.user.id}`,
+      action: `idea_enrichment:${body.path}`,
+      limit: 200,
+      windowSeconds: 24 * 60 * 60,
+    },
+  ]);
+  if (!rateLimit.ok) return rateLimitResponse(rateLimit);
+
   let charged = false;
   try {
-    const reservedCredits = await spendCredits(usage.admin, usage.user.id, cost);
+    const reservedCredits = await spendCredits(
+      usage.admin,
+      usage.user.id,
+      cost,
+    );
     charged = true;
 
     const backend = await fetch(getBackendUrl(`/trend-ideas/${body.path}`), {
@@ -73,11 +113,15 @@ export async function POST(request: Request) {
       body: JSON.stringify(payload),
     });
 
-    const data = (await backend.json().catch(() => null)) as Record<string, unknown> | null;
+    const data = (await backend.json().catch(() => null)) as Record<
+      string,
+      unknown
+    > | null;
     if (!backend.ok) {
       const detail = data?.detail ?? data?.error ?? backend.statusText;
-      await refundCredits(usage.admin, usage.user.id, cost).catch((refundError) =>
-        console.error("Failed to refund idea tool credits:", refundError),
+      await refundCredits(usage.admin, usage.user.id, cost).catch(
+        (refundError) =>
+          console.error("Failed to refund idea tool credits:", refundError),
       );
       charged = false;
       return NextResponse.json(
@@ -89,8 +133,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ data, credits: reservedCredits });
   } catch (error) {
     if (charged) {
-      await refundCredits(usage.admin, usage.user.id, cost).catch((refundError) =>
-        console.error("Failed to refund idea tool credits:", refundError),
+      await refundCredits(usage.admin, usage.user.id, cost).catch(
+        (refundError) =>
+          console.error("Failed to refund idea tool credits:", refundError),
       );
     }
     if (isInsufficientCreditsError(error)) {

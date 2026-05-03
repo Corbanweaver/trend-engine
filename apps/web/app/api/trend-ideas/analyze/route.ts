@@ -2,8 +2,14 @@ import { NextResponse } from "next/server";
 
 import { CREDIT_COSTS } from "@/lib/credits";
 import { getBackendHeaders, getBackendUrl } from "@/lib/server-api";
+import { checkRateLimits, rateLimitResponse } from "@/lib/server-rate-limit";
 
-import { isInsufficientCreditsError, loadUsage, refundCredits, spendCredits } from "../usage";
+import {
+  isInsufficientCreditsError,
+  loadUsage,
+  refundCredits,
+  spendCredits,
+} from "../usage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,19 +37,46 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as { niche?: unknown };
   } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid request body." },
+      { status: 400 },
+    );
   }
 
   const niche = typeof body.niche === "string" ? body.niche.trim() : "";
   if (!niche) {
-    return NextResponse.json({ error: "Choose a niche to analyze." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Choose a niche to analyze." },
+      { status: 400 },
+    );
   }
+
+  const rateLimit = await checkRateLimits(usage.admin, [
+    {
+      key: `user:${usage.user.id}`,
+      action: "trend_analysis",
+      limit: 8,
+      windowSeconds: 15 * 60,
+    },
+    {
+      key: `user:${usage.user.id}`,
+      action: "trend_analysis",
+      limit: 80,
+      windowSeconds: 24 * 60 * 60,
+    },
+  ]);
+  if (!rateLimit.ok) return rateLimitResponse(rateLimit);
 
   let charged = false;
   try {
-    const reservedCredits = await spendCredits(usage.admin, usage.user.id, cost, {
-      countAnalysis: true,
-    });
+    const reservedCredits = await spendCredits(
+      usage.admin,
+      usage.user.id,
+      cost,
+      {
+        countAnalysis: true,
+      },
+    );
     charged = true;
 
     const backend = await fetch(getBackendUrl("/trend-ideas/"), {
@@ -52,11 +85,16 @@ export async function POST(request: Request) {
       body: JSON.stringify({ niche }),
     });
 
-    const payload = (await backend.json().catch(() => null)) as Record<string, unknown> | null;
+    const payload = (await backend.json().catch(() => null)) as Record<
+      string,
+      unknown
+    > | null;
     if (!backend.ok) {
       const detail = payload?.detail ?? payload?.error ?? backend.statusText;
-      await refundCredits(usage.admin, usage.user.id, cost, { countAnalysis: true }).catch(
-        (refundError) => console.error("Failed to refund analysis credits:", refundError),
+      await refundCredits(usage.admin, usage.user.id, cost, {
+        countAnalysis: true,
+      }).catch((refundError) =>
+        console.error("Failed to refund analysis credits:", refundError),
       );
       charged = false;
       return NextResponse.json(
@@ -68,8 +106,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ ...(payload ?? {}), credits: reservedCredits });
   } catch (error) {
     if (charged) {
-      await refundCredits(usage.admin, usage.user.id, cost, { countAnalysis: true }).catch(
-        (refundError) => console.error("Failed to refund analysis credits:", refundError),
+      await refundCredits(usage.admin, usage.user.id, cost, {
+        countAnalysis: true,
+      }).catch((refundError) =>
+        console.error("Failed to refund analysis credits:", refundError),
       );
     }
     if (isInsufficientCreditsError(error)) {
@@ -84,7 +124,10 @@ export async function POST(request: Request) {
     }
     console.error("Trend analysis route failed:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Trend analysis failed." },
+      {
+        error:
+          error instanceof Error ? error.message : "Trend analysis failed.",
+      },
       { status: 500 },
     );
   }

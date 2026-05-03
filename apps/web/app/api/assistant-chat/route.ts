@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { CREDIT_COSTS } from "@/lib/credits";
+import { checkRateLimits, rateLimitResponse } from "@/lib/server-rate-limit";
 
 import {
   isInsufficientCreditsError,
@@ -47,7 +48,9 @@ function normalizeMessages(messages: ChatMessage[]): ChatMessage[] {
   return messages
     .filter((message) => {
       if (message.role !== "user" && message.role !== "assistant") return false;
-      return typeof message.content === "string" && message.content.trim().length > 0;
+      return (
+        typeof message.content === "string" && message.content.trim().length > 0
+      );
     })
     .slice(-20);
 }
@@ -103,7 +106,10 @@ export async function POST(request: Request) {
     const body = (await request.json()) as ChatBody;
     const messages = normalizeMessages(body.messages ?? []);
     if (!messages.length) {
-      return NextResponse.json({ error: "Please send at least one message." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Please send at least one message." },
+        { status: 400 },
+      );
     }
 
     const cost = CREDIT_COSTS.assistantMessage;
@@ -118,6 +124,22 @@ export async function POST(request: Request) {
       );
     }
 
+    const rateLimit = await checkRateLimits(usage.admin, [
+      {
+        key: `user:${usage.user.id}`,
+        action: "assistant_message",
+        limit: 30,
+        windowSeconds: 10 * 60,
+      },
+      {
+        key: `user:${usage.user.id}`,
+        action: "assistant_message",
+        limit: 300,
+        windowSeconds: 24 * 60 * 60,
+      },
+    ]);
+    if (!rateLimit.ok) return rateLimitResponse(rateLimit);
+
     let charged = false;
     try {
       const credits = await spendCredits(usage.admin, usage.user.id, cost);
@@ -126,8 +148,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ reply, credits });
     } catch (error) {
       if (charged) {
-        await refundCredits(usage.admin, usage.user.id, cost).catch((refundError) =>
-          console.error("Failed to refund assistant credits:", refundError),
+        await refundCredits(usage.admin, usage.user.id, cost).catch(
+          (refundError) =>
+            console.error("Failed to refund assistant credits:", refundError),
         );
       }
       if (isInsufficientCreditsError(error)) {
@@ -142,10 +165,12 @@ export async function POST(request: Request) {
       }
       throw error;
     }
-
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Assistant request failed." },
+      {
+        error:
+          error instanceof Error ? error.message : "Assistant request failed.",
+      },
       { status: 500 },
     );
   }

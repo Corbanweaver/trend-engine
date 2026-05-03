@@ -138,6 +138,24 @@ as $$
   end;
 $$;
 
+create or replace function public.effective_subscription_plan(
+  p_plan text,
+  p_stripe_subscription_id text,
+  p_stripe_subscription_status text
+)
+returns text
+language sql
+stable
+set search_path = public
+as $$
+  select case
+    when p_plan not in ('creator', 'pro') then 'free'
+    when p_stripe_subscription_id is null then p_plan
+    when p_stripe_subscription_status in ('active', 'trialing', 'past_due') then p_plan
+    else 'free'
+  end;
+$$;
+
 create or replace function public.spend_user_credits(
   p_user_id uuid,
   p_cost integer,
@@ -155,6 +173,7 @@ set search_path = public
 as $$
 declare
   v_row public.user_subscriptions%rowtype;
+  v_plan text;
   v_limit integer;
 begin
   if p_cost <= 0 then
@@ -190,7 +209,12 @@ begin
       returning * into v_row;
   end if;
 
-  v_limit := public.credit_limit_for_plan(v_row.plan);
+  v_plan := public.effective_subscription_plan(
+    v_row.plan,
+    v_row.stripe_subscription_id,
+    v_row.stripe_subscription_status
+  );
+  v_limit := public.credit_limit_for_plan(v_plan);
 
   if v_row.credits_used_this_month + p_cost > v_limit then
     raise exception 'insufficient_credits'
@@ -209,7 +233,7 @@ begin
     returning * into v_row;
 
   return query select
-    v_row.plan,
+    v_plan,
     v_row.credits_used_this_month,
     v_limit,
     greatest(0, v_limit - v_row.credits_used_this_month),
@@ -234,6 +258,7 @@ set search_path = public
 as $$
 declare
   v_row public.user_subscriptions%rowtype;
+  v_plan text;
   v_limit integer;
 begin
   if p_cost <= 0 then
@@ -251,10 +276,15 @@ begin
     raise exception 'subscription row not found';
   end if;
 
-  v_limit := public.credit_limit_for_plan(v_row.plan);
+  v_plan := public.effective_subscription_plan(
+    v_row.plan,
+    v_row.stripe_subscription_id,
+    v_row.stripe_subscription_status
+  );
+  v_limit := public.credit_limit_for_plan(v_plan);
 
   return query select
-    v_row.plan,
+    v_plan,
     v_row.credits_used_this_month,
     v_limit,
     greatest(0, v_limit - v_row.credits_used_this_month),
@@ -263,9 +293,11 @@ end;
 $$;
 
 revoke execute on function public.credit_limit_for_plan(text) from public, anon, authenticated;
+revoke execute on function public.effective_subscription_plan(text, text, text) from public, anon, authenticated;
 revoke execute on function public.spend_user_credits(uuid, integer, boolean) from public, anon, authenticated;
 revoke execute on function public.refund_user_credits(uuid, integer, boolean) from public, anon, authenticated;
 
 grant execute on function public.credit_limit_for_plan(text) to service_role;
+grant execute on function public.effective_subscription_plan(text, text, text) to service_role;
 grant execute on function public.spend_user_credits(uuid, integer, boolean) to service_role;
 grant execute on function public.refund_user_credits(uuid, integer, boolean) to service_role;

@@ -1,6 +1,10 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
-import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
+import {
+  createClient,
+  type SupabaseClient,
+  type User,
+} from "@supabase/supabase-js";
 
 import {
   getMonthlyCreditLimit,
@@ -17,6 +21,8 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 type UserSubscriptionRow = {
   user_id: string;
   plan: SubscriptionPlan;
+  stripe_subscription_id?: string | null;
+  stripe_subscription_status?: string | null;
   analyses_used_this_month: number;
   credits_used_this_month: number;
   credits_reset_at: string;
@@ -49,7 +55,9 @@ function createAdminClient(): SupabaseClient | null {
   });
 }
 
-async function getUserFromCookies(): Promise<{ user: User } | { error: string }> {
+async function getUserFromCookies(): Promise<
+  { user: User } | { error: string }
+> {
   if (!supabaseUrl || !supabaseAnonKey) {
     return { error: "Missing Supabase environment configuration." };
   }
@@ -79,7 +87,7 @@ async function getUserFromCookies(): Promise<{ user: User } | { error: string }>
 }
 
 function snapshotFromRow(row: UserSubscriptionRow): CreditSnapshot {
-  const plan = normalizePlan(row.plan);
+  const plan = usablePlan(row);
   const creditsUsed = Math.max(0, row.credits_used_this_month ?? 0);
   const creditsLimit = getMonthlyCreditLimit(plan);
   return {
@@ -89,6 +97,17 @@ function snapshotFromRow(row: UserSubscriptionRow): CreditSnapshot {
     creditsRemaining: getRemainingCredits(plan, creditsUsed),
     analysesUsedThisMonth: Math.max(0, row.analyses_used_this_month ?? 0),
   };
+}
+
+function isPaidStripeStatus(status: string | null | undefined) {
+  return status === "active" || status === "trialing" || status === "past_due";
+}
+
+function usablePlan(row: UserSubscriptionRow): SubscriptionPlan {
+  const plan = normalizePlan(row.plan);
+  if (plan === "free") return "free";
+  if (!row.stripe_subscription_id) return plan;
+  return isPaidStripeStatus(row.stripe_subscription_status) ? plan : "free";
 }
 
 function snapshotFromRpc(row: CreditRpcRow): CreditSnapshot {
@@ -103,7 +122,7 @@ function snapshotFromRpc(row: CreditRpcRow): CreditSnapshot {
 
 async function getOrCreateSubscription(admin: SupabaseClient, userId: string) {
   const selectColumns =
-    "user_id,plan,analyses_used_this_month,credits_used_this_month,credits_reset_at";
+    "user_id,plan,stripe_subscription_id,stripe_subscription_status,analyses_used_this_month,credits_used_this_month,credits_reset_at";
   const { data, error } = await admin
     .from("user_subscriptions")
     .select(selectColumns)
@@ -115,7 +134,12 @@ async function getOrCreateSubscription(admin: SupabaseClient, userId: string) {
 
   const { data: inserted, error: insertError } = await admin
     .from("user_subscriptions")
-    .insert({ user_id: userId, plan: "free", analyses_used_this_month: 0, credits_used_this_month: 0 })
+    .insert({
+      user_id: userId,
+      plan: "free",
+      analyses_used_this_month: 0,
+      credits_used_this_month: 0,
+    })
     .select(selectColumns)
     .single<UserSubscriptionRow>();
 
@@ -126,12 +150,20 @@ async function getOrCreateSubscription(admin: SupabaseClient, userId: string) {
 export async function loadUsage(): Promise<UsageResult> {
   const userResult = await getUserFromCookies();
   if ("error" in userResult) {
-    return { ok: false, status: userResult.error.startsWith("Missing") ? 500 : 401, error: userResult.error };
+    return {
+      ok: false,
+      status: userResult.error.startsWith("Missing") ? 500 : 401,
+      error: userResult.error,
+    };
   }
 
   const admin = createAdminClient();
   if (!admin) {
-    return { ok: false, status: 500, error: "Missing Supabase service role configuration." };
+    return {
+      ok: false,
+      status: 500,
+      error: "Missing Supabase service role configuration.",
+    };
   }
 
   try {
@@ -145,18 +177,26 @@ export async function loadUsage(): Promise<UsageResult> {
           credits_reset_at: new Date().toISOString(),
         })
         .eq("user_id", userResult.user.id)
-        .select("user_id,plan,analyses_used_this_month,credits_used_this_month,credits_reset_at")
+        .select(
+          "user_id,plan,stripe_subscription_id,stripe_subscription_status,analyses_used_this_month,credits_used_this_month,credits_reset_at",
+        )
         .single<UserSubscriptionRow>();
       if (resetError) throw resetError;
       row = reset;
     }
 
-    return { ok: true, user: userResult.user, admin, snapshot: snapshotFromRow(row) };
+    return {
+      ok: true,
+      user: userResult.user,
+      admin,
+      snapshot: snapshotFromRow(row),
+    };
   } catch (error) {
     return {
       ok: false,
       status: 500,
-      error: error instanceof Error ? error.message : "Unable to load credit usage.",
+      error:
+        error instanceof Error ? error.message : "Unable to load credit usage.",
     };
   }
 }
@@ -201,6 +241,7 @@ export function isInsufficientCreditsError(error: unknown) {
   if (!error || typeof error !== "object") return false;
   const maybeError = error as { message?: unknown; details?: unknown };
   return [maybeError.message, maybeError.details].some(
-    (value) => typeof value === "string" && value.includes("insufficient_credits"),
+    (value) =>
+      typeof value === "string" && value.includes("insufficient_credits"),
   );
 }
