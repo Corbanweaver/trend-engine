@@ -108,12 +108,41 @@ function PricingHeader() {
 type PricingPageProps = {
   searchParams?: Promise<{
     checkout?: string;
+    reason?: string;
+    request_id?: string;
   }>;
 };
+
+function checkoutErrorMessage(reason: string | undefined) {
+  switch (reason) {
+    case "stripe-auth":
+      return "Stripe checkout could not start because the live Stripe secret key is invalid or not loaded in the web app.";
+    case "stripe-permission":
+      return "Stripe checkout could not start because the Stripe key does not have permission to create Checkout Sessions.";
+    case "missing-price":
+      return "Stripe checkout could not start because one of the configured live price IDs could not be found.";
+    case "missing-customer":
+      return "Stripe checkout could not start because the saved Stripe customer could not be found.";
+    case "stripe-account":
+      return "Stripe checkout could not start because the Stripe account is not fully ready for live charges.";
+    case "invalid-url":
+      return "Stripe checkout could not start because a redirect URL is invalid.";
+    case "invalid-request":
+      return "Stripe checkout could not start because Stripe rejected the checkout session request.";
+    case "missing-resource":
+      return "Stripe checkout could not start because a saved Stripe resource could not be found.";
+    case "stripe-error":
+      return "Stripe checkout could not start because Stripe returned an error.";
+    default:
+      return "Stripe checkout could not start. Make sure you are signed in and try again, or contact support if it keeps happening.";
+  }
+}
 
 export default async function PricingPage({ searchParams }: PricingPageProps) {
   const resolvedSearchParams = await searchParams;
   const checkoutStatus = resolvedSearchParams?.checkout;
+  const checkoutReason = resolvedSearchParams?.reason;
+  const stripeRequestId = resolvedSearchParams?.request_id;
   const isCheckoutSuccess = checkoutStatus === "success";
   const isCheckoutCancelled = checkoutStatus === "cancelled";
   const isCheckoutError = checkoutStatus === "error";
@@ -158,8 +187,12 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
 
         {isCheckoutError ? (
           <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-red-400/40 bg-red-500/10 px-5 py-4 text-center text-sm text-red-100">
-            Stripe checkout could not start. Make sure you are signed in and try
-            again, or contact support if it keeps happening.
+            {checkoutErrorMessage(checkoutReason)}
+            {stripeRequestId ? (
+              <span className="mt-2 block text-xs text-red-100/80">
+                Stripe request ID: {stripeRequestId}
+              </span>
+            ) : null}
           </div>
         ) : null}
 

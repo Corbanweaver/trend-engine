@@ -25,6 +25,13 @@ type UserSubscriptionRow = {
   stripe_customer_id: string | null;
 };
 
+type StripeCheckoutError = {
+  type?: string;
+  code?: string;
+  param?: string;
+  requestId?: string;
+};
+
 async function getCheckoutCustomer(
   stripe: Stripe,
   subscription: UserSubscriptionRow | null,
@@ -52,11 +59,31 @@ async function getCheckoutCustomer(
   return email ? { customer_email: email } : {};
 }
 
-function redirectToPricing(request: Request, checkout: string) {
-  return NextResponse.redirect(
-    new URL(`/pricing?checkout=${checkout}`, request.url),
-    303,
-  );
+function redirectToPricing(
+  request: Request,
+  checkout: string,
+  extraParams: Record<string, string | undefined> = {},
+) {
+  const url = new URL("/pricing", request.url);
+  url.searchParams.set("checkout", checkout);
+  for (const [key, value] of Object.entries(extraParams)) {
+    if (value) url.searchParams.set(key, value);
+  }
+  return NextResponse.redirect(url, 303);
+}
+
+function checkoutFailureReason(error: StripeCheckoutError) {
+  if (error.type === "StripeAuthenticationError") return "stripe-auth";
+  if (error.type === "StripePermissionError") return "stripe-permission";
+  if (error.code === "resource_missing") {
+    if (error.param?.includes("price")) return "missing-price";
+    if (error.param === "customer") return "missing-customer";
+    return "missing-resource";
+  }
+  if (error.code === "account_invalid") return "stripe-account";
+  if (error.code === "url_invalid") return "invalid-url";
+  if (error.type === "StripeInvalidRequestError") return "invalid-request";
+  return "stripe-error";
 }
 
 export function GET(request: Request) {
@@ -158,6 +185,10 @@ export async function POST(request: Request) {
         param: error.param,
         requestId: error.requestId,
         statusCode: error.statusCode,
+      });
+      return redirectToPricing(request, "error", {
+        reason: checkoutFailureReason(error),
+        request_id: error.requestId,
       });
     } else {
       console.error("Stripe checkout unexpected error:", error);
