@@ -31,7 +31,21 @@ async function getCustomerId(
   subscription: UserSubscriptionRow | null,
 ) {
   if (subscription?.stripe_customer_id) {
-    return subscription.stripe_customer_id;
+    try {
+      const customer = await stripe.customers.retrieve(subscription.stripe_customer_id);
+      if (!("deleted" in customer && customer.deleted)) {
+        return customer.id;
+      }
+    } catch (error) {
+      if (error instanceof Stripe.errors.StripeError && error.code === "resource_missing") {
+        console.error("Stored Stripe customer could not be found for billing portal", {
+          customerId: subscription.stripe_customer_id,
+          requestId: error.requestId,
+        });
+      } else {
+        throw error;
+      }
+    }
   }
 
   if (!subscription?.stripe_subscription_id) {

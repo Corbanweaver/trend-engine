@@ -25,6 +25,33 @@ type UserSubscriptionRow = {
   stripe_customer_id: string | null;
 };
 
+async function getCheckoutCustomer(
+  stripe: Stripe,
+  subscription: UserSubscriptionRow | null,
+  email: string | undefined,
+) {
+  const customerId = subscription?.stripe_customer_id;
+  if (customerId) {
+    try {
+      const customer = await stripe.customers.retrieve(customerId);
+      if (!("deleted" in customer && customer.deleted)) {
+        return { customer: customer.id };
+      }
+    } catch (error) {
+      if (error instanceof Stripe.errors.StripeError && error.code === "resource_missing") {
+        console.error("Stored Stripe customer could not be found for checkout; creating a new customer", {
+          customerId,
+          requestId: error.requestId,
+        });
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  return email ? { customer_email: email } : {};
+}
+
 function redirectToPricing(request: Request, checkout: string) {
   return NextResponse.redirect(
     new URL(`/pricing?checkout=${checkout}`, request.url),
@@ -89,15 +116,18 @@ export async function POST(request: Request) {
       .maybeSingle<UserSubscriptionRow>();
 
     const stripe = new Stripe(stripeSecretKey);
+    const checkoutCustomer = await getCheckoutCustomer(
+      stripe,
+      subscription,
+      user.email,
+    );
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${siteUrl}/dashboard?success=true`,
       cancel_url: `${siteUrl}/pricing?checkout=cancelled`,
       allow_promotion_codes: true,
-      ...(subscription?.stripe_customer_id
-        ? { customer: subscription.stripe_customer_id }
-        : { customer_email: user.email }),
+      ...checkoutCustomer,
       client_reference_id: user.id,
       subscription_data: {
         metadata: {
