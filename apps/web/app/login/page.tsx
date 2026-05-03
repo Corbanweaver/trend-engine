@@ -8,6 +8,8 @@ import { FormEvent, Suspense, useState } from "react";
 
 import { getSupabaseClient } from "@/lib/supabase";
 
+const googleAuthEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -136,14 +138,16 @@ function LoginForm() {
         </form>
 
         <div className="mt-4 space-y-3">
-          <button
-            type="button"
-            onClick={() => void signInWithGoogle()}
-            disabled={loading}
-            className="w-full rounded-md border border-border bg-card px-4 py-2 font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-800"
-          >
-            Sign in with Google
-          </button>
+          {googleAuthEnabled ? (
+            <button
+              type="button"
+              onClick={() => void signInWithGoogle()}
+              disabled={loading}
+              className="w-full rounded-md border border-border bg-card px-4 py-2 font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-800"
+            >
+              Sign in with Google
+            </button>
+          ) : null}
           <Link
             href="/forgot-password"
             className="block text-center text-sm text-primary hover:underline dark:text-cyan-300"

@@ -14,7 +14,14 @@ const topics = [
   "Feature requests before launch",
 ];
 
+const supportEmail =
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "support@contentideamaker.com";
+
 export default function SupportPage() {
+  const supportHref = `mailto:${supportEmail}?subject=${encodeURIComponent(
+    "Content Idea Maker support request",
+  )}`;
+
   return (
     <main className="min-h-svh bg-background px-4 py-10 text-foreground">
       <div className="mx-auto max-w-3xl space-y-8">
@@ -45,9 +52,13 @@ export default function SupportPage() {
           <h2 className="text-sm font-semibold text-foreground">Contact</h2>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             Use the feedback button inside the dashboard for product issues, or
-            email support from the address connected to your Trend Engine
-            account. Include screenshots and the niche you analyzed when a
-            generated result looks wrong.
+            email{" "}
+            <a href={supportHref} className="font-medium text-primary hover:underline">
+              {supportEmail}
+            </a>{" "}
+            from the address connected to your Trend Engine account. Include
+            screenshots and the niche you analyzed when a generated result looks
+            wrong.
           </p>
         </section>
       </div>
