@@ -17,6 +17,9 @@ import { computeEarnedBadgeIds, readTotalAnalyses } from "@/lib/user-stats";
 
 type SubscriptionPlan = "free" | "creator" | "pro";
 
+const supportEmail =
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "support@contentideamaker.com";
+
 type UserSubscriptionRow = {
   plan: SubscriptionPlan;
   stripe_customer_id: string | null;
@@ -103,6 +106,15 @@ export default function ProfilePage() {
     () => computeEarnedBadgeIds(totalAnalyses, savedCount ?? 0),
     [totalAnalyses, savedCount],
   );
+  const privacyRequestHref = useMemo(() => {
+    const subject = "Content Idea Maker data request";
+    const body = email
+      ? `Account email: ${email}\n\nI would like help with my account data.`
+      : "I would like help with my account data.";
+    return `mailto:${supportEmail}?subject=${encodeURIComponent(
+      subject,
+    )}&body=${encodeURIComponent(body)}`;
+  }, [email]);
 
   const signOut = async () => {
     setSigningOut(true);
@@ -395,6 +407,21 @@ export default function ProfilePage() {
               <p className="text-sm text-muted-foreground">Loading…</p>
             )}
           </div>
+        </section>
+
+        <section className="glass-surface rounded-2xl border border-border p-5">
+          <h2 className="text-sm font-medium text-foreground">Data and privacy</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Request an account export, correction, or deletion from the email
+            connected to your account. Billing changes should still be handled
+            through Stripe billing first.
+          </p>
+          <a
+            href={privacyRequestHref}
+            className="mt-4 inline-flex rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted"
+          >
+            Email data request
+          </a>
         </section>
       </div>
     </main>

@@ -6,7 +6,14 @@ export const metadata: Metadata = {
   description: "How Trend Engine handles account, billing, and trend analysis data.",
 };
 
+const supportEmail =
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "support@contentideamaker.com";
+
 export default function PrivacyPage() {
+  const supportHref = `mailto:${supportEmail}?subject=${encodeURIComponent(
+    "Content Idea Maker privacy request",
+  )}`;
+
   return (
     <main className="min-h-svh bg-background px-4 py-10 text-foreground">
       <div className="mx-auto max-w-3xl space-y-8">
@@ -44,8 +51,11 @@ export default function PrivacyPage() {
             work with vendors who help operate Trend Engine.
           </p>
           <p>
-            To request account help or data deletion, contact support from the
-            Support page.
+            To request account help or data deletion, contact{" "}
+            <a href={supportHref} className="font-medium text-primary hover:underline">
+              {supportEmail}
+            </a>{" "}
+            or use the Support page.
           </p>
         </section>
       </div>
