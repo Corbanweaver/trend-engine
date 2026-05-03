@@ -13,6 +13,7 @@ import {
   shouldResetMonthlyUsage,
   type SubscriptionPlan,
 } from "@/lib/credits";
+import { isAdminEmail } from "@/lib/admin";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -42,11 +43,31 @@ export type CreditSnapshot = {
   creditsLimit: number;
   creditsRemaining: number;
   analysesUsedThisMonth: number;
+  isAdmin?: boolean;
 };
 
 export type UsageResult =
-  | { ok: true; user: User; admin: SupabaseClient; snapshot: CreditSnapshot }
+  | {
+      ok: true;
+      user: User;
+      admin: SupabaseClient;
+      snapshot: CreditSnapshot;
+      isAdmin: boolean;
+    }
   | { ok: false; status: number; error: string };
+
+const ADMIN_CREDIT_LIMIT = 999999;
+
+function adminSnapshot(row: UserSubscriptionRow): CreditSnapshot {
+  return {
+    plan: "pro",
+    creditsUsed: Math.max(0, row.credits_used_this_month ?? 0),
+    creditsLimit: ADMIN_CREDIT_LIMIT,
+    creditsRemaining: ADMIN_CREDIT_LIMIT,
+    analysesUsedThisMonth: Math.max(0, row.analyses_used_this_month ?? 0),
+    isAdmin: true,
+  };
+}
 
 function createAdminClient(): SupabaseClient | null {
   if (!supabaseUrl || !supabaseServiceRoleKey) return null;
@@ -185,11 +206,13 @@ export async function loadUsage(): Promise<UsageResult> {
       row = reset;
     }
 
+    const isAdmin = isAdminEmail(userResult.user.email);
     return {
       ok: true,
       user: userResult.user,
       admin,
-      snapshot: snapshotFromRow(row),
+      snapshot: isAdmin ? adminSnapshot(row) : snapshotFromRow(row),
+      isAdmin,
     };
   } catch (error) {
     return {

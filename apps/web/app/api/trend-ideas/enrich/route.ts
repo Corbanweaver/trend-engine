@@ -72,7 +72,7 @@ export async function POST(request: Request) {
   }
 
   const cost = COST_BY_PATH[body.path];
-  if (usage.snapshot.creditsRemaining < cost) {
+  if (!usage.isAdmin && usage.snapshot.creditsRemaining < cost) {
     return NextResponse.json(
       {
         error: `You need ${cost} credits to run this AI tool.`,
@@ -83,30 +83,30 @@ export async function POST(request: Request) {
     );
   }
 
-  const rateLimit = await checkRateLimits(usage.admin, [
-    {
-      key: `user:${usage.user.id}`,
-      action: "idea_enrichment",
-      limit: 40,
-      windowSeconds: 10 * 60,
-    },
-    {
-      key: `user:${usage.user.id}`,
-      action: `idea_enrichment:${body.path}`,
-      limit: 200,
-      windowSeconds: 24 * 60 * 60,
-    },
-  ]);
-  if (!rateLimit.ok) return rateLimitResponse(rateLimit);
+  if (!usage.isAdmin) {
+    const rateLimit = await checkRateLimits(usage.admin, [
+      {
+        key: `user:${usage.user.id}`,
+        action: "idea_enrichment",
+        limit: 40,
+        windowSeconds: 10 * 60,
+      },
+      {
+        key: `user:${usage.user.id}`,
+        action: `idea_enrichment:${body.path}`,
+        limit: 200,
+        windowSeconds: 24 * 60 * 60,
+      },
+    ]);
+    if (!rateLimit.ok) return rateLimitResponse(rateLimit);
+  }
 
   let charged = false;
   try {
-    const reservedCredits = await spendCredits(
-      usage.admin,
-      usage.user.id,
-      cost,
-    );
-    charged = true;
+    const reservedCredits = usage.isAdmin
+      ? usage.snapshot
+      : await spendCredits(usage.admin, usage.user.id, cost);
+    charged = !usage.isAdmin;
 
     const backend = await fetch(getBackendUrl(`/trend-ideas/${body.path}`), {
       method: "POST",

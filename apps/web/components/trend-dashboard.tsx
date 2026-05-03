@@ -21,6 +21,7 @@ import {
   Youtube,
   UserRound,
   Bell,
+  ShieldCheck,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
@@ -93,6 +94,7 @@ type CreditSnapshot = {
   creditsLimit: number;
   creditsRemaining: number;
   analysesUsedThisMonth: number;
+  isAdmin?: boolean;
 };
 
 type LastAnalyzedSnapshot = {
@@ -756,6 +758,7 @@ export function TrendDashboard() {
   const [signingOut, setSigningOut] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [userAvatar, setUserAvatar] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [plan, setPlan] = useState<SubscriptionPlan>("free");
   const [stripeCancelAtPeriodEnd, setStripeCancelAtPeriodEnd] = useState(false);
   const [stripeCurrentPeriodEnd, setStripeCurrentPeriodEnd] = useState<
@@ -786,6 +789,7 @@ export function TrendDashboard() {
   const saveIdeaLocksRef = useRef<Set<string>>(new Set());
 
   const applyCreditSnapshot = useCallback((snapshot: CreditSnapshot) => {
+    setIsAdmin(Boolean(snapshot.isAdmin));
     setPlan(snapshot.plan);
     setAnalysesUsedThisMonth(snapshot.analysesUsedThisMonth);
     setCreditsUsedThisMonth(snapshot.creditsUsed);
@@ -892,7 +896,7 @@ export function TrendDashboard() {
   });
 
   const runAnalysis = useCallback(async () => {
-    if (creditsRemaining < CREDIT_COSTS.analysisWithImages) {
+    if (!isAdmin && creditsRemaining < CREDIT_COSTS.analysisWithImages) {
       setError(
         `You need ${CREDIT_COSTS.analysisWithImages} credits to run a full analysis with images. Upgrade for more monthly credits.`,
       );
@@ -957,7 +961,7 @@ export function TrendDashboard() {
         setAnalysisProgress(0);
       }, 450);
     }
-  }, [applyCreditSnapshot, creditsRemaining, effectiveNiche]);
+  }, [applyCreditSnapshot, creditsRemaining, effectiveNiche, isAdmin]);
 
   useEffect(() => {
     try {
@@ -995,8 +999,23 @@ export function TrendDashboard() {
       );
     };
 
+    const loadAdminStatus = async () => {
+      try {
+        const response = await fetch("/api/admin/status", { cache: "no-store" });
+        if (!response.ok) {
+          setIsAdmin(false);
+          return;
+        }
+        const body = (await response.json()) as { isAdmin?: boolean };
+        setIsAdmin(Boolean(body.isAdmin));
+      } catch {
+        setIsAdmin(false);
+      }
+    };
+
     const loadSubscription = async (uid: string | null) => {
       if (!uid) {
+        setIsAdmin(false);
         setPlan("free");
         setAnalysesUsedThisMonth(0);
         setCreditsUsedThisMonth(0);
@@ -1072,6 +1091,7 @@ export function TrendDashboard() {
         data: { user },
       } = await supabase.auth.getUser();
       setUserState(user);
+      await loadAdminStatus();
       await loadSubscription(user?.id ?? null);
     };
 
@@ -1081,6 +1101,7 @@ export function TrendDashboard() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       const nextUser = session?.user ?? null;
       setUserState(nextUser);
+      void loadAdminStatus();
       void loadSubscription(nextUser?.id ?? null);
     });
     return () => {
@@ -1089,7 +1110,7 @@ export function TrendDashboard() {
   }, []);
 
   const analysisCreditBlocked =
-    creditsRemaining < CREDIT_COSTS.analysisWithImages;
+    !isAdmin && creditsRemaining < CREDIT_COSTS.analysisWithImages;
   const favoriteSet = new Set(favoriteNiches);
   const favoriteOptions = NICHE_OPTIONS.filter((o) => favoriteSet.has(o.value));
   const regularOptions = NICHE_OPTIONS.filter((o) => !favoriteSet.has(o.value));
@@ -1315,13 +1336,28 @@ export function TrendDashboard() {
             className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] text-primary dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-100 sm:px-3 sm:text-xs"
             title={`${creditsUsedThisMonth} credits used this month across ${analysesUsedThisMonth} analyses`}
           >
-            {formatCurrentPlanLabel(
-              plan,
-              stripeCancelAtPeriodEnd,
-              stripeCurrentPeriodEnd,
+            {isAdmin ? (
+              "Admin: unlimited credits"
+            ) : (
+              <>
+                {formatCurrentPlanLabel(
+                  plan,
+                  stripeCancelAtPeriodEnd,
+                  stripeCurrentPeriodEnd,
+                )}
+                : {creditsRemaining}/{creditsLimit} credits
+              </>
             )}
-            : {creditsRemaining}/{creditsLimit} credits
           </div>
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              className="fluid-transition hidden items-center gap-1 rounded-md border border-primary/25 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/15 dark:border-cyan-300/30 dark:bg-cyan-400/10 dark:text-cyan-100 dark:hover:bg-cyan-400/15 lg:inline-flex"
+            >
+              <ShieldCheck className="size-3.5" />
+              Admin
+            </Link>
+          ) : null}
           <Link
             href="/analytics"
             className="fluid-transition hidden rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800 lg:inline-flex"
@@ -1760,7 +1796,7 @@ export function TrendDashboard() {
         </div>
       ) : null}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur dark:border-white/10 dark:bg-slate-950/95 lg:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-6">
+        <div className={cn("mx-auto grid max-w-lg", isAdmin ? "grid-cols-7" : "grid-cols-6")}>
           <Link
             href="/"
             className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300"
@@ -1803,6 +1839,15 @@ export function TrendDashboard() {
             <UserRound className="mb-1 size-4" />
             Profile
           </Link>
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              className="flex flex-col items-center text-[11px] text-primary dark:text-cyan-200"
+            >
+              <ShieldCheck className="mb-1 size-4" />
+              Admin
+            </Link>
+          ) : null}
         </div>
       </nav>
     </div>

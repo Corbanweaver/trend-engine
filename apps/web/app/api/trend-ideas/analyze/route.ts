@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   }
 
   const cost = CREDIT_COSTS.analysisWithImages;
-  if (usage.snapshot.creditsRemaining < cost) {
+  if (!usage.isAdmin && usage.snapshot.creditsRemaining < cost) {
     return NextResponse.json(
       {
         error: `You need ${cost} credits to run a full analysis with images.`,
@@ -52,33 +52,32 @@ export async function POST(request: Request) {
     );
   }
 
-  const rateLimit = await checkRateLimits(usage.admin, [
-    {
-      key: `user:${usage.user.id}`,
-      action: "trend_analysis",
-      limit: 8,
-      windowSeconds: 15 * 60,
-    },
-    {
-      key: `user:${usage.user.id}`,
-      action: "trend_analysis",
-      limit: 80,
-      windowSeconds: 24 * 60 * 60,
-    },
-  ]);
-  if (!rateLimit.ok) return rateLimitResponse(rateLimit);
+  if (!usage.isAdmin) {
+    const rateLimit = await checkRateLimits(usage.admin, [
+      {
+        key: `user:${usage.user.id}`,
+        action: "trend_analysis",
+        limit: 8,
+        windowSeconds: 15 * 60,
+      },
+      {
+        key: `user:${usage.user.id}`,
+        action: "trend_analysis",
+        limit: 80,
+        windowSeconds: 24 * 60 * 60,
+      },
+    ]);
+    if (!rateLimit.ok) return rateLimitResponse(rateLimit);
+  }
 
   let charged = false;
   try {
-    const reservedCredits = await spendCredits(
-      usage.admin,
-      usage.user.id,
-      cost,
-      {
-        countAnalysis: true,
-      },
-    );
-    charged = true;
+    const reservedCredits = usage.isAdmin
+      ? usage.snapshot
+      : await spendCredits(usage.admin, usage.user.id, cost, {
+          countAnalysis: true,
+        });
+    charged = !usage.isAdmin;
 
     const backend = await fetch(getBackendUrl("/trend-ideas/"), {
       method: "POST",

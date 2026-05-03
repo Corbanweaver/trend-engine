@@ -83,6 +83,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [savedCount, setSavedCount] = useState<number | null>(null);
   const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
   const [creditsUsed, setCreditsUsed] = useState(0);
@@ -177,6 +178,7 @@ export default function ProfilePage() {
           setCancelAtPeriodEnd(false);
           setCurrentPeriodEnd(null);
           setHasStripeBilling(false);
+          setIsAdmin(false);
           setReady(true);
           return;
         }
@@ -184,6 +186,21 @@ export default function ProfilePage() {
         setAvatar(
           (user.user_metadata?.avatar_url as string | undefined) ?? null,
         );
+        try {
+          const adminResponse = await fetch("/api/admin/status", {
+            cache: "no-store",
+          });
+          if (adminResponse.ok) {
+            const adminBody = (await adminResponse.json()) as {
+              isAdmin?: boolean;
+            };
+            setIsAdmin(Boolean(adminBody.isAdmin));
+          } else {
+            setIsAdmin(false);
+          }
+        } catch {
+          setIsAdmin(false);
+        }
 
         const { count, error: countError } = await supabase
           .from("saved_ideas")
@@ -334,12 +351,14 @@ export default function ProfilePage() {
               <p className="mt-1 text-sm text-muted-foreground">
                 Current plan:{" "}
                 <span className="font-medium text-foreground">
-                  {ready
-                    ? formatCurrentPlanLabel(
-                        plan,
-                        cancelAtPeriodEnd,
-                        currentPeriodEnd,
-                      )
+                  {isAdmin
+                    ? "Admin"
+                    : ready
+                      ? formatCurrentPlanLabel(
+                          plan,
+                          cancelAtPeriodEnd,
+                          currentPeriodEnd,
+                        )
                     : "Loading..."}
                 </span>
               </p>
@@ -354,9 +373,11 @@ export default function ProfilePage() {
               <p className="mt-1 text-sm text-muted-foreground">
                 Monthly credits:{" "}
                 <span className="font-medium text-foreground">
-                  {ready
-                    ? `${getRemainingCredits(plan, creditsUsed)} remaining of ${creditsLimit}`
-                    : "Loading..."}
+                  {isAdmin
+                    ? "Unlimited for admin testing"
+                    : ready
+                      ? `${getRemainingCredits(plan, creditsUsed)} remaining of ${creditsLimit}`
+                      : "Loading..."}
                 </span>
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -375,6 +396,14 @@ export default function ProfilePage() {
                   Manage billing
                 </button>
               </form>
+              {isAdmin ? (
+                <Link
+                  href="/admin"
+                  className="fluid-transition rounded-xl border border-primary/25 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/15"
+                >
+                  Admin overview
+                </Link>
+              ) : null}
               {!hasStripeBilling && ready ? (
                 <Link
                   href="/pricing"

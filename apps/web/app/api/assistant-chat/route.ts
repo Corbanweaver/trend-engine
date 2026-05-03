@@ -114,7 +114,7 @@ export async function POST(request: Request) {
     }
 
     const cost = CREDIT_COSTS.assistantMessage;
-    if (usage.snapshot.creditsRemaining < cost) {
+    if (!usage.isAdmin && usage.snapshot.creditsRemaining < cost) {
       return NextResponse.json(
         {
           error: `You need ${cost} credit to message the AI assistant.`,
@@ -125,26 +125,30 @@ export async function POST(request: Request) {
       );
     }
 
-    const rateLimit = await checkRateLimits(usage.admin, [
-      {
-        key: `user:${usage.user.id}`,
-        action: "assistant_message",
-        limit: 30,
-        windowSeconds: 10 * 60,
-      },
-      {
-        key: `user:${usage.user.id}`,
-        action: "assistant_message",
-        limit: 300,
-        windowSeconds: 24 * 60 * 60,
-      },
-    ]);
-    if (!rateLimit.ok) return rateLimitResponse(rateLimit);
+    if (!usage.isAdmin) {
+      const rateLimit = await checkRateLimits(usage.admin, [
+        {
+          key: `user:${usage.user.id}`,
+          action: "assistant_message",
+          limit: 30,
+          windowSeconds: 10 * 60,
+        },
+        {
+          key: `user:${usage.user.id}`,
+          action: "assistant_message",
+          limit: 300,
+          windowSeconds: 24 * 60 * 60,
+        },
+      ]);
+      if (!rateLimit.ok) return rateLimitResponse(rateLimit);
+    }
 
     let charged = false;
     try {
-      const credits = await spendCredits(usage.admin, usage.user.id, cost);
-      charged = true;
+      const credits = usage.isAdmin
+        ? usage.snapshot
+        : await spendCredits(usage.admin, usage.user.id, cost);
+      charged = !usage.isAdmin;
       const reply = await callGpt4(messages);
       return NextResponse.json({ reply, credits });
     } catch (error) {
