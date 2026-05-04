@@ -22,8 +22,25 @@ export const metadata: Metadata = {
     default: "Trend Engine - AI Content Ideas From Live Trends",
     template: "%s | Trend Engine",
   },
+  applicationName: "Content Idea Maker",
   description:
     "Find live content trends, generate polished idea cards, and turn them into hooks, scripts, and hashtags.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      {
+        url: "/icon.svg",
+        type: "image/svg+xml",
+      },
+    ],
+    shortcut: "/icon.svg",
+    apple: [
+      {
+        url: "/apple-icon.svg",
+        type: "image/svg+xml",
+      },
+    ],
+  },
   openGraph: {
     title: "Trend Engine - AI Content Ideas From Live Trends",
     description:
