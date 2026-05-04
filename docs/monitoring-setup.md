@@ -9,7 +9,7 @@ This is the production monitoring checklist for Content Idea Maker.
 - Local/CI script: `pnpm monitor:production`
 - GitHub Actions workflow: `.github/workflows/production-health.yml`
 
-The public health check confirms the web app is reachable. The deep health check also checks required environment variables, Supabase access, and the backend `/health` endpoint.
+The public health check confirms the web app is reachable. The deep health check also checks required environment variables, Stripe live configuration, Supabase access, OpenAI configuration, and the backend `/health` endpoint.
 
 ## GitHub Actions Monitor
 

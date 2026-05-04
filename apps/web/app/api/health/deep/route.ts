@@ -34,9 +34,13 @@ function getPresentedSecret(request: Request) {
 function envCheck(): CheckResult {
   const missing = [
     ["NEXT_PUBLIC_SUPABASE_URL", supabaseUrl],
+    ["NEXT_PUBLIC_SUPABASE_ANON_KEY", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY],
     ["SUPABASE_SERVICE_ROLE_KEY", supabaseServiceRoleKey],
     ["NEXT_PUBLIC_API_URL or API_URL", process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL],
+    ["OPENAI_API_KEY", process.env.OPENAI_API_KEY],
     ["STRIPE_SECRET_KEY", process.env.STRIPE_SECRET_KEY],
+    ["STRIPE_CREATOR_PRICE_ID", process.env.STRIPE_CREATOR_PRICE_ID],
+    ["STRIPE_PRO_PRICE_ID", process.env.STRIPE_PRO_PRICE_ID],
     ["STRIPE_WEBHOOK_SECRET", process.env.STRIPE_WEBHOOK_SECRET],
   ]
     .filter(([, value]) => !value)

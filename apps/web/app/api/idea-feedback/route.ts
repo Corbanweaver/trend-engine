@@ -11,8 +11,10 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const gmailUser = process.env.GMAIL_USER;
 const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
+const resendApiKey = process.env.RESEND_API_KEY;
 const feedbackSenderEmail =
   process.env.FEEDBACK_SENDER_EMAIL?.trim() ||
+  (resendApiKey ? "no-reply@auth.contentideamaker.com" : "") ||
   gmailUser ||
   "support@contentideamaker.com";
 const feedbackRecipientEmail =
@@ -74,11 +76,6 @@ async function sendFeedbackEmail({
   recipientEmail: string;
   senderEmail: string;
 }) {
-  if (!gmailUser || !gmailAppPassword) {
-    throw new Error("Missing GMAIL_USER or GMAIL_APP_PASSWORD");
-  }
-  const transporter = createGmailTransporter();
-
   const prettyFeedback = getFeedbackLabel(feedbackType);
   const safeMessage = message || "(none)";
   const safeUserEmail = escapeHtml(userEmail);
@@ -99,6 +96,36 @@ async function sendFeedbackEmail({
     `Idea: ${ideaTitle}`,
     `Written message: ${safeMessage}`,
   ].join("\n");
+
+  if (resendApiKey) {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: senderEmail,
+        to: recipientEmail,
+        subject: `Trend Engine feedback: ${prettyFeedback}`,
+        html,
+        text,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new Error(
+        `Resend feedback email failed (${response.status}): ${errorText || response.statusText}`,
+      );
+    }
+    return;
+  }
+
+  if (!gmailUser || !gmailAppPassword) {
+    throw new Error("Missing RESEND_API_KEY or GMAIL_USER/GMAIL_APP_PASSWORD");
+  }
+  const transporter = createGmailTransporter();
 
   try {
     await transporter.sendMail({
@@ -230,11 +257,11 @@ export async function POST(request: Request) {
       senderEmail: feedbackSenderEmail,
     });
   } catch (emailError) {
-    if (!gmailUser || !gmailAppPassword) {
+    if (!resendApiKey && (!gmailUser || !gmailAppPassword)) {
       await recordOperationalEvent(admin, {
         level: "warn",
         source: "idea_feedback",
-        message: "Feedback email skipped due to missing SMTP credentials",
+        message: "Feedback email skipped due to missing email credentials",
         userId: user.id,
         metadata: { ideaTitle, feedbackType },
       });

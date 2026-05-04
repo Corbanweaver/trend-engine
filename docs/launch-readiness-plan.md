@@ -69,7 +69,7 @@ Goal: make sure a new customer instantly understands what to do and what they re
 
 1. Confirm the dashboard explains what niche to enter.
 2. Confirm the loading state makes it obvious analysis is still working.
-3. Confirm generated cards feel official and complete.
+3. Confirm generated cards feel polished and complete.
 4. Confirm credits are understandable.
 5. Confirm first-time onboarding reads clearly.
 6. Confirm loading state shows meaningful progress.
@@ -100,7 +100,7 @@ Goal: make sure customer-facing promises match what the app really does.
 - Make sure cancellation and monthly credit reset wording is clear.
 - Tighten platform-scanning claims, especially Instagram, TikTok, and other sources.
 
-Status: ✅ completed. Remaining "unlimited" pricing wording was removed from app-facing copy.
+Status: ✅ completed. Pricing now shows the live monthly price points, unverified social proof was removed, "official-looking" wording was replaced with "polished," and remaining platform-source claims are phrased around signals rather than guaranteed scraping.
 
 ## 7. Soft Launch
 

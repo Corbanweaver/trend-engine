@@ -63,5 +63,6 @@ Use this during first user onboarding and early support hours.
 
 - For repeated failures in analysis, capture error text, browser, and niche.
 - If feedback requests are not saving, capture user id + recent session timing.
+- Feedback email notifications prefer Resend when `RESEND_API_KEY` is set, then fall back to Gmail SMTP if configured.
 - For payment-related issues, share `Stripe Checkout` or billing portal details privately only.
 - If feature behavior is affected, add steps to reproduce and save them in the idea card / screenshot.

@@ -29,7 +29,7 @@ const plans = [
   },
   {
     name: "Creator",
-    price: "$19",
+    price: "$19.99",
     period: "/mo",
     description: "Everything you need to ship ideas consistently.",
     featured: true,
@@ -47,7 +47,7 @@ const plans = [
   },
   {
     name: "Pro",
-    price: "$49",
+    price: "$49.99",
     period: "/mo",
     description: "Maximum throughput for teams and power creators.",
     featured: false,
@@ -57,7 +57,7 @@ const plans = [
       "All niches",
       "Saved ideas",
       "AI thumbnails",
-      "Priority scraping",
+      "Priority trend processing",
       "Early access to new features",
     ],
     ctaHref: "/api/stripe/checkout",

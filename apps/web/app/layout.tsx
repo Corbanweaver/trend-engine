@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s | Trend Engine",
   },
   description:
-    "Find live content trends, generate official-looking idea cards, and turn them into hooks, scripts, and hashtags.",
+    "Find live content trends, generate polished idea cards, and turn them into hooks, scripts, and hashtags.",
   openGraph: {
     title: "Trend Engine - AI Content Ideas From Live Trends",
     description:

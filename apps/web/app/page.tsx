@@ -69,27 +69,27 @@ const featureCards = [
 const testimonials = [
   {
     quote:
-      "I post six Shorts a week for two channels. Trend Engine cut my research nights from three hours to under twenty minutes—the hooks alone are scary good.",
-    name: "Maya Chen",
-    handle: "@mayashorts",
-    role: "Food & lifestyle · 480k subs",
-    initials: "MC",
+      "Turn a rising food story into three short-form angles: a curiosity hook, a step-by-step script, and a thumbnail direction you can film today.",
+    name: "Food & lifestyle",
+    handle: "Weekly creator workflow",
+    role: "Hooks, scripts, hashtags, and idea cards",
+    initials: "FL",
   },
   {
     quote:
-      "Our editor used to screenshot Reddit and Discord all morning. Now we open the trending hub, pick two angles, and we’re scripting by lunch. Game changer for a tiny team.",
-    name: "Jordan Wells",
-    handle: "@jwtechbits",
-    role: "Tech reviews · 210k subs",
-    initials: "JW",
+      "Watch search, news, Reddit, Shorts, and TikTok signals together so a small team can choose the angle before the topic cools off.",
+    name: "Tech & news",
+    handle: "Small team workflow",
+    role: "Cross-platform signal checks",
+    initials: "TN",
   },
   {
     quote:
-      "I’m allergic to generic AI fluff. The scripts actually sound like my voice because they’re tied to what’s literally blowing up that day—not last month’s memes.",
-    name: "Sam Ortiz",
-    handle: "@samfitruns",
-    role: "Fitness creator · 1.1M TikTok",
-    initials: "SO",
+      "Save winners with source links and move the full creative brief into your calendar so publishing stays organized after the first idea sprint.",
+    name: "Fitness & coaching",
+    handle: "Solo creator workflow",
+    role: "Saved ideas and content calendar",
+    initials: "FC",
   },
 ] as const;
 
@@ -249,14 +249,14 @@ export default function Home() {
       >
         <div className="text-center">
           <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary dark:text-cyan-200">
-            Social proof
+            Creator workflows
           </span>
           <h2 className="mt-4 text-balance text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Creators who ship on deadlines
+            Built for creators who ship on deadlines
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-            Independent voices—from niche labs to faceless edits—use Trend Engine to
-            publish while topics are still hot.
+            Practical examples of how Trend Engine turns live momentum into
+            content you can plan, save, and publish.
           </p>
         </div>
 
@@ -266,14 +266,8 @@ export default function Home() {
               key={t.handle}
               className="flex h-full flex-col rounded-2xl border border-border bg-card/90 p-6 text-left shadow-sm dark:border-white/10 dark:bg-slate-900/55"
             >
-              <div className="flex gap-1 text-amber-500 dark:text-amber-400">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className="size-4 fill-current"
-                    aria-hidden
-                  />
-                ))}
+              <div className="flex gap-1 text-primary dark:text-cyan-300">
+                <Star className="size-4 fill-current" aria-hidden />
               </div>
               <blockquote className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground">
                 <span className="text-foreground">“</span>
@@ -306,16 +300,17 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <LineChart className="size-8 text-primary dark:text-cyan-300" />
               <div className="text-left">
-                <p className="text-2xl font-extrabold text-foreground">4.9★</p>
+                <p className="text-2xl font-extrabold text-foreground">3x</p>
                 <p className="text-xs text-muted-foreground">
-                  Avg. from weekly creators
+                  Ideas from each trend pass
                 </p>
               </div>
             </div>
             <div className="hidden h-10 w-px bg-border sm:block dark:bg-white/15" />
             <div className="text-sm text-muted-foreground sm:max-w-xs sm:text-left">
-              Teams report cutting manual trend chasing by over an hour per upload
-              cycle once hooks and scripts live in the same place.
+              Each analysis gives you trend context, source links, hooks,
+              scripts, hashtags, thumbnail direction, and save-ready cards in
+              one workflow.
             </div>
           </div>
         </div>
@@ -358,7 +353,7 @@ export default function Home() {
       <section className="relative z-20 mx-auto w-full max-w-6xl px-6 pb-8">
         <div className="rounded-3xl border border-border bg-card/85 p-8 shadow-[0_16px_42px_rgba(34,39,47,0.08)] backdrop-blur-sm dark:border-cyan-300/20 dark:bg-gradient-to-br dark:from-slate-950/90 dark:via-slate-900/90 dark:to-indigo-950/70 dark:shadow-[0_0_48px_rgba(59,130,246,0.18)] sm:p-10">
           <p className="text-center text-2xl font-semibold text-foreground dark:text-slate-100 sm:text-3xl">
-            Join 1,000+ creators discovering viral trends
+            Join the creator launch list
           </p>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-muted-foreground dark:text-slate-300 sm:text-base">
             Get product updates, early feature access, and weekly trend insights
