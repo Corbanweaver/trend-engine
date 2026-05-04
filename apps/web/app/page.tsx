@@ -2,13 +2,15 @@ import Link from "next/link";
 import {
   Bot,
   CalendarDays,
-  Instagram,
+  CreditCard,
   Layers,
+  Link2,
   LineChart,
   Radio,
+  RotateCcw,
+  ShieldCheck,
   Sparkles,
   Star,
-  Youtube,
   Zap,
 } from "lucide-react";
 
@@ -66,6 +68,29 @@ const featureCards = [
   },
 ] as const;
 
+const trustItems = [
+  {
+    icon: CreditCard,
+    title: "Stripe-secured billing",
+    body: "Checkout and billing portal actions run through Stripe, with plan access synced back to your account.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Credits protect fair usage",
+    body: "Monthly credits keep AI image generation sustainable, predictable, and harder to abuse.",
+  },
+  {
+    icon: Link2,
+    title: "Source links stay attached",
+    body: "Saved ideas keep the research context, source links, hooks, scripts, and hashtags together.",
+  },
+  {
+    icon: RotateCcw,
+    title: "Cancel anytime",
+    body: "Paid access continues through the current billing period after cancellation.",
+  },
+] as const;
+
 const testimonials = [
   {
     quote:
@@ -95,7 +120,7 @@ const testimonials = [
 
 const faqItems = [
   {
-    q: "Which platforms does Trend Engine scan?",
+    q: "Which platforms does Content Idea Maker scan?",
     a: "We aggregate momentum signals from short-form video, community discussions, news, and search—so you see a cross-platform picture instead of one siloed feed.",
   },
   {
@@ -116,19 +141,6 @@ const faqItems = [
   },
 ] as const;
 
-function XIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden
-      className={className}
-      fill="currentColor"
-    >
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  );
-}
-
 export default function Home() {
   return (
     <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
@@ -143,7 +155,7 @@ export default function Home() {
           href="/"
           className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
         >
-          Trend Engine
+          Content Idea Maker
         </Link>
         <nav className="flex items-center gap-6 text-sm">
           <Link
@@ -171,6 +183,12 @@ export default function Home() {
             FAQ
           </Link>
           <Link
+            href="/about"
+            className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
+          >
+            About
+          </Link>
+          <Link
             href="/pricing"
             className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
           >
@@ -181,7 +199,7 @@ export default function Home() {
 
       <section className="relative mx-auto flex min-h-[calc(100svh-5.5rem)] w-full max-w-6xl flex-col items-center justify-center px-6 py-18 text-center">
         <span className="glass-surface hairline-ring rounded-full border border-border bg-card px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-primary dark:text-cyan-200">
-          Trend Engine
+          Content Idea Maker
         </span>
 
         <h1 className="mt-8 max-w-5xl text-balance bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-5xl font-extrabold leading-tight text-transparent sm:text-6xl lg:text-7xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
@@ -209,6 +227,27 @@ export default function Home() {
       </section>
 
       <HowItWorksSection steps={howSteps} />
+
+      <section className="relative z-20 mx-auto w-full max-w-6xl px-6 py-12">
+        <div className="grid gap-4 md:grid-cols-4">
+          {trustItems.map((item) => (
+            <div
+              key={item.title}
+              className="rounded-2xl border border-border bg-card/85 p-5 shadow-sm dark:border-white/10 dark:bg-slate-900/50"
+            >
+              <div className="flex size-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 dark:border-cyan-400/25 dark:bg-cyan-400/10">
+                <item.icon className="size-5 text-primary dark:text-cyan-300" />
+              </div>
+              <h2 className="mt-4 text-sm font-semibold text-foreground">
+                {item.title}
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {item.body}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section
         id="features"
@@ -255,7 +294,7 @@ export default function Home() {
             Built for creators who ship on deadlines
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-            Practical examples of how Trend Engine turns live momentum into
+            Practical examples of how Content Idea Maker turns live momentum into
             content you can plan, save, and publish.
           </p>
         </div>
@@ -367,11 +406,11 @@ export default function Home() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-14 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-sm">
             <p className="text-sm font-semibold tracking-[0.18em] text-foreground">
-              Trend Engine
+              Content Idea Maker
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Trend intelligence and AI-assisted ideas for creators who cannot afford
-              to miss the moment.
+              Content Idea Maker turns live trend signals into creator-ready
+              briefs, scripts, and polished idea cards.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-10 sm:flex sm:gap-16">
@@ -406,6 +445,14 @@ export default function Home() {
                 </li>
                 <li>
                   <Link
+                    href="/about"
+                    className="fluid-transition text-muted-foreground hover:text-foreground"
+                  >
+                    About
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/trending"
                     className="fluid-transition text-muted-foreground hover:text-foreground"
                   >
@@ -430,6 +477,14 @@ export default function Home() {
                 </li>
                 <li>
                   <Link
+                    href="/status"
+                    className="fluid-transition text-muted-foreground hover:text-foreground"
+                  >
+                    Status
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/privacy"
                     className="fluid-transition text-muted-foreground hover:text-foreground"
                   >
@@ -448,41 +503,40 @@ export default function Home() {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Social
+                Company
               </p>
               <ul className="mt-4 flex flex-col gap-3 text-sm">
                 <li>
-                  <a
-                    href="https://x.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="fluid-transition inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                  <Link
+                    href="/about"
+                    className="fluid-transition text-muted-foreground hover:text-foreground"
                   >
-                    <XIcon className="size-4" />
-                    X
-                  </a>
+                    About
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="https://www.youtube.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="fluid-transition inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                  <Link
+                    href="/status"
+                    className="fluid-transition text-muted-foreground hover:text-foreground"
                   >
-                    <Youtube className="size-4" />
-                    YouTube
-                  </a>
+                    Status
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="https://www.instagram.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="fluid-transition inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                  <Link
+                    href="/support"
+                    className="fluid-transition text-muted-foreground hover:text-foreground"
                   >
-                    <Instagram className="size-4" />
-                    Instagram
-                  </a>
+                    Support
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/pricing"
+                    className="fluid-transition text-muted-foreground hover:text-foreground"
+                  >
+                    Pricing
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -490,7 +544,7 @@ export default function Home() {
         </div>
         <div className="border-t border-border py-6 dark:border-white/10">
           <p className="text-center text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Trend Engine. All rights reserved.
+            © {new Date().getFullYear()} Content Idea Maker. All rights reserved.
           </p>
         </div>
       </footer>

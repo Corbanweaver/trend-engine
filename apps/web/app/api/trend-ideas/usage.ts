@@ -101,7 +101,7 @@ async function getUserFromCookies(): Promise<
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    return { error: "Please log in to use Trend Engine." };
+    return { error: "Please log in to use Content Idea Maker." };
   }
 
   return { user };

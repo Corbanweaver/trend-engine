@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy - Trend Engine",
-  description: "How Trend Engine handles account, billing, and trend analysis data.",
+  title: "Privacy Policy",
+  description:
+    "How Content Idea Maker handles account, billing, and trend analysis data.",
 };
 
 const supportEmail =
@@ -18,7 +19,7 @@ export default function PrivacyPage() {
     <main className="min-h-svh bg-background px-4 py-10 text-foreground">
       <div className="mx-auto max-w-3xl space-y-8">
         <Link href="/" className="text-sm font-medium text-primary hover:underline">
-          Trend Engine
+          Content Idea Maker
         </Link>
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Privacy Policy</h1>
@@ -29,13 +30,13 @@ export default function PrivacyPage() {
 
         <section className="space-y-3 text-sm leading-6 text-muted-foreground">
           <p>
-            Trend Engine collects the account details you provide, such as your
+            Content Idea Maker collects the account details you provide, such as your
             email address, saved ideas, selected niches, subscription status, and
             product usage. We use this information to run the app, personalize
             your dashboard, prevent abuse, and provide support.
           </p>
           <p>
-            Payments are processed by Stripe. Trend Engine does not store full
+            Payments are processed by Stripe. Content Idea Maker does not store full
             card numbers. We store Stripe customer and subscription identifiers
             so your plan can be updated when billing events occur.
           </p>
@@ -48,7 +49,7 @@ export default function PrivacyPage() {
           <p>
             We do not sell personal data. We may disclose information when
             needed to comply with law, protect the service, process payments, or
-            work with vendors who help operate Trend Engine.
+            work with vendors who help operate Content Idea Maker.
           </p>
           <p>
             To request account help or data deletion, contact{" "}

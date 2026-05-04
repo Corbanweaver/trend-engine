@@ -135,7 +135,7 @@ export default function SavedIdeasPage() {
   };
 
   useEffect(() => {
-    document.title = "Saved Ideas - Trend Engine";
+    document.title = "Saved Ideas - Content Idea Maker";
   }, []);
 
   useEffect(() => {

@@ -1308,15 +1308,16 @@ export function TrendDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 dark:bg-slate-950/80">
           <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl dark:border-white/15 dark:bg-slate-900">
             <h2 className="text-xl font-semibold text-foreground dark:text-white">
-              Welcome to Trend Engine
+              Welcome to Content Idea Maker
             </h2>
             <p className="mt-2 text-sm text-muted-foreground dark:text-slate-300">
-              Get started in under two minutes:
+              Your first workflow takes just a few steps:
             </p>
             <ol className="mt-4 space-y-2 text-sm text-foreground dark:text-slate-200">
               <li>1. Pick your niche</li>
               <li>2. Run your first analysis</li>
-              <li>3. Save your best ideas</li>
+              <li>3. Save your best idea with source links</li>
+              <li>4. Move it to your content calendar</li>
             </ol>
             <p className="mt-4 text-xs text-muted-foreground dark:text-slate-400">
               Each analysis takes 30-90 seconds. If no result appears right
@@ -1374,7 +1375,7 @@ export function TrendDashboard() {
             </div>
             <div className="min-w-0">
               <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">
-                Trend Engine
+                Content Idea Maker
               </h1>
               <p className="hidden text-xs text-muted-foreground dark:text-slate-400 sm:block">
                 AI trend intelligence for creators

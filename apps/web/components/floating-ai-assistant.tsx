@@ -24,7 +24,7 @@ const ASSISTANT_MESSAGES_STORAGE_KEY = "trend_engine:assistant_messages";
 const INITIAL_ASSISTANT_MESSAGE: ChatMessage = {
   role: "assistant",
   content:
-    "Hi! I can help with niche discovery, trend explanations, content brainstorming, and navigating Trend Engine.",
+    "Hi! I can help with niche discovery, trend explanations, content brainstorming, and navigating Content Idea Maker.",
 };
 
 export function FloatingAiAssistant() {

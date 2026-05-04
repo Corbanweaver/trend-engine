@@ -130,7 +130,7 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-    document.title = "Profile — Trend Engine";
+    document.title = "Profile — Content Idea Maker";
   }, []);
 
   useEffect(() => {

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { TrendingLivePage } from "./trending-client";
 
 export const metadata: Metadata = {
-  title: "Live trending — Trend Engine",
+  title: "Live trending",
   description:
     "Today's top trends across Google, news, YouTube Shorts, TikTok, Reddit, and tech communities.",
 };

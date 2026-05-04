@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Terms of Service - Trend Engine",
-  description: "Terms for using Trend Engine.",
+  title: "Terms of Service",
+  description: "Terms for using Content Idea Maker.",
 };
 
 export default function TermsPage() {
@@ -11,7 +11,7 @@ export default function TermsPage() {
     <main className="min-h-svh bg-background px-4 py-10 text-foreground">
       <div className="mx-auto max-w-3xl space-y-8">
         <Link href="/" className="text-sm font-medium text-primary hover:underline">
-          Trend Engine
+          Content Idea Maker
         </Link>
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Terms of Service</h1>
@@ -22,7 +22,7 @@ export default function TermsPage() {
 
         <section className="space-y-3 text-sm leading-6 text-muted-foreground">
           <p>
-            By using Trend Engine, you agree to use the service responsibly and
+            By using Content Idea Maker, you agree to use the service responsibly and
             only for lawful content research, planning, and creation workflows.
           </p>
           <p>
@@ -34,7 +34,7 @@ export default function TermsPage() {
           <p>
             Subscription plans include monthly credits. Credits reset monthly,
             have no cash value, and are intended to protect the service from
-            runaway usage. Trend Engine may limit or suspend accounts that abuse
+            runaway usage. Content Idea Maker may limit or suspend accounts that abuse
             automation, scraping, billing, or AI generation.
           </p>
           <p>
@@ -43,7 +43,7 @@ export default function TermsPage() {
             on usage, timing, and payment processor status.
           </p>
           <p>
-            Trend Engine may change features, pricing, credits, or these terms
+            Content Idea Maker may change features, pricing, credits, or these terms
             as the product evolves. Continued use means you accept the current
             terms.
           </p>

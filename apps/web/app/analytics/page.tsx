@@ -29,7 +29,7 @@ export default function AnalyticsPage() {
   );
 
   useEffect(() => {
-    document.title = "Analytics — Trend Engine";
+    document.title = "Analytics — Content Idea Maker";
   }, []);
 
   useEffect(() => {

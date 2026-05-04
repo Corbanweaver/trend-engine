@@ -5,9 +5,9 @@ import { Check } from "lucide-react";
 import { CREDIT_LIMITS } from "@/lib/credits";
 
 export const metadata: Metadata = {
-  title: "Pricing — Trend Engine",
+  title: "Pricing",
   description:
-    "Choose a plan for Trend Engine: trend analyses, niches, saved ideas, and AI thumbnails.",
+    "Choose a Content Idea Maker plan for trend analyses, niches, saved ideas, and AI thumbnails.",
 };
 
 const plans = [
@@ -73,7 +73,7 @@ function PricingHeader() {
         href="/"
         className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
       >
-        Trend Engine
+        Content Idea Maker
       </Link>
       <nav className="flex items-center gap-6 text-sm">
         <Link
@@ -87,6 +87,12 @@ function PricingHeader() {
           className="fluid-transition font-medium text-primary hover:text-foreground"
         >
           Pricing
+        </Link>
+        <Link
+          href="/about"
+          className="fluid-transition text-muted-foreground hover:text-foreground"
+        >
+          About
         </Link>
         <Link
           href="/login"
@@ -289,6 +295,9 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
         <nav className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
           <Link href="/support" className="hover:text-foreground">
             Support
+          </Link>
+          <Link href="/status" className="hover:text-foreground">
+            Status
           </Link>
           <Link href="/privacy" className="hover:text-foreground">
             Privacy

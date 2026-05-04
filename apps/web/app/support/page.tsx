@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Support - Trend Engine",
+  title: "Support",
   description:
-    "Get help with Trend Engine billing, credits, account access, and ideas.",
+    "Get help with Content Idea Maker billing, credits, account access, and ideas.",
 };
 
 const topics = [
@@ -51,7 +51,7 @@ export default function SupportPage() {
           href="/"
           className="text-sm font-medium text-primary hover:underline"
         >
-          Trend Engine
+          Content Idea Maker
         </Link>
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Support</h1>
@@ -86,7 +86,7 @@ export default function SupportPage() {
             >
               {supportEmail}
             </a>{" "}
-            from the address connected to your Trend Engine account. Include
+            from the address connected to your Content Idea Maker account. Include
             screenshots and the niche you analyzed when a generated result looks
             wrong.
           </p>

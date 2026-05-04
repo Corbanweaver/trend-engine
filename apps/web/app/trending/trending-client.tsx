@@ -115,7 +115,7 @@ export function TrendingLivePage() {
             href="/"
             className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
           >
-            Trend Engine
+            Content Idea Maker
           </Link>
           <nav className="flex items-center gap-6 text-sm">
             <span className="font-medium text-primary">Trending</span>
@@ -300,7 +300,7 @@ export function TrendingLivePage() {
             href="/dashboard"
             className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-lg hover:opacity-95 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
           >
-            Open Trend Engine
+            Open Content Idea Maker
             <ArrowRight className="size-4" />
           </Link>
         </div>

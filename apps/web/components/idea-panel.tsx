@@ -519,7 +519,7 @@ export function IdeaPanel({
         </h2>
         <p className="mt-1 text-xs text-muted-foreground dark:text-slate-400">
           {trend.ideas.length} idea{trend.ideas.length === 1 ? "" : "s"} from
-          your Trend Engine
+          Content Idea Maker
         </p>
       </div>
 

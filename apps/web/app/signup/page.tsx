@@ -77,8 +77,16 @@ export default function SignupPage() {
   return (
     <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
       <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
+        <Link
+          href="/"
+          className="mb-6 block text-xs font-semibold uppercase tracking-[0.2em] text-primary dark:text-cyan-300"
+        >
+          Content Idea Maker
+        </Link>
         <h1 className="text-2xl font-semibold">Sign up</h1>
-        <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">Create your account.</p>
+        <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
+          Create your account and run your first trend analysis.
+        </p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm">

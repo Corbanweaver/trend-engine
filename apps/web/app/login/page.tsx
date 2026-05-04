@@ -86,8 +86,16 @@ function LoginForm() {
   return (
     <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
       <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
+        <Link
+          href="/"
+          className="mb-6 block text-xs font-semibold uppercase tracking-[0.2em] text-primary dark:text-cyan-300"
+        >
+          Content Idea Maker
+        </Link>
         <h1 className="text-2xl font-semibold">Log in</h1>
-        <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">Access your dashboard.</p>
+        <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
+          Access your saved ideas, alerts, billing, and creator dashboard.
+        </p>
         {verifyPrompt ? (
           <p className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">
             Please check your email to confirm your account.

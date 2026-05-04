@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.contentideamaker.com"),
   title: {
-    default: "Trend Engine - AI Content Ideas From Live Trends",
-    template: "%s | Trend Engine",
+    default: "Content Idea Maker - AI Content Ideas From Live Trends",
+    template: "%s | Content Idea Maker",
   },
   applicationName: "Content Idea Maker",
   description:
@@ -42,16 +42,16 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "Trend Engine - AI Content Ideas From Live Trends",
+    title: "Content Idea Maker - AI Content Ideas From Live Trends",
     description:
-      "Analyze trends across creator platforms and generate AI-powered content ideas with thumbnails.",
+      "Analyze trend signals across creator platforms and generate AI-powered content ideas with thumbnails.",
     url: "https://www.contentideamaker.com",
-    siteName: "Trend Engine",
+    siteName: "Content Idea Maker",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Trend Engine - AI Content Ideas From Live Trends",
+    title: "Content Idea Maker - AI Content Ideas From Live Trends",
     description:
       "Find live trends and turn them into AI-assisted content ideas.",
   },

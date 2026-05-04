@@ -66,12 +66,15 @@ function buildDigestEmailHtml(payload: {
     return `<h2 style="font-size:18px;margin:24px 0 8px;">${title}</h2><ul style="padding-left:20px;margin:0;">${list}</ul>`;
   });
   return `
-    <div style="font-family:system-ui,Segoe UI,sans-serif;max-width:560px;line-height:1.5;color:#111;">
-      <h1 style="font-size:22px;margin:0 0 12px;">Your weekly trend digest</h1>
-      <p style="color:#444;margin:0 0 20px;">Top topics across the niches you follow. Open the dashboard to generate full video ideas.</p>
+    <div style="font-family:system-ui,Segoe UI,sans-serif;max-width:600px;line-height:1.5;color:#111827;background:#ffffff;">
+      <div style="background:#0f172a;color:#f8fafc;border-radius:18px;padding:22px 24px;margin-bottom:24px;">
+        <p style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#67e8f9;margin:0 0 8px;">Content Idea Maker</p>
+        <h1 style="font-size:24px;margin:0;">Your weekly trend digest</h1>
+        <p style="color:#dbeafe;margin:10px 0 0;">Top topics across the niches you follow. Open the dashboard to generate full video ideas.</p>
+      </div>
       ${blocks.join("")}
       <p style="margin-top:28px;">
-        <a href="${escapeHtml(siteUrl + "/dashboard")}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;">Open Trend Engine</a>
+        <a href="${escapeHtml(siteUrl + "/dashboard")}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;">Open Content Idea Maker</a>
       </p>
       <p style="font-size:12px;color:#888;margin-top:32px;">You receive this because you subscribed on Trend Alerts. <a href="${escapeHtml(siteUrl + "/alerts")}" style="color:#2563eb;">Manage niches</a>.</p>
     </div>
@@ -82,7 +85,7 @@ function buildDigestEmailText(payload: {
   sections: { niche: string; topics: string[]; error?: string }[];
   siteUrl: string;
 }): string {
-  const lines: string[] = ["Your weekly trend digest", ""];
+  const lines: string[] = ["Content Idea Maker", "Your weekly trend digest", ""];
   for (const s of payload.sections) {
     lines.push(nicheDisplayName(s.niche));
     if (s.error) {
@@ -179,7 +182,7 @@ export async function GET(request: Request) {
       await transporter.sendMail({
         from: gmailUser,
         to: email,
-        subject: "Your weekly trend digest — Trend Engine",
+        subject: "Your weekly trend digest - Content Idea Maker",
         text: buildDigestEmailText({ sections, siteUrl }),
         html: buildDigestEmailHtml({ sections, siteUrl }),
       });

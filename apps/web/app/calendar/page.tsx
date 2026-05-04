@@ -44,7 +44,7 @@ export default function CalendarPage() {
   }, []);
 
   useEffect(() => {
-    document.title = "Content Calendar — Trend Engine";
+    document.title = "Content Calendar — Content Idea Maker";
   }, []);
 
   useEffect(() => {
@@ -238,8 +238,9 @@ export default function CalendarPage() {
             <div className="space-y-2">
               {unscheduled.length === 0 ? (
                 <div className="rounded-xl border border-border bg-muted p-3 text-xs text-muted-foreground">
-                  All ideas are scheduled. Drag items between dates to
-                  reschedule.
+                  {ideas.length === 0
+                    ? "Save an idea from the dashboard and it will be ready to schedule here."
+                    : "All ideas are scheduled. Drag items between dates to reschedule."}
                 </div>
               ) : null}
               {unscheduled.map((idea, idx) => (
