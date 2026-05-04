@@ -5,6 +5,7 @@
   "scripts": {
     "preinstall": "node scripts/ensure-pnpm.mjs",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "monitor:production": "node scripts/check-production-health.mjs",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./apps/**\" --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },

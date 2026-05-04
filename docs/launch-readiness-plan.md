@@ -33,7 +33,7 @@ Goal: know when something breaks before customers have to tell us.
 - Confirm deployment failure emails are understood or filtered.
 - Check OpenAI, Railway, Stripe, and Supabase dashboards for useful alerts.
 
-Status: `/api/health` and `/api/health/deep` exist. Dashboard alert setup still needs to be done.
+Status: `/api/health`, `/api/health/deep`, `pnpm monitor:production`, and a scheduled GitHub Actions monitor exist. External uptime/provider dashboard alerts still need setup.
 
 ## 3. Support Readiness
 
