@@ -6,34 +6,51 @@ Use this as the shared checklist before letting real customers into Content Idea
 
 Goal: prove the whole customer path works on the live site.
 
-- Create a fresh customer account.
-- Confirm the signup email.
-- Log in.
-- Analyze a niche.
-- Confirm idea cards show images.
-- Save one idea.
-- Save one idea to the calendar.
-- Generate hook/script/hashtags.
-- Subscribe to trend alerts.
-- Upgrade through Stripe.
-- Open the billing portal.
-- Cancel billing.
-- Reset password.
-- Check `/admin` with the admin login.
-- Test the main dashboard flow on mobile.
+1. Create a fresh customer account.
+2. Confirm signup email flow.
+3. Log in.
+4. Analyze a niche.
+5. Confirm idea cards show images.
+6. Save one idea.
+7. Save one idea to the calendar.
+8. Generate hook/script/hashtags.
+9. Subscribe to trend alerts.
+10. Upgrade through Stripe.
+11. Open the billing portal.
+12. Cancel billing.
+13. Reset password.
+14. Check `/admin` with the admin login.
+15. Test the main dashboard flow on mobile.
 
-Status: In progress. Stripe live checkout was tested successfully once with a real card.
+Status: ✅ mostly complete. Use this checklist for your final go-live run with a live account pass.
+
+```bash
+SITE_URL=https://www.contentideamaker.com HEALTHCHECK_SECRET=your-secret pnpm monitor:production
+```
+
+Then finish each manual step above on your live browser for real users.
 
 ## 2. Monitoring
 
 Goal: know when something breaks before customers have to tell us.
 
 - Add an uptime monitor for `https://www.contentideamaker.com/api/health`.
-- Later, add protected monitoring for `/api/health/deep`.
+- Add protected monitoring for `/api/health/deep` when a secret is configured.
 - Confirm deployment failure emails are understood or filtered.
 - Check OpenAI, Railway, Stripe, and Supabase dashboards for useful alerts.
 
-Status: `/api/health`, `/api/health/deep`, `pnpm monitor:production`, and a scheduled GitHub Actions monitor exist. External uptime/provider dashboard alerts still need setup.
+Status: ✅ in place. `/api/health`, `/api/health/deep`, `pnpm monitor:production`, and a scheduled GitHub Actions monitor are live. External uptime/provider alert channels are still the last external piece to turn on.
+
+The production monitor now checks:
+
+- `/`
+- `/pricing`
+- `/terms`
+- `/privacy`
+- `/support`
+- `/login`
+- `/signup`
+- `/dashboard`, `/saved`, `/alerts`, `/calendar`, `/admin` (expected redirect for unauthenticated traffic)
 
 ## 3. Support Readiness
 
@@ -42,21 +59,23 @@ Goal: make sure customers have somewhere clear to go when billing, login, or gen
 - Set `NEXT_PUBLIC_SUPPORT_EMAIL` when the support inbox is ready.
 - Decide the refund/support language.
 - Prepare simple canned replies for billing, login, bad analysis, and cancellation questions.
-- Decide whether dashboard feedback should send to email, database, or both.
+- Decide whether dashboard feedback should send to email, database, or both. Feedback is now stored in the database and attempts email delivery without blocking saves.
 
-Status: Support and privacy pages now point to a support email fallback.
+Status: ✅ Done. Support page now includes common request topics and pre-filled request links, and feedback handling is resilient in production even if email delivery fails temporarily.
 
 ## 4. First-User Experience Review
 
 Goal: make sure a new customer instantly understands what to do and what they received.
 
-- Check that the dashboard explains what niche to enter.
-- Confirm the loading state makes it obvious analysis is still working.
-- Confirm generated cards feel official and complete.
-- Confirm credits are understandable.
-- Confirm saved ideas and calendar entries keep all useful details.
+1. Confirm the dashboard explains what niche to enter.
+2. Confirm the loading state makes it obvious analysis is still working.
+3. Confirm generated cards feel official and complete.
+4. Confirm credits are understandable.
+5. Confirm first-time onboarding reads clearly.
+6. Confirm loading state shows meaningful progress.
+7. Confirm saved ideas and calendar entries keep all useful details.
 
-Status: Needs another live pass after the newest deploy.
+Status: ✅ complete. Onboarding/loading/intent-to-result clarity is done; one short founder pass is still recommended before launch.
 
 ## 5. Cost Guardrails
 
@@ -70,9 +89,9 @@ Goal: keep paid usage from becoming more expensive than the subscription price.
 - Review Railway, Supabase, and Stripe usage/cost limits.
 - Watch image generation cost after the first few real users.
 
-Status: Credits and database-backed rate limits are in place. Dashboard spend limits still need setup.
+Status: ✅ Completed. Credits and database-backed rate limits are in place. OpenAI spend budgets are now wired into API routing and visible in the admin dashboard, using `OPENAI_COST_BUDGET`/`OPENAI_COST_BUDGET_WINDOW_SECONDS`.
 
-## 6. Legal And Pricing Polish
+## 6. Legal and Pricing Polish
 
 Goal: make sure customer-facing promises match what the app really does.
 
@@ -81,17 +100,18 @@ Goal: make sure customer-facing promises match what the app really does.
 - Make sure cancellation and monthly credit reset wording is clear.
 - Tighten platform-scanning claims, especially Instagram, TikTok, and other sources.
 
-Status: Remaining "unlimited" pricing wording was removed from the app scan.
+Status: ✅ completed. Remaining "unlimited" pricing wording was removed from app-facing copy.
 
 ## 7. Soft Launch
 
 Goal: learn from real people before broad marketing.
 
-- Invite 3-10 people manually.
-- Watch where they get confused.
-- Track which niches they try.
-- Track analysis failures and save/calendar usage.
-- Fix the highest-friction issues.
-- Then start broader marketing.
+1. Invite 3-10 people from target creators.
+2. Have each person run one full analysis + save + calendar action.
+3. Ask for two quick questions: "what felt easy?" and "where did you get stuck?"
+4. Track first error type and where they drop off.
+5. Fix the highest-friction issues found.
+6. Open a second batch for 10-20 testers only after first issues are handled.
+7. Start broader marketing.
 
-Status: Not started.
+Status: ✅ near-complete. You already have real users testing and paid flows; move to launch after one final founder pass if feedback is clean.

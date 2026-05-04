@@ -654,11 +654,16 @@ function LoadingState({
   niche,
   step,
   progress,
+  elapsedSeconds,
 }: {
   niche: string;
   step: string;
   progress: number;
+  elapsedSeconds: number;
 }) {
+  const elapsedDisplay = `${Math.floor(elapsedSeconds / 60)}m ${String(
+    elapsedSeconds % 60,
+  ).padStart(2, "0")}s`;
   return (
     <div className="flex flex-col items-center justify-center gap-5 py-20 text-center">
       <div className="relative flex items-center justify-center">
@@ -682,8 +687,10 @@ function LoadingState({
           />
         </div>
         <p className="text-xs text-slate-400">
-          This can take 30-90 seconds because we are scanning sources and
-          generating images.
+          Time running:{" "}
+          <span className="font-medium text-slate-200">{elapsedDisplay}</span> ·
+          This usually takes 30 to 90 seconds while we scan sources and generate
+          images. Leave this tab open and don&apos;t refresh.
         </p>
       </div>
       <div className="grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -775,6 +782,7 @@ export function TrendDashboard() {
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisElapsedSeconds, setAnalysisElapsedSeconds] = useState(0);
   const [lastAnalyzed, setLastAnalyzed] = useState<LastAnalyzedSnapshot | null>(
     null,
   );
@@ -906,14 +914,24 @@ export function TrendDashboard() {
     setLoading(true);
     setError(null);
     setSelectedIndex(null);
+    setAnalysisElapsedSeconds(0);
     setAnalysisProgress(8);
     setAnalysisStep(ANALYSIS_PROGRESS_STEPS[0]);
     let stepIndex = 0;
+    let elapsedSeconds = 0;
     const timer = window.setInterval(() => {
-      stepIndex = Math.min(stepIndex + 1, ANALYSIS_PROGRESS_STEPS.length - 1);
-      setAnalysisStep(ANALYSIS_PROGRESS_STEPS[stepIndex]);
-      setAnalysisProgress((prev) => Math.min(prev + 14, 94));
-    }, 3500);
+      elapsedSeconds += 1;
+      setAnalysisElapsedSeconds(elapsedSeconds);
+      const nextStepIndex = Math.min(
+        Math.floor(elapsedSeconds / 4),
+        ANALYSIS_PROGRESS_STEPS.length - 1,
+      );
+      if (nextStepIndex !== stepIndex) {
+        stepIndex = nextStepIndex;
+        setAnalysisStep(ANALYSIS_PROGRESS_STEPS[stepIndex]);
+      }
+      setAnalysisProgress(Math.min(Math.round((elapsedSeconds / 75) * 94), 94));
+    }, 1000);
     try {
       const res = await fetchTrendIdeas(effectiveNiche);
       setData(res);
@@ -959,6 +977,7 @@ export function TrendDashboard() {
       setLoading(false);
       window.setTimeout(() => {
         setAnalysisProgress(0);
+        setAnalysisElapsedSeconds(0);
       }, 450);
     }
   }, [applyCreditSnapshot, creditsRemaining, effectiveNiche, isAdmin]);
@@ -1001,7 +1020,9 @@ export function TrendDashboard() {
 
     const loadAdminStatus = async () => {
       try {
-        const response = await fetch("/api/admin/status", { cache: "no-store" });
+        const response = await fetch("/api/admin/status", {
+          cache: "no-store",
+        });
         if (!response.ok) {
           setIsAdmin(false);
           return;
@@ -1210,39 +1231,64 @@ export function TrendDashboard() {
       const title =
         idea.optimized_title?.trim() || idea.hook || trend || "Saved idea";
       const saveKey = buildIdeaSaveKey(trend, idea);
-      const lockKey = `${mode}:${user.id}:${saveKey}`;
+      const lockKey = `save:${mode}:${user.id}:${saveKey}`;
       if (saveIdeaLocksRef.current.has(lockKey)) return;
       saveIdeaLocksRef.current.add(lockKey);
 
       try {
-        const { data: inserted, error: insertError } = await supabase
-          .from("saved_ideas")
-          .upsert(
-            {
-              user_id: user.id,
-              save_key: saveKey,
-              idea_title: title,
-              idea_content: buildSavedIdeaContent(trend, idea),
-              thumbnail_url: getVideoIdeaThumbnailUrls(idea)[0] ?? "",
-              niche: effectiveNiche,
-            },
-            { onConflict: "user_id,save_key" },
-          )
-          .select("id")
-          .single<{ id: string }>();
+        let savedIdeaId = "";
 
-        if (insertError) {
-          throw new Error(insertError.message);
+        const { data: existing, error: findError } = await supabase
+          .from("saved_ideas")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("save_key", saveKey)
+          .limit(1)
+          .maybeSingle<{ id: string }>();
+
+        if (findError) {
+          throw new Error(findError.message);
         }
 
-        if (mode === "calendar" && inserted?.id) {
+        if (existing?.id) {
+          savedIdeaId = existing.id;
+        }
+
+        if (!savedIdeaId) {
+          const { data: inserted, error: insertError } = await supabase
+            .from("saved_ideas")
+            .upsert(
+              {
+                user_id: user.id,
+                save_key: saveKey,
+                idea_title: title,
+                idea_content: buildSavedIdeaContent(trend, idea),
+                thumbnail_url: getVideoIdeaThumbnailUrls(idea)[0] ?? "",
+                niche: effectiveNiche,
+              },
+              { onConflict: "user_id,save_key" },
+            )
+            .select("id")
+            .single<{ id: string }>();
+
+          if (insertError) {
+            throw new Error(insertError.message);
+          }
+          savedIdeaId = inserted?.id ?? "";
+        }
+
+        if (!savedIdeaId) {
+          throw new Error("Failed to save idea.");
+        }
+
+        if (mode === "calendar") {
           const tomorrow = new Date();
           tomorrow.setDate(tomorrow.getDate() + 1);
           const dayKey = tomorrow.toISOString().slice(0, 10);
           const raw = window.localStorage.getItem(CALENDAR_PLAN_STORAGE_KEY);
           const map = raw ? (JSON.parse(raw) as Record<string, string[]>) : {};
           const existing = new Set(map[dayKey] ?? []);
-          existing.add(inserted.id);
+          existing.add(savedIdeaId);
           map[dayKey] = [...existing];
           window.localStorage.setItem(
             CALENDAR_PLAN_STORAGE_KEY,
@@ -1250,7 +1296,7 @@ export function TrendDashboard() {
           );
         }
       } finally {
-        window.setTimeout(() => saveIdeaLocksRef.current.delete(lockKey), 1500);
+        saveIdeaLocksRef.current.delete(lockKey);
       }
     },
     [buildSavedIdeaContent, effectiveNiche],
@@ -1272,6 +1318,10 @@ export function TrendDashboard() {
               <li>2. Run your first analysis</li>
               <li>3. Save your best ideas</li>
             </ol>
+            <p className="mt-4 text-xs text-muted-foreground dark:text-slate-400">
+              Each analysis takes 30-90 seconds. If no result appears right
+              away, keep this window open and the process will continue.
+            </p>
             <div className="mt-6 flex justify-end">
               <Button
                 type="button"
@@ -1634,6 +1684,7 @@ export function TrendDashboard() {
               niche={effectiveNiche}
               step={analysisStep}
               progress={analysisProgress}
+              elapsedSeconds={analysisElapsedSeconds}
             />
           ) : null}
 
@@ -1644,9 +1695,25 @@ export function TrendDashboard() {
                 No data yet
               </p>
               <p className="max-w-sm text-xs">
-                Choose a niche and run <strong>Analyze trends</strong> to load
-                cards from your FastAPI backend.
+                Choose a niche and run <strong>Analyze trends</strong>.
               </p>
+              <p className="max-w-md text-sm">
+                You&apos;ll get a full results page with:
+              </p>
+              <ul className="mt-1 max-w-md list-disc space-y-1 text-left text-xs text-muted-foreground">
+                <li>
+                  Top niche trends detected across TikTok, Instagram, YouTube,
+                  Reddit, and web signals.
+                </li>
+                <li>
+                  AI-ready idea cards with hook, angle, quick script, and source
+                  links.
+                </li>
+                <li>Image previews so you can compare ideas at a glance.</li>
+                <li>
+                  Save options for your ideas library or content calendar.
+                </li>
+              </ul>
             </div>
           ) : null}
 
@@ -1796,7 +1863,12 @@ export function TrendDashboard() {
         </div>
       ) : null}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur dark:border-white/10 dark:bg-slate-950/95 lg:hidden">
-        <div className={cn("mx-auto grid max-w-lg", isAdmin ? "grid-cols-7" : "grid-cols-6")}>
+        <div
+          className={cn(
+            "mx-auto grid max-w-lg",
+            isAdmin ? "grid-cols-7" : "grid-cols-6",
+          )}
+        >
           <Link
             href="/"
             className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300"

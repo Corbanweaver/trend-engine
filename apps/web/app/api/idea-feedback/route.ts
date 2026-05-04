@@ -11,7 +11,14 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const gmailUser = process.env.GMAIL_USER;
 const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
-const feedbackAdminEmail = "corbanweaver5@gmail.com";
+const feedbackSenderEmail =
+  process.env.FEEDBACK_SENDER_EMAIL?.trim() ||
+  gmailUser ||
+  "support@contentideamaker.com";
+const feedbackRecipientEmail =
+  process.env.FEEDBACK_ADMIN_EMAIL?.trim() ||
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() ||
+  "support@contentideamaker.com";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,11 +64,15 @@ async function sendFeedbackEmail({
   ideaTitle,
   feedbackType,
   message,
+  recipientEmail,
+  senderEmail,
 }: {
   userEmail: string;
   ideaTitle: string;
   feedbackType: FeedbackPayload["feedback_type"];
   message: string;
+  recipientEmail: string;
+  senderEmail: string;
 }) {
   if (!gmailUser || !gmailAppPassword) {
     throw new Error("Missing GMAIL_USER or GMAIL_APP_PASSWORD");
@@ -91,8 +102,8 @@ async function sendFeedbackEmail({
 
   try {
     await transporter.sendMail({
-      from: gmailUser,
-      to: feedbackAdminEmail,
+      from: senderEmail,
+      to: recipientEmail,
       subject: `Trend Engine feedback: ${prettyFeedback}`,
       html,
       text,
@@ -215,8 +226,25 @@ export async function POST(request: Request) {
       ideaTitle,
       feedbackType,
       message,
+      recipientEmail: feedbackRecipientEmail,
+      senderEmail: feedbackSenderEmail,
     });
   } catch (emailError) {
+    if (!gmailUser || !gmailAppPassword) {
+      await recordOperationalEvent(admin, {
+        level: "warn",
+        source: "idea_feedback",
+        message: "Feedback email skipped due to missing SMTP credentials",
+        userId: user.id,
+        metadata: { ideaTitle, feedbackType },
+      });
+      return NextResponse.json({
+        ok: true,
+        emailSent: false,
+        message:
+          "We saved your feedback. Email notifications are temporarily unavailable.",
+      });
+    }
     await recordOperationalEvent(admin, {
       level: "error",
       source: "idea_feedback",
@@ -227,16 +255,18 @@ export async function POST(request: Request) {
       userId: user.id,
       metadata: { ideaTitle, feedbackType },
     });
-    return NextResponse.json(
-      {
-        error:
-          emailError instanceof Error
-            ? emailError.message
-            : "Failed to send feedback email",
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({
+      ok: false,
+      emailSent: false,
+      error:
+        emailError instanceof Error
+          ? emailError.message
+          : "Failed to send feedback email",
+    });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    emailSent: true,
+  });
 }

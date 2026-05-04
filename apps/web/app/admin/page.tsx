@@ -5,7 +5,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 
 import { isAdminEmail } from "@/lib/admin";
-import { getMonthlyCreditLimit } from "@/lib/credits";
+import { getMonthlyCreditLimit, getOpenAICreditBudget } from "@/lib/credits";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +31,14 @@ type OperationalEventRow = {
   message: string;
   user_id: string | null;
   created_at: string;
+};
+
+type TrendAiRateLimitRow = {
+  count: number;
+  window_start: string;
+  window_seconds: number;
+  action: string;
+  rate_key: string;
 };
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -140,6 +148,7 @@ export default async function AdminPage() {
     waitlistResult,
     alertsResult,
     rateLimitsResult,
+    openAiSpendResult,
     eventsResult,
   ] = await Promise.all([
     admin
@@ -162,6 +171,13 @@ export default async function AdminPage() {
         new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
       )
       .limit(1000),
+    admin
+      .from("api_rate_limits")
+      .select("count, window_start, window_seconds, action, rate_key")
+      .eq("action", "trend_ai_cost")
+      .eq("rate_key", "global:trend-ai-cost")
+      .order("window_start", { ascending: false })
+      .limit(10),
     admin
       .from("operational_events")
       .select("id, level, source, message, user_id, created_at")
@@ -212,7 +228,53 @@ export default async function AdminPage() {
     );
   }
 
-  const cards = [
+  const openAiCostBudget = getOpenAICreditBudget();
+  const openAiRateRows = (openAiSpendResult.data ?? []) as
+    | TrendAiRateLimitRow[]
+    | null;
+  const activeOpenAiBudgetWindow =
+    openAiRateRows?.find((row) => {
+      const windowStart = Date.parse(row.window_start);
+      if (Number.isNaN(windowStart)) return false;
+      const windowEnd = windowStart + row.window_seconds * 1000;
+      const now = Date.now();
+      return now >= windowStart && now < windowEnd;
+    }) ??
+    (openAiRateRows ?? [])[0] ??
+    null;
+
+  const openAiBudgetRemaining = activeOpenAiBudgetWindow
+    ? Math.max(0, openAiCostBudget.limit - activeOpenAiBudgetWindow.count)
+    : openAiCostBudget.limit > 0
+      ? openAiCostBudget.limit
+      : 0;
+  const openAiBudgetUsagePercent =
+    openAiCostBudget.limit > 0
+      ? Math.min(
+          100,
+          Math.round(
+            ((openAiCostBudget.limit - openAiBudgetRemaining) /
+              openAiCostBudget.limit) *
+              100,
+          ),
+        )
+      : 0;
+  const openAiWindowResetsAt = activeOpenAiBudgetWindow
+    ? formatDateTime(
+        new Date(
+          Date.parse(activeOpenAiBudgetWindow.window_start) +
+            activeOpenAiBudgetWindow.window_seconds * 1000,
+        ).toISOString(),
+      )
+    : "No active window";
+
+  type MetricCard = {
+    label: string;
+    value: number | string;
+    helper: string;
+  };
+
+  const cards: MetricCard[] = [
     {
       label: "Accounts",
       value: subscriptions.length,
@@ -242,6 +304,17 @@ export default async function AdminPage() {
       label: "Credits used",
       value: totalCredits,
       helper: `${totalAnalyses} analyses`,
+    },
+    {
+      label: "AI spend budget",
+      value:
+        openAiCostBudget.limit > 0
+          ? `${openAiBudgetRemaining}/${openAiCostBudget.limit}`
+          : "Not set",
+      helper:
+        openAiCostBudget.limit > 0
+          ? `Window ${openAiBudgetUsagePercent}% used, resets ${openAiWindowResetsAt}`
+          : "Set OPENAI_COST_BUDGET to enable.",
     },
   ];
   const events = (eventsResult.data ?? []) as OperationalEventRow[];
@@ -279,7 +352,9 @@ export default async function AdminPage() {
                 {card.label}
               </p>
               <p className="mt-2 text-3xl font-semibold">
-                {compactNumber(card.value)}
+                {typeof card.value === "number"
+                  ? compactNumber(card.value)
+                  : card.value}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {card.helper}
@@ -353,6 +428,45 @@ export default async function AdminPage() {
                   No tracked API usage yet.
                 </p>
               ) : null}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <h2 className="text-sm font-semibold">Recent AI spend windows</h2>
+            <div className="mt-4 space-y-2">
+              {openAiRateRows && openAiRateRows.length > 0 ? (
+                openAiRateRows.slice(0, 6).map((row) => {
+                  const windowStart = new Date(row.window_start);
+                  const resetAt = new Date(
+                    windowStart.getTime() + row.window_seconds * 1000,
+                  );
+                  const budget = openAiCostBudget.limit || 0;
+                  return (
+                    <div
+                      key={`${row.rate_key}-${row.window_start}-${row.window_seconds}`}
+                      className="rounded-xl border border-border bg-muted/30 px-3 py-2"
+                    >
+                      <div className="flex items-center justify-between gap-2 text-sm">
+                        <span className="font-medium">
+                          Window starts{" "}
+                          {formatDateTime(windowStart.toISOString())}
+                        </span>
+                        <span className="tabular-nums">
+                          {budget > 0
+                            ? `${row.count}/${budget}`
+                            : `${row.count}`}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDateTime(resetAt.toISOString())} reset
+                      </p>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="rounded-xl border border-border bg-muted/30 px-3 py-4 text-sm text-muted-foreground">
+                  No trend AI cost rows yet.
+                </p>
+              )}
             </div>
           </div>
         </section>

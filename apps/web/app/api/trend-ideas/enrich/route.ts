@@ -3,7 +3,12 @@ import { NextResponse } from "next/server";
 import { CREDIT_COSTS } from "@/lib/credits";
 import { getBackendHeaders, getBackendUrl } from "@/lib/server-api";
 import { recordOperationalEvent } from "@/lib/server-events";
-import { checkRateLimits, rateLimitResponse } from "@/lib/server-rate-limit";
+import {
+  checkRateLimits,
+  rateLimitResponse,
+  type RateLimitRule,
+} from "@/lib/server-rate-limit";
+import { getOpenAICreditBudget } from "@/lib/credits";
 
 import {
   isInsufficientCreditsError,
@@ -84,7 +89,8 @@ export async function POST(request: Request) {
   }
 
   if (!usage.isAdmin) {
-    const rateLimit = await checkRateLimits(usage.admin, [
+    const globalCostGuard = getOpenAICreditBudget();
+    const rules: RateLimitRule[] = [
       {
         key: `user:${usage.user.id}`,
         action: "idea_enrichment",
@@ -97,7 +103,19 @@ export async function POST(request: Request) {
         limit: 200,
         windowSeconds: 24 * 60 * 60,
       },
-    ]);
+    ];
+
+    if (globalCostGuard.limit > 0) {
+      rules.push({
+        key: "global:trend-ai-cost",
+        action: "trend_ai_cost",
+        cost,
+        limit: globalCostGuard.limit,
+        windowSeconds: globalCostGuard.windowSeconds,
+      });
+    }
+
+    const rateLimit = await checkRateLimits(usage.admin, rules);
     if (!rateLimit.ok) return rateLimitResponse(rateLimit);
   }
 

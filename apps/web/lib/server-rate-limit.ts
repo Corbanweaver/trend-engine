@@ -3,11 +3,12 @@ import "server-only";
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-type RateLimitRule = {
+export type RateLimitRule = {
   key: string;
   action: string;
   limit: number;
   windowSeconds: number;
+  cost?: number;
 };
 
 type RateLimitRpcRow = {
@@ -47,13 +48,18 @@ export async function checkRateLimits(
   rules: RateLimitRule[],
 ): Promise<RateLimitResult> {
   for (const rule of rules) {
+    const cost = Math.max(1, Math.floor(rule.cost ?? 1));
     const { data, error } = await admin
-      .rpc("consume_api_rate_limit", {
-        p_rate_key: rule.key,
-        p_action: rule.action,
-        p_limit: rule.limit,
-        p_window_seconds: rule.windowSeconds,
-      })
+      .rpc(
+        cost > 1 ? "consume_api_rate_limit_weighted" : "consume_api_rate_limit",
+        {
+          p_rate_key: rule.key,
+          p_action: rule.action,
+          p_limit: rule.limit,
+          ...(cost > 1 ? { p_cost: cost } : {}),
+          p_window_seconds: rule.windowSeconds,
+        },
+      )
       .single();
 
     if (error) throw error;

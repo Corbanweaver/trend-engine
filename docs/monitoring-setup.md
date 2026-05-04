@@ -44,6 +44,9 @@ OpenAI:
 - Set a monthly budget limit.
 - Set email alerts around 50%, 80%, and 100% of budget.
 - Review image generation spend after each user test group.
+- Also align app-side cap variables with your provider budget:
+  - `OPENAI_COST_BUDGET` (credit units per window)
+  - `OPENAI_COST_BUDGET_WINDOW_SECONDS` (window duration, defaults to 86400 seconds)
 
 Railway:
 
@@ -76,3 +79,16 @@ Run public and deep checks locally:
 ```bash
 HEALTHCHECK_SECRET=your-secret pnpm monitor:production
 ```
+
+To test the full status from a local terminal against any environment:
+
+```bash
+SITE_URL=https://www.contentideamaker.com pnpm monitor:production
+```
+
+Expected status checks include:
+
+- `200` for open pages: `/`, `/pricing`, `/terms`, `/privacy`, `/support`, `/login`, `/signup`
+- redirect-style status (`302`/`307`) for protected pages when not signed in: `/dashboard`, `/saved`, `/alerts`, `/calendar`, `/admin`
+- `200` for `/api/health`
+- `/api/health/deep` is checked when `HEALTHCHECK_SECRET` is present

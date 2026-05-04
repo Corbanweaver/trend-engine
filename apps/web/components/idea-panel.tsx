@@ -544,6 +544,8 @@ export function IdeaPanel({
       <div className="space-y-3">
         {trend.ideas.map((idea, i) => {
           const thumbnailUrls = getVideoIdeaThumbnailUrls(idea);
+          const isSavingThisIdea =
+            savingIdeaIndex === i || savingCalendarIndex === i;
 
           return (
             <Card
@@ -792,7 +794,7 @@ export function IdeaPanel({
                     <div className="flex flex-wrap gap-2">
                       <Button
                         type="button"
-                        disabled={savingIdeaIndex === i || savedIndexes[i]}
+                        disabled={isSavingThisIdea || savedIndexes[i]}
                         onClick={() => void handleSaveIdea(idea, i, "saved")}
                         className="h-8 bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:opacity-90"
                       >
@@ -804,9 +806,7 @@ export function IdeaPanel({
                       </Button>
                       <Button
                         type="button"
-                        disabled={
-                          savingCalendarIndex === i || calendarSavedIndexes[i]
-                        }
+                        disabled={isSavingThisIdea || calendarSavedIndexes[i]}
                         onClick={() => void handleSaveIdea(idea, i, "calendar")}
                         className={`h-8 border border-emerald-500/35 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 dark:border-emerald-300/40 dark:bg-emerald-500/15 dark:text-emerald-100 dark:hover:bg-emerald-500/25 ${
                           calendarSavedIndexes[i] ? "animate-pulse" : ""

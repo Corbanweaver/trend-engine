@@ -546,9 +546,9 @@ export default function SavedIdeasPage() {
                   {item.idea_title || "Saved idea"}
                 </h2>
                 {item.idea_content ? (
-                  <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-muted-foreground">
-                    {item.idea_content}
-                  </p>
+                  <div className="mt-3 line-clamp-4 text-sm leading-relaxed text-muted-foreground">
+                    <SavedIdeaContent content={item.idea_content} />
+                  </div>
                 ) : (
                   <p className="mt-3 text-sm text-muted-foreground">
                     No script/content available for this idea.
@@ -582,7 +582,7 @@ export default function SavedIdeasPage() {
                   <button
                     type="button"
                     aria-label="Download idea text file"
-                    title="Download .txt"
+                    title="Download.txt"
                     onClick={(e) => {
                       e.stopPropagation();
                       downloadIdeaFile(item);
