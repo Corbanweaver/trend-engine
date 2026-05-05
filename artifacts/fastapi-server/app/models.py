@@ -122,6 +122,18 @@ class DailyTrendingResponse(BaseModel):
     sections: list[DailyPlatformSection]
 
 
+class TrendSignalRefreshRequest(BaseModel):
+    niches: list[str] = Field(default_factory=lambda: ["fitness", "beauty", "food", "fashion", "business"], max_length=20)
+    max_results: int = Field(default=8, ge=1, le=25)
+    platforms: list[str] = Field(default_factory=lambda: ["youtube", "tiktok", "instagram", "pinterest", "x", "reddit"], max_length=10)
+
+
+class TrendSignalRefreshResponse(BaseModel):
+    updated_at: str
+    cached: dict[str, int]
+    skipped_platforms: list[str] = []
+
+
 class YouTubeSearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=200)
     max_results: int = Field(default=5, ge=1, le=20)

@@ -34,6 +34,7 @@ from app.multi_reddit_client import multi_reddit_ingest
 from app.pinterest_client import pinterest_search
 from app.medium_client import medium_search
 from app.x_client import search_x
+from app.social_signal_fetcher import cached_or_fetch, fetch_platform_signals
 
 router = APIRouter(
     prefix="/trend-ideas",
@@ -290,12 +291,12 @@ async def discover_trends(niche: str) -> tuple[list[str], dict]:
         _safe_fetch(google_news_search(niche, max_results=8), []),
         _safe_fetch(google_trends_search(niche), {}, timeout=15.0),
         _safe_fetch(web_search(f"{niche} trending viral 2026", max_results=8), []),
-        _safe_fetch(multi_reddit_ingest(niche, max_per_sub=5, days_back=RECENCY_DAYS), []),
-        _safe_fetch(youtube_search(f"{niche} viral shorts", max_results=6, days_back=RECENCY_DAYS), []),
-        _safe_fetch(search_instagram(f"{niche} reels", max_results=6), []),
-        _safe_fetch(tiktok_trending_search(f"{niche} viral", max_results=6, days_back=RECENCY_DAYS), []),
-        _safe_fetch(pinterest_search(f"{niche} ideas", max_results=6), []),
-        _safe_fetch(search_x(f"{niche} viral", max_results=6), []),
+        _safe_fetch(fetch_platform_signals("reddit", niche, max_results=6, days_back=RECENCY_DAYS), []),
+        _safe_fetch(fetch_platform_signals("youtube", niche, max_results=6, days_back=RECENCY_DAYS), []),
+        _safe_fetch(fetch_platform_signals("instagram", niche, max_results=6, days_back=RECENCY_DAYS), []),
+        _safe_fetch(fetch_platform_signals("tiktok", niche, max_results=6, days_back=RECENCY_DAYS), []),
+        _safe_fetch(fetch_platform_signals("pinterest", niche, max_results=6, days_back=RECENCY_DAYS), []),
+        _safe_fetch(fetch_platform_signals("x", niche, max_results=6, days_back=RECENCY_DAYS), []),
     ]
     news, trends_data, web_results, reddit_posts, youtube, instagram, tiktok, pins, x_posts = await asyncio.gather(*coros)
 
@@ -344,13 +345,48 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
     logger.info("Starting media gather for topic '%s'", topic)
     logger.info("Calling Instagram search for niche '%s'", instagram_query)
     coros = [
-        _safe_fetch(youtube_search(search_query, max_results=5, days_back=RECENCY_DAYS), []),
-        _safe_fetch(search_instagram(instagram_query, max_results=5), []),
-        _safe_fetch(tiktok_trending_search(search_query, max_results=5, days_back=RECENCY_DAYS), []),
-        _safe_fetch(search_x(search_query, max_results=5), []),
+        _safe_fetch(cached_or_fetch(
+            "youtube",
+            niche,
+            search_query,
+            max_results=5,
+            fetch=lambda: youtube_search(search_query, max_results=5, days_back=RECENCY_DAYS),
+            source="youtube-api",
+        ), []),
+        _safe_fetch(cached_or_fetch(
+            "instagram",
+            niche,
+            instagram_query,
+            max_results=5,
+            fetch=lambda: search_instagram(instagram_query, max_results=5),
+            source="apify-instagram",
+        ), []),
+        _safe_fetch(cached_or_fetch(
+            "tiktok",
+            niche,
+            search_query,
+            max_results=5,
+            fetch=lambda: tiktok_trending_search(search_query, max_results=5, days_back=RECENCY_DAYS),
+            source="apify-tiktok",
+        ), []),
+        _safe_fetch(cached_or_fetch(
+            "x",
+            niche,
+            search_query,
+            max_results=5,
+            fetch=lambda: search_x(search_query, max_results=5),
+            source="apify-x",
+        ), []),
         _safe_fetch(google_news_search(search_query, max_results=4), []),
         _safe_fetch(web_search(f"{search_query} trending", max_results=4), []),
-        _safe_fetch(pinterest_search(search_query, max_results=5), []),
+        _safe_fetch(cached_or_fetch(
+            "pinterest",
+            niche,
+            search_query,
+            max_results=5,
+            fetch=lambda: pinterest_search(search_query, max_results=5),
+            source="apify-pinterest",
+        ), []),
         _safe_fetch(medium_search(search_query, max_results=4), []),
     ]
     youtube, instagram_results, tiktok, x_posts, news, web, pins, articles = await asyncio.gather(*coros)

@@ -4,10 +4,16 @@ import json
 import logging
 from urllib.parse import quote
 
+from app.apify_client import common_search_input, configured_actor_id, run_actor_items
+
 logger = logging.getLogger(__name__)
 
 
 async def pinterest_search(query: str, max_results: int = 6) -> list[dict]:
+    results = await _run_apify_pinterest_actor(query, max_results)
+    if results:
+        return results
+
     results = []
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
@@ -38,6 +44,88 @@ async def pinterest_search(query: str, max_results: int = 6) -> list[dict]:
         results = _generate_pinterest_links(query, max_results)
 
     return results
+
+
+async def _run_apify_pinterest_actor(query: str, max_results: int) -> list[dict]:
+    actor_id = configured_actor_id("APIFY_PINTEREST_ACTOR_ID")
+    if not actor_id:
+        return []
+    actor_input = {
+        **common_search_input(query, max_results),
+        "startUrls": [{"url": f"https://www.pinterest.com/search/pins/?q={quote(query)}"}],
+    }
+    data = await run_actor_items(actor_id, actor_input, max_results=max_results)
+    results: list[dict] = []
+    seen: set[str] = set()
+    for item in data:
+        mapped = _map_apify_pinterest_item(item)
+        if not mapped:
+            continue
+        key = mapped.get("link") or mapped.get("pin_id") or mapped.get("title")
+        if key in seen:
+            continue
+        seen.add(str(key))
+        results.append(mapped)
+        if len(results) >= max_results:
+            break
+    return results
+
+
+def _map_apify_pinterest_item(item: dict) -> dict | None:
+    pin_id = (
+        item.get("pin_id")
+        or item.get("pinId")
+        or item.get("id")
+        or item.get("entityId")
+        or item.get("entity_id")
+    )
+    title = (
+        item.get("title")
+        or item.get("grid_title")
+        or item.get("description")
+        or item.get("text")
+        or "Pinterest Pin"
+    )
+    link = (
+        item.get("link")
+        or item.get("url")
+        or item.get("pinUrl")
+        or item.get("pin_url")
+        or ""
+    )
+    if not link and pin_id:
+        link = f"https://www.pinterest.com/pin/{pin_id}/"
+
+    image_url = (
+        item.get("image_url")
+        or item.get("imageUrl")
+        or item.get("image")
+        or item.get("thumbnail")
+        or item.get("thumbnailUrl")
+        or ""
+    )
+    images = item.get("images")
+    if not image_url and isinstance(images, dict):
+        for value in images.values():
+            if isinstance(value, dict) and value.get("url"):
+                image_url = str(value["url"])
+                break
+            if isinstance(value, str) and value:
+                image_url = value
+                break
+
+    board = item.get("board") if isinstance(item.get("board"), dict) else {}
+    pinner = item.get("pinner") if isinstance(item.get("pinner"), dict) else {}
+    if not (title or link or image_url):
+        return None
+    return {
+        "pin_id": str(pin_id or link or title),
+        "title": str(title)[:200],
+        "image_url": str(image_url),
+        "link": str(link),
+        "board_name": str(item.get("board_name") or board.get("name") or ""),
+        "pinner": str(item.get("pinner_name") or item.get("username") or pinner.get("username") or ""),
+    }
 
 
 def _parse_pinterest_html(text: str, max_results: int) -> list[dict]:

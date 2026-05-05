@@ -1,49 +1,26 @@
-import os
 from urllib.parse import quote
 from datetime import datetime, timedelta, timezone
 
 import httpx
 
-APIFY_API_BASE = "https://api.apify.com/v2"
+from app.apify_client import common_search_input, configured_actor_id, run_actor_items
+
 DEFAULT_TIKTOK_ACTOR_ID = "clockworks/free-tiktok-scraper"
 
 
 async def _run_apify_tiktok_actor(query: str, max_results: int, days_back: int = 7) -> list[dict]:
-    token = os.environ.get("APIFY_API_TOKEN", "").strip()
-    if not token:
-        return []
-
     since = datetime.now(timezone.utc) - timedelta(days=max(days_back, 1))
     since_iso = since.isoformat()
     since_unix = int(since.timestamp())
 
-    # Keep the input broad and minimal; actor schemas can evolve.
-    # We submit multiple commonly accepted fields to improve compatibility.
     actor_input = {
-        "query": query,
-        "search": query,
-        "keyword": query,
-        "searchTerms": [query],
-        "maxItems": max_results,
-        "resultsPerPage": max_results,
+        **common_search_input(query, max_results),
         "startDate": since_iso,
         "publishedAfter": since_iso,
         "minCreatedAt": since_unix,
     }
-
-    actor_id = os.environ.get("APIFY_TIKTOK_ACTOR_ID", DEFAULT_TIKTOK_ACTOR_ID).strip()
-    actor_slug = actor_id.replace("/", "~")
-    url = f"{APIFY_API_BASE}/acts/{actor_slug}/run-sync-get-dataset-items"
-    params = {"token": token, "limit": max_results}
-
-    try:
-        async with httpx.AsyncClient(timeout=45.0) as client:
-            resp = await client.post(url, params=params, json=actor_input)
-            resp.raise_for_status()
-            data = resp.json()
-            return data if isinstance(data, list) else []
-    except Exception:
-        return []
+    actor_id = configured_actor_id("APIFY_TIKTOK_ACTOR_ID", DEFAULT_TIKTOK_ACTOR_ID)
+    return await run_actor_items(actor_id, actor_input, max_results=max_results, timeout_seconds=45.0)
 
 
 def _to_int(value: object) -> int:

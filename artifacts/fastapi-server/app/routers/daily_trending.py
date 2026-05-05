@@ -6,20 +6,23 @@ import logging
 from datetime import datetime, timezone
 from urllib.parse import quote
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from app.models import DailyPlatformSection, DailyTrendItem, DailyTrendingResponse
+from app.models import (
+    DailyPlatformSection,
+    DailyTrendItem,
+    DailyTrendingResponse,
+    TrendSignalRefreshRequest,
+    TrendSignalRefreshResponse,
+)
 from app.google_news_client import google_news_search
 from app.google_trends_client import google_trends_search
-from app.multi_reddit_client import multi_reddit_ingest
-from app.instagram_client import search_instagram
-from app.pinterest_client import pinterest_search
-from app.tiktok_client import tiktok_trending_search
-from app.youtube_client import youtube_search
-from app.x_client import search_x
+from app.security import require_operational_key
+from app.social_signal_fetcher import fetch_platform_signals, refresh_social_cache
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/trending", tags=["trending"])
+ALLOWED_REFRESH_PLATFORMS = {"youtube", "tiktok", "instagram", "pinterest", "x", "reddit"}
 
 
 async def _safe(coro, default, timeout: float = 14.0):
@@ -250,12 +253,12 @@ async def get_daily_trending():
     coros = [
         _safe(google_trends_search("viral trends"), {}),
         _safe(google_news_search("top stories United States today", max_results=14), []),
-        _safe(youtube_search("viral shorts trending today", max_results=8, days_back=3), []),
-        _safe(tiktok_trending_search("viral trend", max_results=8, days_back=3), []),
-        _safe(search_instagram("viral reels trending today", max_results=8), []),
-        _safe(pinterest_search("viral content ideas trending", max_results=8), []),
-        _safe(search_x("viral trend today", max_results=8), []),
-        _safe(multi_reddit_ingest("global viral pulse", max_per_sub=5, days_back=3), []),
+        _safe(fetch_platform_signals("youtube", "viral trends", max_results=8, days_back=3), []),
+        _safe(fetch_platform_signals("tiktok", "viral trends", max_results=8, days_back=3), []),
+        _safe(fetch_platform_signals("instagram", "viral trends", max_results=8, days_back=3), []),
+        _safe(fetch_platform_signals("pinterest", "viral trends", max_results=8, days_back=3), []),
+        _safe(fetch_platform_signals("x", "viral trends", max_results=8, days_back=3), []),
+        _safe(fetch_platform_signals("reddit", "global viral pulse", max_results=8, days_back=3), []),
     ]
 
     results = await asyncio.gather(*coros)
@@ -305,3 +308,32 @@ async def get_daily_trending():
     ]
 
     return DailyTrendingResponse(updated_at=loop_ts, sections=sections)
+
+
+@router.post(
+    "/refresh-cache",
+    response_model=TrendSignalRefreshResponse,
+    dependencies=[Depends(require_operational_key)],
+)
+async def refresh_trending_cache(body: TrendSignalRefreshRequest):
+    platforms = [
+        platform.strip().lower()
+        for platform in body.platforms
+        if platform.strip().lower() in ALLOWED_REFRESH_PLATFORMS
+    ]
+    skipped = [
+        platform.strip().lower()
+        for platform in body.platforms
+        if platform.strip().lower() not in ALLOWED_REFRESH_PLATFORMS
+    ]
+    cached = await refresh_social_cache(
+        [niche for niche in body.niches if niche.strip()],
+        platforms,
+        max_results=body.max_results,
+        days_back=7,
+    )
+    return TrendSignalRefreshResponse(
+        updated_at=datetime.now(timezone.utc).isoformat(),
+        cached=cached,
+        skipped_platforms=skipped,
+    )

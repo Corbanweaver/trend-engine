@@ -1,14 +1,11 @@
-import os
 import logging
 import re
 from urllib.parse import quote
 
-import httpx
-
+from app.apify_client import apify_token, configured_actor_id, run_actor_items
 from app.web_search_client import web_search
 
 logger = logging.getLogger(__name__)
-APIFY_API_BASE = "https://api.apify.com/v2"
 DEFAULT_INSTAGRAM_ACTOR_ID = "apify/instagram-scraper"
 
 
@@ -193,15 +190,14 @@ def _map_instagram_item(item: dict) -> dict | None:
 
 
 async def search_instagram(query: str, max_results: int = 5) -> list[dict]:
-    token = os.environ.get("APIFY_API_TOKEN", "").strip()
-    if not token:
+    if not apify_token():
         logger.warning("APIFY_API_TOKEN is not configured; using Instagram organic fallback links.")
         return await _organic_instagram_fallback(query, max_results)
     try:
         tags = _candidate_hashtags(query)
         if not tags:
             return await _organic_instagram_fallback(query, max_results)
-        actor_id = os.environ.get("APIFY_INSTAGRAM_ACTOR_ID", DEFAULT_INSTAGRAM_ACTOR_ID).strip()
+        actor_id = configured_actor_id("APIFY_INSTAGRAM_ACTOR_ID", DEFAULT_INSTAGRAM_ACTOR_ID)
         actor_input = {
             "directUrls": [
                 f"https://www.instagram.com/explore/tags/{quote(tag, safe='')}/"
@@ -213,31 +209,21 @@ async def search_instagram(query: str, max_results: int = 5) -> list[dict]:
             "search": query,
             "searchLimit": max_results,
         }
-        url = f"{APIFY_API_BASE}/acts/{actor_id.replace('/', '~')}/run-sync-get-dataset-items"
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.post(url, params={"token": token}, json=actor_input)
-            if resp.status_code != 200:
-                logger.warning("Instagram Apify request failed with status %s", resp.status_code)
-                return await _organic_instagram_fallback(query, max_results)
-            data = resp.json()
-            if not isinstance(data, list):
-                return await _organic_instagram_fallback(query, max_results)
-            normalized = []
-            seen: set[str] = set()
-            for item in data:
-                if not isinstance(item, dict):
-                    continue
-                mapped = _map_instagram_item(item)
-                if not mapped:
-                    continue
-                key = mapped.get("permalink") or mapped.get("id") or mapped.get("caption")
-                if key in seen:
-                    continue
-                seen.add(str(key))
-                normalized.append(mapped)
-                if len(normalized) >= max_results:
-                    break
-            return normalized or await _organic_instagram_fallback(query, max_results)
+        data = await run_actor_items(actor_id, actor_input, max_results=max_results, timeout_seconds=60.0)
+        normalized = []
+        seen: set[str] = set()
+        for item in data:
+            mapped = _map_instagram_item(item)
+            if not mapped:
+                continue
+            key = mapped.get("permalink") or mapped.get("id") or mapped.get("caption")
+            if key in seen:
+                continue
+            seen.add(str(key))
+            normalized.append(mapped)
+            if len(normalized) >= max_results:
+                break
+        return normalized or await _organic_instagram_fallback(query, max_results)
     except Exception as e:
         logger.warning("Instagram search failed: %s", e)
         return await _organic_instagram_fallback(query, max_results)

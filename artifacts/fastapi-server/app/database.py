@@ -65,6 +65,7 @@ def _ensure_title_column_postgres(conn) -> None:
 def init_db() -> None:
     # SQLite has no TIMESTAMPTZ; TIMESTAMP is portable enough for stored datetimes.
     created_at_type = "TIMESTAMP" if _is_sqlite else "TIMESTAMPTZ"
+    json_type = "TEXT" if _is_sqlite else "JSONB"
     ddl = f"""
         CREATE TABLE IF NOT EXISTS reddit_posts (
             id TEXT PRIMARY KEY,
@@ -74,9 +75,36 @@ def init_db() -> None:
             created_at {created_at_type} NOT NULL
         )
     """
+    trend_signals_ddl = f"""
+        CREATE TABLE IF NOT EXISTS trend_signals (
+            id TEXT PRIMARY KEY,
+            platform TEXT NOT NULL,
+            niche TEXT NOT NULL,
+            query TEXT NOT NULL,
+            title TEXT NOT NULL DEFAULT '',
+            text TEXT NOT NULL DEFAULT '',
+            url TEXT NOT NULL DEFAULT '',
+            thumbnail_url TEXT NOT NULL DEFAULT '',
+            author TEXT NOT NULL DEFAULT '',
+            engagement INTEGER NOT NULL DEFAULT 0,
+            source TEXT NOT NULL DEFAULT 'live',
+            raw_json {json_type} NOT NULL,
+            fetched_at {created_at_type} NOT NULL
+        )
+    """
     with engine.begin() as conn:
         conn.execute(text(ddl))
+        conn.execute(text(trend_signals_ddl))
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_trend_signals_lookup "
+            "ON trend_signals (platform, niche, query, fetched_at)"
+        ))
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_trend_signals_platform_fetched "
+            "ON trend_signals (platform, fetched_at)"
+        ))
         if _is_sqlite:
             _ensure_title_column_sqlite(conn)
         else:
             _ensure_title_column_postgres(conn)
+            conn.execute(text("ALTER TABLE trend_signals ENABLE ROW LEVEL SECURITY"))
