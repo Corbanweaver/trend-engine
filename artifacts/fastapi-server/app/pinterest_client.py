@@ -109,14 +109,29 @@ def _map_apify_pinterest_item(item: dict) -> dict | None:
     if not link and pin_id:
         link = f"https://www.pinterest.com/pin/{pin_id}/"
 
-    image_url = (
+    image_value = (
         item.get("image_url")
         or item.get("imageUrl")
         or item.get("image")
+        or item.get("imageLargeUrl")
+        or item.get("image_large_url")
+        or item.get("imageMediumUrl")
+        or item.get("image_medium_url")
+        or item.get("imageSquareUrl")
+        or item.get("image_square_url")
         or item.get("thumbnail")
         or item.get("thumbnailUrl")
+        or item.get("thumbnail_url")
+        or item.get("displayUrl")
+        or item.get("display_url")
         or ""
     )
+    image_url = ""
+    if isinstance(image_value, dict):
+        image_url = str(image_value.get("url") or image_value.get("src") or "")
+    else:
+        image_url = str(image_value)
+
     images = item.get("images")
     if not image_url and isinstance(images, dict):
         for value in images.values():
@@ -126,6 +141,16 @@ def _map_apify_pinterest_item(item: dict) -> dict | None:
             if isinstance(value, str) and value:
                 image_url = value
                 break
+    media = item.get("media")
+    if not image_url and isinstance(media, dict):
+        image_url = str(
+            media.get("url")
+            or media.get("imageUrl")
+            or media.get("image_url")
+            or media.get("thumbnailUrl")
+            or media.get("thumbnail_url")
+            or ""
+        )
 
     board = item.get("board") if isinstance(item.get("board"), dict) else {}
     pinner = item.get("pinner") if isinstance(item.get("pinner"), dict) else {}

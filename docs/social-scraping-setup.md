@@ -23,7 +23,7 @@ Set these in Vercel and Railway/FastAPI as noted:
 
 Start with TikTok and Instagram, then add Pinterest/X actors once selected in Apify:
 
-- `APIFY_TIKTOK_ACTOR_ID=clockworks/free-tiktok-scraper`
+- `APIFY_TIKTOK_ACTOR_ID=clockworks/tiktok-scraper`
 - `APIFY_INSTAGRAM_ACTOR_ID=apify/instagram-scraper`
 - `APIFY_PINTEREST_ACTOR_ID=`
 - `APIFY_X_ACTOR_ID=`

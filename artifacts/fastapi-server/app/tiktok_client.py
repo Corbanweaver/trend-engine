@@ -5,7 +5,7 @@ import httpx
 
 from app.apify_client import common_search_input, configured_actor_id, run_actor_items
 
-DEFAULT_TIKTOK_ACTOR_ID = "clockworks/free-tiktok-scraper"
+DEFAULT_TIKTOK_ACTOR_ID = "clockworks/tiktok-scraper"
 
 
 async def _run_apify_tiktok_actor(
@@ -20,9 +20,19 @@ async def _run_apify_tiktok_actor(
 
     actor_input = {
         **common_search_input(query, max_results),
+        "searchQueries": [query],
+        "searchSection": "/video",
+        "searchSorting": "0",
+        "searchDatePosted": "0",
         "startDate": since_iso,
         "publishedAfter": since_iso,
         "minCreatedAt": since_unix,
+        "resultsPerPage": max_results,
+        "maxProfilesPerQuery": 0,
+        "maxFollowersPerProfile": 0,
+        "maxFollowingPerProfile": 0,
+        "shouldDownloadCovers": True,
+        "shouldDownloadVideos": False,
     }
     actor_id = configured_actor_id("APIFY_TIKTOK_ACTOR_ID", DEFAULT_TIKTOK_ACTOR_ID)
     return await run_actor_items(
