@@ -856,20 +856,6 @@
             margin-left: 16px;
         }
 
-        .thumbnail-result {
-            display: none;
-            margin-top: 12px;
-        }
-
-        .thumbnail-result.open { display: block; }
-
-        .thumbnail-result img {
-            width: 100%;
-            max-width: 300px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-md);
-        }
-
         .copy-toast {
             position: fixed;
             bottom: 24px;
@@ -1056,35 +1042,6 @@
             }
         }
 
-        async function generateThumbnail(id) {
-            const idea = ideaStore[id];
-            if (!idea) return;
-            const btn = document.getElementById('thumb-btn-' + id);
-            const box = document.getElementById('thumb-box-' + id);
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span> Generating...';
-            try {
-                const res = await fetch('/ai/generate-thumbnail', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        idea: idea.idea,
-                        hook: idea.hook,
-                        niche: getNiche(),
-                    })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Failed');
-                box.innerHTML = `<img src="data:image/png;base64,${data.image_b64}" alt="AI Thumbnail">`;
-                box.classList.add('open');
-                btn.innerHTML = 'Generated';
-                btn.classList.add('active');
-            } catch (e) {
-                btn.innerHTML = 'Generation Failed';
-                setTimeout(() => { btn.innerHTML = 'AI Thumbnail'; btn.disabled = false; }, 2000);
-            }
-        }
-
         let currentUtterance = null;
         function voicePreview(id) {
             if (!('speechSynthesis' in window)) return;
@@ -1158,11 +1115,9 @@
                             ` : ''}
                             <div class="idea-actions">
                                 ${idea.script ? `<button class="action-btn" id="refine-btn-${uid}" onclick="refineScript('${uid}')">Refine with Claude</button>` : ''}
-                                <button class="action-btn" id="thumb-btn-${uid}" onclick="generateThumbnail('${uid}')">AI Thumbnail</button>
                                 ${idea.script ? `<button class="action-btn" id="voice-btn-${uid}" onclick="voicePreview('${uid}')">Voice Preview</button>` : ''}
                             </div>
                             <div class="refine-result" id="refine-box-${uid}"></div>
-                            <div class="thumbnail-result" id="thumb-box-${uid}"></div>
                         </div>
                     </div>
                 </div>`;

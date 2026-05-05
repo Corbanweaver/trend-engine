@@ -20,12 +20,3 @@ def get_openai_client() -> OpenAI:
         return OpenAI(api_key=api_key)
 
     raise HTTPException(status_code=503, detail="OpenAI integration not configured.")
-
-
-def get_openai_image_client() -> OpenAI:
-    """Return a client for OpenAI image generation, preferring the native Images API."""
-    api_key = (os.environ.get("OPENAI_API_KEY") or "").strip()
-    if api_key:
-        return OpenAI(api_key=api_key)
-
-    return get_openai_client()

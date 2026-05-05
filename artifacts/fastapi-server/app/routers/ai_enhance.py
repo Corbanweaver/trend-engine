@@ -6,7 +6,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from app.security import expensive_endpoint_rate_limit
-from app.openai_client import get_openai_client, get_openai_image_client
+from app.openai_client import get_openai_client
 
 try:
     import anthropic
@@ -33,17 +33,6 @@ class RefineScriptResponse(BaseModel):
     refined_script: str
     model: str = "claude"
     improvements: list[str] = []
-
-
-class ThumbnailRequest(BaseModel):
-    idea: str = Field(min_length=1, max_length=2000)
-    hook: str = Field(default="", max_length=500)
-    niche: str = Field(default="general", max_length=80)
-
-
-class ThumbnailResponse(BaseModel):
-    image_b64: str
-    prompt_used: str
 
 
 def get_anthropic_client():
@@ -140,45 +129,3 @@ async def refine_script(body: RefineScriptRequest):
         )
     except json.JSONDecodeError:
         return RefineScriptResponse(refined_script=raw, model="gpt-5.2")
-
-
-THUMBNAIL_PROMPT_TEMPLATE = """Create a viral YouTube/TikTok video thumbnail concept for:
-Topic: {idea}
-Hook: {hook}
-Niche: {niche}
-
-Style: Bold, high-contrast, eye-catching social media thumbnail. Bright colors, dramatic lighting, clean composition. No text overlay. Professional quality, attention-grabbing."""
-
-OPENAI_IMAGE_MODEL = os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-1")
-OPENAI_IMAGE_SIZE = os.environ.get("OPENAI_IMAGE_SIZE", "1024x1024")
-OPENAI_IMAGE_QUALITY = os.environ.get("OPENAI_IMAGE_QUALITY", "low")
-
-
-@router.post("/generate-thumbnail", response_model=ThumbnailResponse)
-async def generate_thumbnail(body: ThumbnailRequest):
-    client = get_openai_image_client()
-    prompt = THUMBNAIL_PROMPT_TEMPLATE.format(
-        idea=body.idea,
-        hook=body.hook,
-        niche=body.niche,
-    )
-
-    try:
-        loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(
-            None,
-            lambda: client.images.generate(
-                model=OPENAI_IMAGE_MODEL,
-                prompt=prompt,
-                n=1,
-                size=OPENAI_IMAGE_SIZE,
-                quality=OPENAI_IMAGE_QUALITY,
-            ),
-        )
-        image_data = response.data[0].b64_json
-        if not image_data:
-            raise HTTPException(status_code=500, detail="No image data returned")
-        return ThumbnailResponse(image_b64=image_data, prompt_used=prompt)
-    except Exception as e:
-        logger.error("Thumbnail generation failed: %s", e)
-        raise HTTPException(status_code=500, detail="Image generation failed.")

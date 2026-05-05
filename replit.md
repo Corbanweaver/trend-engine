@@ -68,7 +68,7 @@ artifacts/fastapi-server/
         ├── multi_reddit.py  # POST /reddit/multi-search
         ├── pinterest.py     # POST /pinterest/search
         ├── medium.py        # POST /medium/search
-        └── ai_enhance.py   # POST /ai/refine-script + /ai/generate-thumbnail (rate-limited)
+        └── ai_enhance.py   # POST /ai/refine-script (rate-limited)
 ```
 
 ### Dependencies
@@ -97,7 +97,6 @@ artifacts/fastapi-server/
 - `POST /ideas/` — accepts `{"text": "...", "niche": "fitness"}`, returns 5 viral video ideas with hook/angle/idea/script
 - `POST /trend-ideas/` — accepts `{"niche": "fitness"}`, chains trends → 3 AI ideas per trend + YouTube + Instagram + TikTok + Pinterest + Medium examples. Ideas now include SEO metadata (hashtags, optimized_title, seo_description).
 - `POST /ai/refine-script` — Claude script refinement (Anthropic integration, falls back to OpenAI). Rate-limited 10 req/min per IP.
-- `POST /ai/generate-thumbnail` — AI thumbnail generation using OpenAI gpt-image-1. Returns base64 PNG. Rate-limited 10 req/min per IP.
 - `POST /youtube/search` — search YouTube for short-form videos by query
 - `POST /instagram/search` — search Instagram top posts by hashtag
 - `POST /tiktok/search` — search TikTok trending content
@@ -131,9 +130,9 @@ artifacts/fastapi-server/
 - Pinterest pin grid and Medium article cards with images
 - Rounded corners, soft shadows, hover effects, fade-in animations
 - SEO section per idea: optimized title, description, hashtag pills with copy-to-clipboard
-- Action buttons per idea: "Refine with Claude" (script refinement), "AI Thumbnail" (image generation), "Voice Preview" (browser SpeechSynthesis)
+- Action buttons per idea: "Refine with Claude" (script refinement), "Voice Preview" (browser SpeechSynthesis)
 - Refined scripts show inline with improvement bullet points
-- AI thumbnails render inline below the idea
+- Thumbnails come from organic source media when available
 
 ### Instagram Notes
 - Instagram Graph API requires: Business/Creator account + Facebook Page + linked IG account
