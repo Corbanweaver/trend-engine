@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { AppQuickNav } from "@/components/app-quick-nav";
 import { getSelectableNicheOptions, NICHE_OPTIONS } from "@/lib/niches";
 import { trackUiEvent } from "@/lib/telemetry";
 
@@ -186,6 +187,7 @@ export default function TrendAlertsPage() {
             Back to Dashboard
           </Link>
         </div>
+        <AppQuickNav active="alerts" />
 
         <div className="glass-surface rounded-2xl border border-border p-6 dark:border-white/10">
           <p className="text-sm leading-relaxed text-muted-foreground dark:text-slate-300">

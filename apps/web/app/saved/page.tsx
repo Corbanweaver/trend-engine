@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { AppQuickNav } from "@/components/app-quick-nav";
 import { SavedIdeaContent } from "@/components/saved-idea-content";
 import { Button } from "@/components/ui/button";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -395,6 +396,7 @@ export default function SavedIdeasPage() {
             </Link>
           </Button>
         </div>
+        <AppQuickNav active="saved" />
 
         {loading ? (
           <div className="glass-surface shimmer rounded-2xl border border-border p-5 text-sm text-muted-foreground dark:border-white/10 dark:text-slate-300">

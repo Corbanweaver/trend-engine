@@ -5,7 +5,7 @@ import { TrendDashboard } from "@/components/trend-dashboard";
 export const metadata: Metadata = {
   title: "Dashboard",
   description:
-    "Pinterest-style trend intelligence dashboard with AI-generated video ideas",
+    "Visual trend intelligence dashboard with AI-generated video ideas.",
 };
 
 export const dynamic = "force-dynamic";

@@ -8,6 +8,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  BookmarkPlus,
+  CalendarPlus,
+  FileText,
+  Loader2,
+  ThumbsDown,
+  ThumbsUp,
+  WandSparkles,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { trackUiEvent } from "@/lib/telemetry";
@@ -512,19 +521,19 @@ export function IdeaPanel({
   }
 
   return (
-    <div className="space-y-4 p-4 pr-2">
+    <div className="space-y-5 p-4 sm:p-5">
       <div>
         <h2 className="text-lg font-semibold leading-tight text-foreground dark:text-slate-100">
           {trend.trend}
         </h2>
-        <p className="mt-1 text-xs text-muted-foreground dark:text-slate-400">
+        <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
           {trend.ideas.length} idea{trend.ideas.length === 1 ? "" : "s"} from
           Content Idea Maker
         </p>
       </div>
 
       {relatedTrends.length > 0 ? (
-        <div className="rounded-lg border border-border bg-background p-3 dark:border-white/10 dark:bg-slate-900/60">
+        <div className="rounded-2xl border border-border bg-background p-3 dark:border-white/10 dark:bg-slate-900/60">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-slate-300">
             Similar trends
           </p>
@@ -541,7 +550,7 @@ export function IdeaPanel({
         </div>
       ) : null}
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {trend.ideas.map((idea, i) => {
           const thumbnailUrls = getVideoIdeaThumbnailUrls(idea);
           const isSavingThisIdea =
@@ -550,12 +559,12 @@ export function IdeaPanel({
           return (
             <Card
               key={`${trend.trend}-${i}`}
-              className="border-border bg-background text-card-foreground shadow-sm shadow-black/5 dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-100 dark:shadow-black/20"
+              className="overflow-hidden rounded-[1.35rem] border-border bg-background text-card-foreground shadow-sm shadow-black/5 dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-100 dark:shadow-black/20"
             >
               {thumbnailUrls.length > 0 ? (
                 <div
                   className={cn(
-                    "grid gap-1 overflow-hidden border-b border-border bg-muted p-1 dark:border-white/10 dark:bg-slate-950",
+                    "grid gap-1 overflow-hidden border-b border-border bg-muted p-1.5 dark:border-white/10 dark:bg-slate-950",
                     thumbnailUrls.length === 1 ? "grid-cols-1" : "grid-cols-2",
                   )}
                 >
@@ -563,7 +572,7 @@ export function IdeaPanel({
                     <div
                       key={`${thumbnailUrl}-${thumbnailIndex}`}
                       className={cn(
-                        "relative aspect-video overflow-hidden rounded-sm bg-background dark:bg-slate-900",
+                        "relative aspect-video overflow-hidden rounded-xl bg-background dark:bg-slate-900",
                         thumbnailUrls.length === 3 &&
                           thumbnailIndex === 0 &&
                           "col-span-2",
@@ -648,9 +657,14 @@ export function IdeaPanel({
                     size="sm"
                     disabled={hooksLoadingByIndex[i]}
                     onClick={() => void loadHooks(idea, i)}
-                    className="h-8 border-fuchsia-500/35 bg-fuchsia-50 text-xs font-semibold text-fuchsia-700 hover:bg-fuchsia-100 dark:border-fuchsia-400/35 dark:bg-fuchsia-500/10 dark:text-fuchsia-100 dark:hover:bg-fuchsia-500/20"
+                    className="h-9 rounded-full border-fuchsia-500/35 bg-fuchsia-50 px-3 text-xs font-semibold text-fuchsia-700 hover:bg-fuchsia-100 dark:border-fuchsia-400/35 dark:bg-fuchsia-500/10 dark:text-fuchsia-100 dark:hover:bg-fuchsia-500/20"
                   >
-                    {hooksLoadingByIndex[i] ? "Generating…" : "Generate Hooks"}
+                    {hooksLoadingByIndex[i] ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <WandSparkles className="size-3.5" />
+                    )}
+                    {hooksLoadingByIndex[i] ? "Generating" : "Hooks"}
                   </Button>
                   <Button
                     type="button"
@@ -658,11 +672,14 @@ export function IdeaPanel({
                     size="sm"
                     disabled={fullScriptLoadingByIndex[i]}
                     onClick={() => void loadFullScript(idea, i)}
-                    className="h-8 border-indigo-500/35 bg-indigo-50 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-400/35 dark:bg-indigo-500/10 dark:text-indigo-100 dark:hover:bg-indigo-500/20"
+                    className="h-9 rounded-full border-indigo-500/35 bg-indigo-50 px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-400/35 dark:bg-indigo-500/10 dark:text-indigo-100 dark:hover:bg-indigo-500/20"
                   >
-                    {fullScriptLoadingByIndex[i]
-                      ? "Writing…"
-                      : "Write Full Script"}
+                    {fullScriptLoadingByIndex[i] ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <FileText className="size-3.5" />
+                    )}
+                    {fullScriptLoadingByIndex[i] ? "Writing" : "Full script"}
                   </Button>
                 </div>
                 {hooksErrorByIndex[i] ? (
@@ -774,49 +791,66 @@ export function IdeaPanel({
                   ) : null}
                 </div>
                 {onSaveIdea ? (
-                  <div className="space-y-2 pt-1">
-                    <div className="flex items-center gap-2">
+                  <div className="space-y-3 border-t border-border pt-3 dark:border-white/10">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-slate-300">
+                        Actions
+                      </p>
+                      <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => void setIdeaRating(idea, i, "up")}
-                        className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200"
+                        aria-label="Mark idea as useful"
+                        className="inline-flex size-8 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10 text-emerald-700 transition-colors hover:bg-emerald-500/15 dark:text-emerald-200"
                       >
-                        👍
+                        <ThumbsUp className="size-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => void setIdeaRating(idea, i, "down")}
-                        className="rounded-md border border-amber-400/30 bg-amber-500/10 px-2 py-1 text-xs text-amber-100"
+                        aria-label="Mark idea as not useful"
+                        className="inline-flex size-8 items-center justify-center rounded-full border border-amber-400/30 bg-amber-500/10 text-amber-700 transition-colors hover:bg-amber-500/15 dark:text-amber-100"
                       >
-                        👎
+                        <ThumbsDown className="size-4" />
                       </button>
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid gap-2 sm:grid-cols-2">
                       <Button
                         type="button"
                         disabled={isSavingThisIdea || savedIndexes[i]}
                         onClick={() => void handleSaveIdea(idea, i, "saved")}
-                        className="h-8 bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:opacity-90"
+                        className="h-10 rounded-full bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:opacity-90"
                       >
+                        {savingIdeaIndex === i ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <BookmarkPlus className="size-4" />
+                        )}
                         {savedIndexes[i]
-                          ? "Saved Idea ✔"
+                          ? "Saved"
                           : savingIdeaIndex === i
                             ? "Saving..."
-                            : "Save Idea"}
+                            : "Save idea"}
                       </Button>
                       <Button
                         type="button"
                         disabled={isSavingThisIdea || calendarSavedIndexes[i]}
                         onClick={() => void handleSaveIdea(idea, i, "calendar")}
-                        className={`h-8 border border-emerald-500/35 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 dark:border-emerald-300/40 dark:bg-emerald-500/15 dark:text-emerald-100 dark:hover:bg-emerald-500/25 ${
+                        className={`h-10 rounded-full border border-emerald-500/35 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 dark:border-emerald-300/40 dark:bg-emerald-500/15 dark:text-emerald-100 dark:hover:bg-emerald-500/25 ${
                           calendarSavedIndexes[i] ? "animate-pulse" : ""
                         }`}
                       >
+                        {savingCalendarIndex === i ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <CalendarPlus className="size-4" />
+                        )}
                         {calendarSavedIndexes[i]
-                          ? "✅ Saved to Content Calendar"
+                          ? "On calendar"
                           : savingCalendarIndex === i
                             ? "Saving..."
-                            : "Save to Content Calendar"}
+                            : "To calendar"}
                       </Button>
                     </div>
                     {(() => {
