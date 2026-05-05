@@ -1,6 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import {
+  FormEvent,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+} from "react";
 import type { User } from "@supabase/supabase-js";
 import { Bot, Loader2, MessageCircle, Send, X } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -20,12 +26,45 @@ const QUICK_PROMPTS = [
 ];
 
 const ASSISTANT_MESSAGES_STORAGE_KEY = "trend_engine:assistant_messages";
+const ASSISTANT_POSITION_STORAGE_KEY = "trend_engine:assistant_position";
 
 const INITIAL_ASSISTANT_MESSAGE: ChatMessage = {
   role: "assistant",
   content:
     "Hi! I can help with niche discovery, trend explanations, content brainstorming, and navigating Content Idea Maker.",
 };
+
+type AssistantPosition = {
+  x: number;
+  y: number;
+};
+
+function getDefaultAssistantPosition(): AssistantPosition {
+  if (typeof window === "undefined") return { x: 16, y: 16 };
+  const isMobile = window.innerWidth < 768;
+  const estimatedWidth = isMobile ? 142 : 164;
+  const estimatedHeight = 52;
+  return {
+    x: Math.max(12, window.innerWidth - estimatedWidth - 20),
+    y: Math.max(
+      12,
+      window.innerHeight - estimatedHeight - (isMobile ? 88 : 20),
+    ),
+  };
+}
+
+function clampAssistantPosition(
+  position: AssistantPosition,
+  width = 164,
+  height = 52,
+): AssistantPosition {
+  if (typeof window === "undefined") return position;
+  const margin = 12;
+  return {
+    x: Math.min(Math.max(position.x, margin), window.innerWidth - width - margin),
+    y: Math.min(Math.max(position.y, margin), window.innerHeight - height - margin),
+  };
+}
 
 export function FloatingAiAssistant() {
   const pathname = usePathname();
@@ -35,6 +74,18 @@ export function FloatingAiAssistant() {
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_ASSISTANT_MESSAGE]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assistantPosition, setAssistantPosition] =
+    useState<AssistantPosition | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const dragRef = useRef<{
+    offsetX: number;
+    offsetY: number;
+    moved: boolean;
+    startX: number;
+    startY: number;
+    lastPosition?: AssistantPosition;
+  } | null>(null);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -99,11 +150,109 @@ export function FloatingAiAssistant() {
     }
   }, [messages]);
 
+  useEffect(() => {
+    const getButtonSize = () => ({
+      width: buttonRef.current?.offsetWidth ?? 164,
+      height: buttonRef.current?.offsetHeight ?? 52,
+    });
+
+    try {
+      const raw = window.localStorage.getItem(ASSISTANT_POSITION_STORAGE_KEY);
+      const parsed = raw ? (JSON.parse(raw) as AssistantPosition) : null;
+      const initial =
+        parsed && Number.isFinite(parsed.x) && Number.isFinite(parsed.y)
+          ? parsed
+          : getDefaultAssistantPosition();
+      const { width, height } = getButtonSize();
+      setAssistantPosition(clampAssistantPosition(initial, width, height));
+    } catch {
+      setAssistantPosition(getDefaultAssistantPosition());
+    }
+
+    const onResize = () => {
+      const { width, height } = getButtonSize();
+      setAssistantPosition((prev) =>
+        clampAssistantPosition(prev ?? getDefaultAssistantPosition(), width, height),
+      );
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   const canSend = input.trim().length > 0 && !loading;
 
   if (pathname === "/" || user === undefined || user === null) {
     return null;
   }
+
+  const renderedAssistantPosition =
+    assistantPosition ?? getDefaultAssistantPosition();
+
+  const persistAssistantPosition = (position: AssistantPosition) => {
+    try {
+      window.localStorage.setItem(
+        ASSISTANT_POSITION_STORAGE_KEY,
+        JSON.stringify(position),
+      );
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
+  const onAssistantPointerDown = (e: PointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return;
+    const position = assistantPosition ?? getDefaultAssistantPosition();
+    dragRef.current = {
+      offsetX: e.clientX - position.x,
+      offsetY: e.clientY - position.y,
+      moved: false,
+      startX: e.clientX,
+      startY: e.clientY,
+    };
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const onAssistantPointerMove = (e: PointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    if (
+      Math.abs(e.clientX - drag.startX) > 4 ||
+      Math.abs(e.clientY - drag.startY) > 4
+    ) {
+      drag.moved = true;
+    }
+    const next = clampAssistantPosition(
+      {
+        x: e.clientX - drag.offsetX,
+        y: e.clientY - drag.offsetY,
+      },
+      buttonRef.current?.offsetWidth,
+      buttonRef.current?.offsetHeight,
+    );
+    drag.lastPosition = next;
+    setAssistantPosition(next);
+  };
+
+  const onAssistantPointerUp = (e: PointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    dragRef.current = null;
+    setDragging(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // Pointer may already be released
+    }
+    const next = clampAssistantPosition(
+      drag.lastPosition ?? assistantPosition ?? getDefaultAssistantPosition(),
+      buttonRef.current?.offsetWidth,
+      buttonRef.current?.offsetHeight,
+    );
+    setAssistantPosition(next);
+    persistAssistantPosition(next);
+    if (!drag.moved) setOpen((prev) => !prev);
+  };
 
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
@@ -145,9 +294,29 @@ export function FloatingAiAssistant() {
   return (
     <>
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className="fixed bottom-5 right-5 z-[80] inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-[0_12px_28px_rgba(54,95,125,0.22)] transition hover:bg-primary/90 dark:border-cyan-300/40 dark:bg-slate-900 dark:text-cyan-100 dark:shadow-[0_0_24px_rgba(34,211,238,0.28)] dark:hover:bg-slate-800"
+        aria-pressed={open}
+        onPointerDown={onAssistantPointerDown}
+        onPointerMove={onAssistantPointerMove}
+        onPointerUp={onAssistantPointerUp}
+        onPointerCancel={() => {
+          dragRef.current = null;
+          setDragging(false);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen((prev) => !prev);
+          }
+        }}
+        style={{
+          left: renderedAssistantPosition.x,
+          top: renderedAssistantPosition.y,
+        }}
+        className={`fixed z-[80] inline-flex touch-none select-none items-center gap-2 rounded-full border border-primary/25 bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground shadow-[0_12px_28px_rgba(54,95,125,0.22)] transition hover:bg-primary/90 dark:border-cyan-300/40 dark:bg-slate-900 dark:text-cyan-100 dark:shadow-[0_0_24px_rgba(34,211,238,0.28)] dark:hover:bg-slate-800 sm:px-4 ${
+          dragging ? "cursor-grabbing" : "cursor-grab"
+        }`}
       >
         {open ? <X className="size-4" /> : <MessageCircle className="size-4" />}
         AI Assistant

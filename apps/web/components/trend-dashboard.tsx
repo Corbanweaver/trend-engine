@@ -426,6 +426,8 @@ function TrendCard({
   const redditUrl = getRedditUrl(trend);
   const instagramUrl = getInstagramUrl(trend);
   const trendLabel = getTrendDetectedLabel(trend);
+  const [imageFailed, setImageFailed] = useState(false);
+  const showVisual = Boolean(visual && !imageFailed);
   const heightClass =
     index % 5 === 0
       ? "h-72"
@@ -434,6 +436,10 @@ function TrendCard({
         : index % 5 === 3
           ? "h-80"
           : "h-52";
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [visual]);
 
   return (
     <div
@@ -469,12 +475,13 @@ function TrendCard({
             heightClass,
           )}
         >
-          {visual ? (
+          {showVisual && visual ? (
             // Using API-provided thumbnails when available.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={visual}
               alt={trend.trend}
+              onError={() => setImageFailed(true)}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
@@ -1312,7 +1319,7 @@ export function TrendDashboard() {
   );
 
   return (
-    <div className="min-h-svh bg-[#f6f5f2] pb-[calc(4.75rem+env(safe-area-inset-bottom))] text-foreground dark:bg-slate-950 lg:pl-[5.5rem] lg:pb-0">
+    <div className="min-h-svh overflow-x-hidden bg-[#f6f5f2] pb-[calc(4.75rem+env(safe-area-inset-bottom))] text-foreground dark:bg-slate-950 lg:pl-[5.5rem] lg:pb-0 xl:pl-56">
       {showOnboarding ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 dark:bg-slate-950/80">
           <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl dark:border-white/15 dark:bg-slate-900">
@@ -1456,7 +1463,7 @@ export function TrendDashboard() {
           </div>
 
           <div className="rounded-[1.75rem] border border-border bg-card p-2 shadow-sm dark:border-white/10 dark:bg-slate-900/95">
-            <div className="grid gap-2 md:grid-cols-[minmax(180px,260px)_1fr_auto_auto] md:items-center">
+            <div className="grid grid-cols-[1fr_auto] gap-2 md:grid-cols-[minmax(220px,360px)_1fr_auto_auto] md:items-center">
               <label className="sr-only" htmlFor="quick-niche-select">
                 Niche
               </label>
@@ -1465,7 +1472,7 @@ export function TrendDashboard() {
                 value={nicheKey}
                 onChange={(e) => setNicheKey(e.target.value)}
                 disabled={loading}
-                className="h-12 rounded-[1.15rem] border border-border bg-background px-4 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/60 dark:border-white/10 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-cyan-300/60"
+                className="h-12 rounded-[1.15rem] border border-border bg-background px-4 text-center text-base font-bold capitalize text-foreground outline-none focus:ring-2 focus:ring-primary/60 dark:border-white/10 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-cyan-300/60 sm:text-lg md:text-base"
               >
                 {favoriteOptions.length > 0 ? (
                   <optgroup label="Favorites">
@@ -1497,7 +1504,7 @@ export function TrendDashboard() {
                   onChange={(e) => setCustomNiche(e.target.value)}
                   placeholder="Describe your niche..."
                   disabled={loading}
-                  className="h-12 rounded-[1.15rem] border border-border bg-background px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/60 dark:border-white/10 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-cyan-300/60"
+                  className="col-span-2 h-12 rounded-[1.15rem] border border-border bg-background px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/60 dark:border-white/10 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-cyan-300/60 md:col-span-1"
                 />
               ) : (
                 <div className="hidden md:block" />
@@ -1513,7 +1520,7 @@ export function TrendDashboard() {
                   }
                   aria-pressed={selectedNicheIsFavorite}
                   className={cn(
-                    "inline-flex h-12 items-center justify-center gap-2 rounded-[1.15rem] border px-4 text-sm font-semibold transition-colors",
+                    "inline-flex h-12 w-12 items-center justify-center gap-2 rounded-[1.15rem] border px-0 text-sm font-semibold transition-colors sm:w-auto sm:px-4",
                     selectedNicheIsFavorite
                       ? "border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200 dark:border-amber-300/40 dark:bg-amber-400/15 dark:text-amber-100 dark:hover:bg-amber-400/25"
                       : "border-border bg-background text-foreground hover:bg-muted dark:border-white/10 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-white/10",
@@ -1525,7 +1532,7 @@ export function TrendDashboard() {
                       selectedNicheIsFavorite && "fill-current",
                     )}
                   />
-                  <span className="hidden sm:inline">
+                  <span className="hidden md:inline">
                     {selectedNicheIsFavorite ? "Favorite" : "Favorite"}
                   </span>
                 </button>
@@ -1536,7 +1543,7 @@ export function TrendDashboard() {
                   loading || analysisCreditBlocked || subscriptionLoading
                 }
                 onClick={runAnalysis}
-                className="h-12 rounded-[1.15rem] bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+                className="col-span-2 h-12 rounded-[1.15rem] bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300 md:col-span-1"
               >
                 {loading ? (
                   <>
@@ -1586,27 +1593,6 @@ export function TrendDashboard() {
                   {entry}
                 </button>
               ))}
-            </div>
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="relative w-full sm:w-72">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground dark:text-slate-500" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search board..."
-                  className="h-10 w-full rounded-full border border-border bg-card pl-9 pr-3 text-sm text-foreground shadow-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/60 dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-cyan-300/60"
-                />
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
-                {PLATFORM_CHIPS.map((chip) => (
-                  <FilterChip
-                    key={chip}
-                    label={chip}
-                    active={platformFilter === chip}
-                    onClick={() => setPlatformFilter(chip)}
-                  />
-                ))}
-              </div>
             </div>
           </div>
         </div>
@@ -1960,7 +1946,7 @@ export function TrendDashboard() {
 
           {data ? (
             filteredTrends.length > 0 ? (
-              <div className="columns-1 gap-4 sm:columns-2 xl:columns-3 2xl:columns-4">
+              <div className="columns-1 gap-4 md:columns-2 xl:columns-3 2xl:columns-4">
                 {filteredTrends.map((trend, index) => {
                   const realIndex = data.trend_ideas.findIndex(
                     (t) => t.trend === trend.trend,
