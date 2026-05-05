@@ -8,6 +8,36 @@ from app.apify_client import common_search_input, configured_actor_id, run_actor
 DEFAULT_TIKTOK_ACTOR_ID = "clockworks/tiktok-scraper"
 
 
+def _candidate_hashtags(query: str, limit: int = 4) -> list[str]:
+    words = [
+        "".join(ch for ch in word.lower() if ch.isalnum() or ch == "_")
+        for word in query.split()
+    ]
+    words = [word for word in words if len(word) > 2 and word not in {"viral", "trend", "trends", "video", "ideas"}]
+    candidates: list[str] = []
+
+    def add(value: str) -> None:
+        cleaned = "".join(ch for ch in value.lower() if ch.isalnum() or ch == "_")
+        if cleaned and cleaned not in candidates:
+            candidates.append(cleaned)
+
+    if words:
+        add(words[0])
+        if len(words) > 1:
+            add("".join(words[:2]))
+            add(words[-1])
+
+    compact = "".join(ch for ch in query.lower() if ch.isalnum())
+    if compact and compact not in {"viral", "trend", "trends"}:
+        add(compact)
+
+    if not candidates:
+        add("fyp")
+        add("viral")
+
+    return candidates[:limit]
+
+
 async def _run_apify_tiktok_actor(
     query: str,
     max_results: int,
@@ -20,6 +50,7 @@ async def _run_apify_tiktok_actor(
 
     actor_input = {
         **common_search_input(query, max_results),
+        "hashtags": _candidate_hashtags(query),
         "searchQueries": [query],
         "searchSection": "/video",
         "searchSorting": "0",
