@@ -7,7 +7,7 @@ import { CREDIT_LIMITS } from "@/lib/credits";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Choose a TrendBoard plan for trend analyses, niches, saved ideas, and AI thumbnails.",
+    "Choose a TrendBoard plan for trend analyses, niches, saved ideas, and organic source thumbnails.",
 };
 
 const plans = [
@@ -19,7 +19,7 @@ const plans = [
     featured: false,
     features: [
       `${CREDIT_LIMITS.free} monthly credits`,
-      "1 full AI-image analysis",
+      "1 full trend analysis",
       "Basic niches only",
       "Explore before upgrading",
     ],
@@ -36,10 +36,10 @@ const plans = [
     popularLabel: "Most Popular",
     features: [
       `${CREDIT_LIMITS.creator} monthly credits`,
-      "About 20 full AI-image analyses",
+      "About 20 full trend analyses",
       "All niches",
       "Save and organize ideas",
-      "AI thumbnails",
+      "Organic source thumbnails",
     ],
     ctaHref: "/api/stripe/checkout",
     planKey: "creator",
@@ -53,10 +53,10 @@ const plans = [
     featured: false,
     features: [
       `${CREDIT_LIMITS.pro.toLocaleString()} monthly credits`,
-      "About 60 full AI-image analyses",
+      "About 60 full trend analyses",
       "All niches",
       "Saved ideas",
-      "AI thumbnails",
+      "Organic source thumbnails",
       "Priority trend processing",
       "Early access to new features",
     ],
@@ -175,7 +175,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           </h1>
           <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
             Pick the tier that matches your workflow. Credits reset monthly and
-            keep AI image generation fair for everyone.
+            keep heavier trend scans fair for everyone.
           </p>
         </div>
 
@@ -292,7 +292,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
         </div>
 
         <p className="mt-10 text-center text-sm text-muted-foreground">
-          Full image analyses cost 30 credits. Smaller AI tools such as hooks,
+          Full trend analyses cost 30 credits. Smaller AI tools such as hooks,
           hashtags, and scripts use fewer credits.
         </p>
 

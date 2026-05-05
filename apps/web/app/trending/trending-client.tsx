@@ -26,6 +26,8 @@ const REFRESH_MS = 75_000;
 const SOCIAL_SECTION_ORDER = [
   "tiktok",
   "instagram",
+  "x",
+  "pinterest",
   "youtube",
   "reddit",
   "google_trends",
@@ -35,6 +37,8 @@ const SOCIAL_SECTION_ORDER = [
 const SOCIAL_SECTION_LABELS: Record<string, string> = {
   tiktok: "TikTok",
   instagram: "Instagram Reels",
+  x: "X",
+  pinterest: "Pinterest",
   youtube: "YouTube Shorts",
   reddit: "Reddit conversations",
   google_trends: "Search demand",
@@ -53,6 +57,10 @@ function sectionIcon(key: string) {
       return Music2;
     case "instagram":
       return Instagram;
+    case "x":
+      return Flame;
+    case "pinterest":
+      return TrendingUp;
     case "reddit":
       return Flame;
     default:
@@ -336,7 +344,7 @@ export function TrendingLivePage() {
 
         <div className="mt-14 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-muted/45 px-6 py-5 dark:border-white/10 dark:bg-gradient-to-r dark:from-slate-950/80 dark:via-slate-900/60 dark:to-indigo-950/40">
           <p className="max-w-xl text-sm text-muted-foreground">
-            Turn these signals into full scripts, hooks, and thumbnails in the
+            Turn these signals into full scripts, hooks, and source links in the
             dashboard - niches from breaking news to gaming.
           </p>
           <Link

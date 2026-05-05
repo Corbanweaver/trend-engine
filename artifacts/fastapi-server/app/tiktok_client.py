@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 import httpx
 
 APIFY_API_BASE = "https://api.apify.com/v2"
-TIKTOK_ACTOR_ID = "clockworks/free-tiktok-scraper"
+DEFAULT_TIKTOK_ACTOR_ID = "clockworks/free-tiktok-scraper"
 
 
 async def _run_apify_tiktok_actor(query: str, max_results: int, days_back: int = 7) -> list[dict]:
@@ -31,7 +31,9 @@ async def _run_apify_tiktok_actor(query: str, max_results: int, days_back: int =
         "minCreatedAt": since_unix,
     }
 
-    url = f"{APIFY_API_BASE}/acts/{TIKTOK_ACTOR_ID}/run-sync-get-dataset-items"
+    actor_id = os.environ.get("APIFY_TIKTOK_ACTOR_ID", DEFAULT_TIKTOK_ACTOR_ID).strip()
+    actor_slug = actor_id.replace("/", "~")
+    url = f"{APIFY_API_BASE}/acts/{actor_slug}/run-sync-get-dataset-items"
     params = {"token": token, "limit": max_results}
 
     try:
@@ -66,10 +68,13 @@ def _map_apify_tiktok_item(item: dict) -> dict:
     )
     description = (item.get("text") or item.get("desc") or item.get("description") or "")[:200]
     cover = (
-        item.get("webVideoUrl")
-        or item.get("cover")
+        item.get("cover")
         or item.get("thumbnail")
+        or item.get("thumbnailUrl")
+        or item.get("thumbnail_url")
+        or item.get("coverUrl")
         or video_obj.get("coverUrl")
+        or video_obj.get("cover")
         or ""
     )
     url = item.get("webVideoUrl") or item.get("url") or ""

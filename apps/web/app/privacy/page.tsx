@@ -48,7 +48,7 @@ export default function PrivacyPage() {
           </p>
           <p>
             When you run analyses or AI tools, prompts and trend inputs may be
-            sent to service providers that power scraping, language, and image
+            sent to service providers that power scraping and language
             generation. We use these services only to deliver the features you
             request and to improve reliability.
           </p>

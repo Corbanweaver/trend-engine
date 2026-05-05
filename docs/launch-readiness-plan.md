@@ -87,7 +87,7 @@ Goal: keep paid usage from becoming more expensive than the subscription price.
 - Confirm failed analyses refund credits.
 - Set OpenAI spend limits.
 - Review Railway, Supabase, and Stripe usage/cost limits.
-- Watch image generation cost after the first few real users.
+- Watch AI text and trend-source costs after the first few real users.
 
 Status: ✅ Completed. Credits and database-backed rate limits are in place. OpenAI spend budgets are now wired into API routing and visible in the admin dashboard, using `OPENAI_COST_BUDGET`/`OPENAI_COST_BUDGET_WINDOW_SECONDS`.
 

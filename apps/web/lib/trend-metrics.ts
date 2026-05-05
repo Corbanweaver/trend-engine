@@ -3,6 +3,7 @@ import type { TrendIdea } from "@/lib/trend-ideas-types";
 export type PlatformKey =
   | "tiktok"
   | "instagram"
+  | "x"
   | "youtube"
   | "reddit"
   | "hackernews"
@@ -15,6 +16,7 @@ export type PlatformKey =
 const PLATFORM_LABEL: Record<PlatformKey, string> = {
   tiktok: "TikTok",
   instagram: "Instagram",
+  x: "X",
   youtube: "YouTube",
   reddit: "Reddit",
   hackernews: "Tech forums",
@@ -41,6 +43,7 @@ export function computeEngagementRaw(trend: TrendIdea): number {
     score += num(v.like_count) + num(v.play_count) / 10_000;
   }
   score += trend.instagram_posts.length * 35;
+  score += (trend.x_posts ?? []).length * 28;
   for (const s of trend.hackernews_stories) {
     score += num(s.score);
   }
@@ -78,6 +81,10 @@ export function primaryPlatform(trend: TrendIdea): {
     {
       key: "instagram",
       w: trend.instagram_posts.length * 45,
+    },
+    {
+      key: "x",
+      w: (trend.x_posts ?? []).length * 32,
     },
     {
       key: "reddit",

@@ -54,6 +54,7 @@ class TrendIdea(BaseModel):
     example_videos: list[dict] = []
     instagram_posts: list[dict] = []
     tiktok_videos: list[dict] = []
+    x_posts: list[dict] = []
     google_news: list[dict] = []
     google_trends_data: dict = {}
     hackernews_stories: list[dict] = []

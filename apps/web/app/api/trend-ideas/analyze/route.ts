@@ -27,11 +27,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: usage.error }, { status: usage.status });
   }
 
-  const cost = CREDIT_COSTS.analysisWithImages;
+  const cost = CREDIT_COSTS.analysis;
   if (!usage.isAdmin && usage.snapshot.creditsRemaining < cost) {
     return NextResponse.json(
       {
-        error: `You need ${cost} credits to run a full analysis with images.`,
+        error: `You need ${cost} credits to run a full trend analysis.`,
         credits: usage.snapshot,
         requiredCredits: cost,
       },
@@ -140,7 +140,7 @@ export async function POST(request: Request) {
     if (isInsufficientCreditsError(error)) {
       return NextResponse.json(
         {
-          error: `You need ${cost} credits to run a full analysis with images.`,
+          error: `You need ${cost} credits to run a full trend analysis.`,
           credits: usage.snapshot,
           requiredCredits: cost,
         },

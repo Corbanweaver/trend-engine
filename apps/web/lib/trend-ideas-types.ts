@@ -27,6 +27,7 @@ export interface TrendIdea {
   example_videos: Record<string, unknown>[];
   instagram_posts: InstagramPost[];
   tiktok_videos: Record<string, unknown>[];
+  x_posts?: Record<string, unknown>[];
   google_news: Record<string, unknown>[];
   google_trends_data: Record<string, unknown>;
   hackernews_stories: Record<string, unknown>[];

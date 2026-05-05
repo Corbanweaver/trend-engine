@@ -43,7 +43,7 @@ OpenAI:
 
 - Set a monthly budget limit.
 - Set email alerts around 50%, 80%, and 100% of budget.
-- Review image generation spend after each user test group.
+- Review AI text and trend-source spend after each user test group.
 - Also align app-side cap variables with your provider budget:
   - `OPENAI_COST_BUDGET` (credit units per window)
   - `OPENAI_COST_BUDGET_WINDOW_SECONDS` (window duration, defaults to 86400 seconds)

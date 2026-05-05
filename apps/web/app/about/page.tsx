@@ -84,8 +84,8 @@ export default function AboutPage() {
             <Sparkles className="size-6 text-primary dark:text-cyan-300" />
             <h2 className="mt-4 text-base font-semibold">AI creative briefs</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Each analysis can produce hooks, scripts, hashtags, thumbnail
-              direction, source links, and polished idea card images.
+              Each analysis can produce hooks, scripts, hashtags, organic source
+              thumbnails, source links, and polished idea cards.
             </p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/45">

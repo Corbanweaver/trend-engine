@@ -26,12 +26,12 @@ const howSteps = [
   {
     step: "02",
     title: "Scan live signals",
-    body: "We pull fresh momentum from TikTok, YouTube Shorts, Reddit, Google Trends, news, and more in one run.",
+    body: "We pull fresh momentum from TikTok, X, Instagram, Pinterest, YouTube Shorts, search, and news in one run.",
   },
   {
     step: "03",
     title: "Ship scroll-stopping ideas",
-    body: "Get hooks, full scripts, hashtags, SEO blurbs, and thumbnail directions you can film today.",
+    body: "Get hooks, full scripts, hashtags, SEO blurbs, and source-backed thumbnails you can use for context.",
   },
 ] as const;
 
@@ -48,8 +48,8 @@ const featureCards = [
   },
   {
     icon: Zap,
-    title: "Thumbnail direction",
-    body: "Optional AI visuals so your packaging matches the angle before you hit record.",
+    title: "Organic thumbnails",
+    body: "Cards use thumbnails and source links from the platforms we find instead of generated images.",
   },
   {
     icon: CalendarDays,
@@ -77,7 +77,7 @@ const trustItems = [
   {
     icon: ShieldCheck,
     title: "Credits protect fair usage",
-    body: "Monthly credits keep AI image generation sustainable, predictable, and harder to abuse.",
+    body: "Monthly credits keep heavier trend scans predictable and harder to abuse.",
   },
   {
     icon: Link2,
@@ -94,7 +94,7 @@ const trustItems = [
 const testimonials = [
   {
     quote:
-      "Turn a rising food story into three short-form angles: a curiosity hook, a step-by-step script, and a thumbnail direction you can film today.",
+      "Turn a rising food story into three short-form angles: a curiosity hook, a step-by-step script, and source links you can act on today.",
     name: "Food & lifestyle",
     handle: "Weekly creator workflow",
     role: "Hooks, scripts, hashtags, and idea cards",
@@ -102,7 +102,7 @@ const testimonials = [
   },
   {
     quote:
-      "Watch search, news, Reddit, Shorts, and TikTok signals together so a small team can choose the angle before the topic cools off.",
+      "Watch TikTok, X, Instagram, Pinterest, YouTube Shorts, search, and news signals together so a small team can choose the angle before the topic cools off.",
     name: "Tech & news",
     handle: "Small team workflow",
     role: "Cross-platform signal checks",
@@ -350,8 +350,8 @@ export default function Home() {
             <div className="hidden h-10 w-px bg-border sm:block dark:bg-white/15" />
             <div className="text-sm text-muted-foreground sm:max-w-xs sm:text-left">
               Each analysis gives you trend context, source links, hooks,
-              scripts, hashtags, thumbnail direction, and save-ready cards in
-              one workflow.
+              scripts, hashtags, organic thumbnails, and save-ready cards in one
+              workflow.
             </div>
           </div>
         </div>

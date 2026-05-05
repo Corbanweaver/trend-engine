@@ -7,7 +7,7 @@ export const CREDIT_LIMITS: Record<SubscriptionPlan, number> = {
 };
 
 export const CREDIT_COSTS = {
-  analysisWithImages: 30,
+  analysis: 30,
   hooks: 3,
   hashtags: 2,
   fullScript: 6,

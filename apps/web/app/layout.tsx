@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "TrendBoard - AI Content Ideas From Live Trends",
     description:
-      "Analyze trend signals across creator platforms and generate AI-powered content ideas with thumbnails.",
+      "Analyze trend signals across creator platforms and generate AI-powered content ideas with source-backed thumbnails.",
     url: "https://www.contentideamaker.com",
     siteName: "TrendBoard",
     type: "website",

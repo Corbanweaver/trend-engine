@@ -5,6 +5,8 @@ from urllib.parse import quote
 
 import httpx
 
+from app.web_search_client import web_search
+
 logger = logging.getLogger(__name__)
 APIFY_API_BASE = "https://api.apify.com/v2"
 DEFAULT_INSTAGRAM_ACTOR_ID = "apify/instagram-scraper"
@@ -102,6 +104,52 @@ def _fallback_hashtag_results(query: str, max_results: int) -> list[dict]:
     ][:max_results]
 
 
+async def _organic_instagram_fallback(query: str, max_results: int) -> list[dict]:
+    results: list[dict] = []
+    seen: set[str] = set()
+    searches = [
+        f"site:instagram.com/reel {query}",
+        f"site:instagram.com/p {query}",
+    ]
+
+    for search_query in searches:
+        try:
+            rows = await web_search(search_query, max_results=max_results * 2)
+        except Exception as e:
+            logger.warning("Instagram organic search failed for '%s': %s", search_query, e)
+            continue
+
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            url = str(row.get("url") or "").strip()
+            lower = url.lower()
+            if "instagram.com/" not in lower or "/accounts/" in lower:
+                continue
+            if url in seen:
+                continue
+            seen.add(url)
+            title = str(row.get("title") or "").strip()
+            snippet = str(row.get("snippet") or "").strip()
+            results.append(
+                {
+                    "id": url,
+                    "caption": (title or snippet or "Instagram result")[:500],
+                    "media_type": "organic",
+                    "media_url": "",
+                    "permalink": url,
+                    "thumbnail_url": "",
+                    "timestamp": "",
+                    "like_count": 0,
+                    "comments_count": 0,
+                }
+            )
+            if len(results) >= max_results:
+                return results
+
+    return _fallback_hashtag_results(query, max_results)
+
+
 def _map_instagram_item(item: dict) -> dict | None:
     shortcode = _first_str(item, ["shortCode", "shortcode", "code"])
     post_id = _first_str(item, ["id", "pk", "postId", "post_id"]) or shortcode
@@ -147,12 +195,12 @@ def _map_instagram_item(item: dict) -> dict | None:
 async def search_instagram(query: str, max_results: int = 5) -> list[dict]:
     token = os.environ.get("APIFY_API_TOKEN", "").strip()
     if not token:
-        logger.warning("APIFY_API_TOKEN is not configured; returning Instagram hashtag fallback links.")
-        return _fallback_hashtag_results(query, max_results)
+        logger.warning("APIFY_API_TOKEN is not configured; using Instagram organic fallback links.")
+        return await _organic_instagram_fallback(query, max_results)
     try:
         tags = _candidate_hashtags(query)
         if not tags:
-            return _fallback_hashtag_results(query, max_results)
+            return await _organic_instagram_fallback(query, max_results)
         actor_id = os.environ.get("APIFY_INSTAGRAM_ACTOR_ID", DEFAULT_INSTAGRAM_ACTOR_ID).strip()
         actor_input = {
             "directUrls": [
@@ -170,10 +218,10 @@ async def search_instagram(query: str, max_results: int = 5) -> list[dict]:
             resp = await client.post(url, params={"token": token}, json=actor_input)
             if resp.status_code != 200:
                 logger.warning("Instagram Apify request failed with status %s", resp.status_code)
-                return _fallback_hashtag_results(query, max_results)
+                return await _organic_instagram_fallback(query, max_results)
             data = resp.json()
             if not isinstance(data, list):
-                return _fallback_hashtag_results(query, max_results)
+                return await _organic_instagram_fallback(query, max_results)
             normalized = []
             seen: set[str] = set()
             for item in data:
@@ -189,7 +237,7 @@ async def search_instagram(query: str, max_results: int = 5) -> list[dict]:
                 normalized.append(mapped)
                 if len(normalized) >= max_results:
                     break
-            return normalized or _fallback_hashtag_results(query, max_results)
+            return normalized or await _organic_instagram_fallback(query, max_results)
     except Exception as e:
         logger.warning("Instagram search failed: %s", e)
-        return _fallback_hashtag_results(query, max_results)
+        return await _organic_instagram_fallback(query, max_results)

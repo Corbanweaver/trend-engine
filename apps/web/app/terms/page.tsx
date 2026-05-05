@@ -31,10 +31,10 @@ export default function TermsPage() {
             only for lawful content research, planning, and creation workflows.
           </p>
           <p>
-            AI-generated ideas, scripts, hooks, thumbnails, and recommendations
-            are provided as creative assistance. You are responsible for
-            reviewing outputs before publishing and for making sure your content
-            complies with platform rules and applicable laws.
+            AI-generated ideas, scripts, hooks, and recommendations are provided
+            as creative assistance. You are responsible for reviewing outputs
+            before publishing and for making sure your content complies with
+            platform rules and applicable laws.
           </p>
           <p>
             Subscription plans include monthly credits. Credits reset monthly,

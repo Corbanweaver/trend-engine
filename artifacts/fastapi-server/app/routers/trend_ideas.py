@@ -1,20 +1,17 @@
-import os
 import json
 import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
 _ai_semaphore = asyncio.Semaphore(3)
-_image_semaphore = asyncio.Semaphore(2)
 
 from fastapi import APIRouter, Depends, HTTPException, Header
-from openai import OpenAI
 from app.security import (
     expensive_endpoint_rate_limit,
     require_digest_key,
     require_operational_key_if_configured,
 )
-from app.openai_client import get_openai_client, get_openai_image_client
+from app.openai_client import get_openai_client
 
 from app.models import (
     TrendIdeasRequest,
@@ -32,11 +29,11 @@ from app.instagram_client import search_instagram
 from app.tiktok_client import tiktok_trending_search
 from app.google_news_client import google_news_search
 from app.google_trends_client import google_trends_search
-from app.hackernews_client import hn_search
 from app.web_search_client import web_search
 from app.multi_reddit_client import multi_reddit_ingest
 from app.pinterest_client import pinterest_search
 from app.medium_client import medium_search
+from app.x_client import search_x
 
 router = APIRouter(
     prefix="/trend-ideas",
@@ -47,22 +44,6 @@ router = APIRouter(
     ],
 )
 RECENCY_DAYS = 7
-OPENAI_IMAGE_MODEL = os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-1")
-OPENAI_IMAGE_SIZE = os.environ.get("OPENAI_IMAGE_SIZE", "1536x1024")
-OPENAI_IMAGE_QUALITY = os.environ.get("OPENAI_IMAGE_QUALITY", "low")
-OPENAI_IDEA_IMAGE_FORMAT = os.environ.get("OPENAI_IDEA_IMAGE_FORMAT", "webp")
-
-
-def int_env(name: str, default: int, minimum: int, maximum: int) -> int:
-    try:
-        value = int(os.environ.get(name, str(default)))
-    except ValueError:
-        return default
-    return max(minimum, min(maximum, value))
-
-
-OPENAI_IDEA_IMAGE_COMPRESSION = int_env("OPENAI_IDEA_IMAGE_COMPRESSION", 70, 0, 100)
-OPENAI_IDEA_IMAGES_PER_TOPIC = int_env("OPENAI_IDEA_IMAGES_PER_TOPIC", 3, 0, 3)
 
 SYSTEM_PROMPT = """You are a world-class short-form content creator and strategist known for making ideas feel human, bold, and impossible to scroll past.
 
@@ -177,55 +158,6 @@ def parse_ideas_json(raw: str) -> list[VideoIdea]:
     return [VideoIdea(hook=cleaned[:100], angle="", idea=cleaned, script="")]
 
 
-def build_thumbnail_prompt(niche: str, topic: str, idea: VideoIdea) -> str:
-    title = (idea.optimized_title or "").strip() or (idea.hook or "").strip() or "viral short-form video"
-    concept = (idea.idea or "").strip()
-    angle = (idea.angle or "").strip()
-    visual_subject = " ".join(
-        part.strip()
-        for part in [niche, topic, title, concept, angle]
-        if part and part.strip()
-    )[:420]
-    return (
-        "Create a polished vertical-social idea card image for a content creator.\n"
-        f"Niche: {niche}\n"
-        f"Trend: {topic}\n"
-        f"Idea: {visual_subject}\n\n"
-        "Visual direction: premium editorial thumbnail, cinematic lighting, vivid but tasteful colors, "
-        "clear focal subject, high contrast, realistic detail, modern creator economy aesthetic. "
-        "No text, no captions, no logos, no watermarks, no UI mockups, no letterforms."
-    )
-
-
-async def generate_idea_thumbnail(client: OpenAI, niche: str, topic: str, idea: VideoIdea) -> str:
-    prompt = build_thumbnail_prompt(niche, topic, idea)
-    try:
-        async with _image_semaphore:
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None,
-                lambda: client.images.generate(
-                    model=OPENAI_IMAGE_MODEL,
-                    prompt=prompt,
-                    n=1,
-                    size=OPENAI_IMAGE_SIZE,
-                    quality=OPENAI_IMAGE_QUALITY,
-                    output_format=OPENAI_IDEA_IMAGE_FORMAT,
-                    output_compression=OPENAI_IDEA_IMAGE_COMPRESSION,
-                ),
-            )
-        image_data = response.data[0].b64_json
-        if not image_data:
-            logger.warning("OpenAI image generation returned no image data for topic '%s'.", topic)
-            return ""
-        logger.info("OpenAI idea-card image generated for topic '%s'.", topic)
-        return f"data:image/{OPENAI_IDEA_IMAGE_FORMAT};base64,{image_data}"
-    except Exception as e:
-        logger.warning("OpenAI idea-card image generation failed for topic '%s': %s", topic, e)
-
-    return ""
-
-
 def parse_topics_json(raw: str) -> list[str]:
     cleaned = raw.strip()
     if cleaned.startswith("```"):
@@ -306,14 +238,66 @@ async def _safe_fetch(coro, default, timeout=10.0):
         return default
 
 
+def _first_str(item: dict, keys: list[str]) -> str:
+    for key in keys:
+        value = item.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _organic_thumbnail_urls(topic_media: dict) -> list[str]:
+    candidates: list[str] = []
+    source_specs = [
+        ("youtube", ["thumbnail", "thumbnail_url"]),
+        ("pinterest", ["image_url", "thumbnail_url"]),
+        ("instagram", ["thumbnail_url", "media_url", "image_url"]),
+        ("tiktok", ["cover", "thumbnail", "thumbnail_url", "coverUrl"]),
+        ("x", ["thumbnail_url", "image_url"]),
+    ]
+    for bucket, keys in source_specs:
+        rows = topic_media.get(bucket, [])
+        if not isinstance(rows, list):
+            continue
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            url = _first_str(row, keys)
+            if url.startswith("http://") or url.startswith("https://"):
+                candidates.append(url)
+
+    seen: set[str] = set()
+    unique: list[str] = []
+    for url in candidates:
+        if url in seen:
+            continue
+        seen.add(url)
+        unique.append(url)
+    return unique
+
+
+def attach_organic_thumbnails(ideas: list[VideoIdea], topic_media: dict) -> None:
+    thumbnails = _organic_thumbnail_urls(topic_media)
+    if not thumbnails:
+        return
+    for index, idea in enumerate(ideas):
+        if not (idea.thumbnail_url or "").strip():
+            idea.thumbnail_url = thumbnails[index % len(thumbnails)]
+
+
 async def discover_trends(niche: str) -> tuple[list[str], dict]:
     coros = [
         _safe_fetch(google_news_search(niche, max_results=8), []),
         _safe_fetch(google_trends_search(niche), {}, timeout=15.0),
         _safe_fetch(web_search(f"{niche} trending viral 2026", max_results=8), []),
         _safe_fetch(multi_reddit_ingest(niche, max_per_sub=5, days_back=RECENCY_DAYS), []),
+        _safe_fetch(youtube_search(f"{niche} viral shorts", max_results=6, days_back=RECENCY_DAYS), []),
+        _safe_fetch(search_instagram(f"{niche} reels", max_results=6), []),
+        _safe_fetch(tiktok_trending_search(f"{niche} viral", max_results=6, days_back=RECENCY_DAYS), []),
+        _safe_fetch(pinterest_search(f"{niche} ideas", max_results=6), []),
+        _safe_fetch(search_x(f"{niche} viral", max_results=6), []),
     ]
-    news, trends_data, web_results, reddit_posts = await asyncio.gather(*coros)
+    news, trends_data, web_results, reddit_posts, youtube, instagram, tiktok, pins, x_posts = await asyncio.gather(*coros)
 
     context_parts = []
     if news:
@@ -328,12 +312,27 @@ async def discover_trends(niche: str) -> tuple[list[str], dict]:
         context_parts.append("Web articles:\n" + "\n".join(f"- {r['title']}" for r in web_results[:8]))
     if reddit_posts:
         context_parts.append("Reddit discussions:\n" + "\n".join(f"- r/{p['subreddit']}: {p['title']}" for p in reddit_posts[:8]))
+    if youtube:
+        context_parts.append("YouTube Shorts:\n" + "\n".join(f"- {v.get('title', '')}" for v in youtube[:6]))
+    if instagram:
+        context_parts.append("Instagram/Reels signals:\n" + "\n".join(f"- {p.get('caption', '')}" for p in instagram[:6]))
+    if tiktok:
+        context_parts.append("TikTok signals:\n" + "\n".join(f"- {v.get('description', '')}" for v in tiktok[:6]))
+    if pins:
+        context_parts.append("Pinterest pins:\n" + "\n".join(f"- {p.get('title', '')}" for p in pins[:6]))
+    if x_posts:
+        context_parts.append("X conversations:\n" + "\n".join(f"- {p.get('title', '')}" for p in x_posts[:6]))
 
     raw_sources = {
         "google_news": news,
         "google_trends": trends_data,
         "web_search": web_results,
         "reddit_multi": reddit_posts,
+        "youtube": youtube,
+        "instagram": instagram,
+        "tiktok": tiktok,
+        "pinterest": pins,
+        "x": x_posts,
     }
 
     return context_parts, raw_sources
@@ -345,26 +344,28 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
     logger.info("Starting media gather for topic '%s'", topic)
     logger.info("Calling Instagram search for niche '%s'", instagram_query)
     coros = [
-        _safe_fetch(youtube_search(search_query, max_results=4, days_back=RECENCY_DAYS), []),
-        _safe_fetch(search_instagram(instagram_query, max_results=4), []),
-        _safe_fetch(tiktok_trending_search(search_query, max_results=3, days_back=RECENCY_DAYS), []),
+        _safe_fetch(youtube_search(search_query, max_results=5, days_back=RECENCY_DAYS), []),
+        _safe_fetch(search_instagram(instagram_query, max_results=5), []),
+        _safe_fetch(tiktok_trending_search(search_query, max_results=5, days_back=RECENCY_DAYS), []),
+        _safe_fetch(search_x(search_query, max_results=5), []),
         _safe_fetch(google_news_search(search_query, max_results=4), []),
-        _safe_fetch(hn_search(search_query, max_results=3), []),
         _safe_fetch(web_search(f"{search_query} trending", max_results=4), []),
-        _safe_fetch(pinterest_search(search_query, max_results=4), []),
+        _safe_fetch(pinterest_search(search_query, max_results=5), []),
         _safe_fetch(medium_search(search_query, max_results=4), []),
     ]
-    youtube, instagram_results, tiktok, news, hn, web, pins, articles = await asyncio.gather(*coros)
+    youtube, instagram_results, tiktok, x_posts, news, web, pins, articles = await asyncio.gather(*coros)
     logger.info("Instagram results for topic '%s': %s items", topic, len(instagram_results))
     youtube_tagged = [{**item, "platform": "youtube"} for item in youtube if isinstance(item, dict)]
     instagram_tagged = [{**item, "platform": "instagram"} for item in instagram_results if isinstance(item, dict)]
     tiktok_tagged = [{**item, "platform": "tiktok"} for item in tiktok if isinstance(item, dict)]
+    x_tagged = [{**item, "platform": "x"} for item in x_posts if isinstance(item, dict)]
     return {
         "youtube": youtube_tagged,
         "instagram": instagram_tagged,
         "tiktok": tiktok_tagged,
+        "x": x_tagged,
         "google_news": news,
-        "hackernews": hn,
+        "hackernews": [],
         "web_search": web,
         "pinterest": pins,
         "medium": articles,
@@ -385,15 +386,15 @@ def build_context_prompt(niche: str, topic: str, discovery_context: list[str], t
 
     tt = topic_media.get("tiktok", [])
     if tt:
-        parts.append("Popular TikTok videos:\n" + "\n".join(f"- {v.get('title', '')}" for v in tt[:3]))
+        parts.append("Popular TikTok videos:\n" + "\n".join(f"- {v.get('description', '')}" for v in tt[:4]))
+
+    xp = topic_media.get("x", [])
+    if xp:
+        parts.append("X conversations:\n" + "\n".join(f"- {p.get('title', '')}" for p in xp[:4]))
 
     news = topic_media.get("google_news", [])
     if news:
         parts.append("Topic news:\n" + "\n".join(f"- {a['title']}" for a in news[:4]))
-
-    hn = topic_media.get("hackernews", [])
-    if hn:
-        parts.append("Hacker News stories:\n" + "\n".join(f"- {s.get('title', '')}" for s in hn[:3]))
 
     web = topic_media.get("web_search", [])
     if web:
@@ -430,34 +431,15 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
             )
         raw = response.choices[0].message.content or ""
         ideas = parse_ideas_json(raw)
-        thumbnail_ideas = ideas[:OPENAI_IDEA_IMAGES_PER_TOPIC]
-        thumbnail_results = []
-        if thumbnail_ideas:
-            image_client = get_openai_image_client()
-            thumbnail_coros = [
-                generate_idea_thumbnail(image_client, niche, topic, idea)
-                for idea in thumbnail_ideas
-            ]
-            thumbnail_results = await asyncio.gather(*thumbnail_coros, return_exceptions=True)
-        for idx, result in enumerate(thumbnail_results):
-            if isinstance(result, str):
-                ideas[idx].thumbnail_url = result
-            elif isinstance(result, Exception):
-                logger.warning("Thumbnail generation error for topic '%s': %s", topic, result)
-        generated_count = sum(1 for idea in ideas if (idea.thumbnail_url or "").strip())
-        logger.info(
-            "OpenAI idea-card images generated for topic '%s': %s/%s",
-            topic,
-            generated_count,
-            len(ideas),
-        )
+        attach_organic_thumbnails(ideas, media)
 
         return TrendIdea(
             trend=topic,
             ideas=ideas,
             example_videos=media.get("youtube", [])[:4],
             instagram_posts=media.get("instagram", [])[:4],
-            tiktok_videos=media.get("tiktok", [])[:3],
+            tiktok_videos=media.get("tiktok", [])[:4],
+            x_posts=media.get("x", [])[:4],
             google_news=media.get("google_news", [])[:4],
             google_trends_data={},
             hackernews_stories=media.get("hackernews", [])[:3],
@@ -474,6 +456,7 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
             example_videos=[],
             instagram_posts=[],
             tiktok_videos=[],
+            x_posts=[],
         )
 
 

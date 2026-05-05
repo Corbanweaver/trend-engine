@@ -11,10 +11,12 @@ from fastapi import APIRouter
 from app.models import DailyPlatformSection, DailyTrendItem, DailyTrendingResponse
 from app.google_news_client import google_news_search
 from app.google_trends_client import google_trends_search
-from app.hackernews_client import hn_top_stories
 from app.multi_reddit_client import multi_reddit_ingest
+from app.instagram_client import search_instagram
+from app.pinterest_client import pinterest_search
 from app.tiktok_client import tiktok_trending_search
 from app.youtube_client import youtube_search
+from app.x_client import search_x
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/trending", tags=["trending"])
@@ -143,6 +145,77 @@ def _items_from_tiktok(rows: object) -> list[DailyTrendItem]:
     return out
 
 
+def _items_from_instagram(rows: object) -> list[DailyTrendItem]:
+    if not isinstance(rows, list):
+        return []
+    out: list[DailyTrendItem] = []
+    for row in rows[:8]:
+        if not isinstance(row, dict):
+            continue
+        caption = str(row.get("caption", "") or row.get("title", "") or "").strip()
+        if not caption:
+            caption = "Instagram/Reels result"
+        meta = "Instagram"
+        likes = row.get("like_count") or row.get("likes") or 0
+        try:
+            if int(likes) > 0:
+                meta = f"{int(likes):,} likes"
+        except (TypeError, ValueError):
+            pass
+        out.append(
+            DailyTrendItem(
+                title=caption[:120],
+                subtitle="Instagram/Reels",
+                url=str(row.get("permalink", "") or row.get("url", "") or row.get("link", "") or ""),
+                meta=meta,
+            )
+        )
+    return out
+
+
+def _items_from_pinterest(rows: object) -> list[DailyTrendItem]:
+    if not isinstance(rows, list):
+        return []
+    out: list[DailyTrendItem] = []
+    for row in rows[:8]:
+        if not isinstance(row, dict):
+            continue
+        title = str(row.get("title", "") or "").strip()
+        if not title:
+            title = "Pinterest pin"
+        board = str(row.get("board_name", "") or "").strip()
+        out.append(
+            DailyTrendItem(
+                title=title,
+                subtitle=board or "Pinterest",
+                url=str(row.get("link", "") or row.get("url", "") or ""),
+                meta="Visual search",
+            )
+        )
+    return out
+
+
+def _items_from_x(rows: object) -> list[DailyTrendItem]:
+    if not isinstance(rows, list):
+        return []
+    out: list[DailyTrendItem] = []
+    for row in rows[:8]:
+        if not isinstance(row, dict):
+            continue
+        title = str(row.get("title", "") or row.get("snippet", "") or "").strip()
+        if not title:
+            title = "X post"
+        out.append(
+            DailyTrendItem(
+                title=title[:120],
+                subtitle=str(row.get("author", "") or "X"),
+                url=str(row.get("url", "") or ""),
+                meta="Live conversation",
+            )
+        )
+    return out
+
+
 def _items_from_reddit(rows: object) -> list[DailyTrendItem]:
     if not isinstance(rows, list):
         return []
@@ -169,45 +242,9 @@ def _items_from_reddit(rows: object) -> list[DailyTrendItem]:
         )
     return out
 
-
-def _items_from_hn(rows: object) -> list[DailyTrendItem]:
-    if not isinstance(rows, list):
-        return []
-    out: list[DailyTrendItem] = []
-    for row in rows[:10]:
-        if not isinstance(row, dict):
-            continue
-        title = str(row.get("title", "")).strip()
-        if not title:
-            continue
-        url = str(row.get("url", "") or "").strip()
-        if not url:
-            url = str(row.get("hn_link", "") or "")
-        score = row.get("score", 0)
-        try:
-            sc = int(score)
-        except (TypeError, ValueError):
-            sc = 0
-        cm = row.get("comments", 0)
-        try:
-            ccount = int(cm)
-        except (TypeError, ValueError):
-            ccount = 0
-        meta = f"{sc} pts · {ccount} comments"
-        out.append(
-            DailyTrendItem(
-                title=title,
-                subtitle="Hacker News",
-                url=url,
-                meta=meta,
-            )
-        )
-    return out
-
-
 @router.get("/daily", response_model=DailyTrendingResponse)
 async def get_daily_trending():
-    """Cross-platform snapshot for the live trending page (no AI — raw signals)."""
+    """Cross-platform snapshot for the live trending page (raw signals only)."""
     loop_ts = datetime.now(timezone.utc).isoformat()
 
     coros = [
@@ -215,12 +252,14 @@ async def get_daily_trending():
         _safe(google_news_search("top stories United States today", max_results=14), []),
         _safe(youtube_search("viral shorts trending today", max_results=8, days_back=3), []),
         _safe(tiktok_trending_search("viral trend", max_results=8, days_back=3), []),
+        _safe(search_instagram("viral reels trending today", max_results=8), []),
+        _safe(pinterest_search("viral content ideas trending", max_results=8), []),
+        _safe(search_x("viral trend today", max_results=8), []),
         _safe(multi_reddit_ingest("global viral pulse", max_per_sub=5, days_back=3), []),
-        _safe(hn_top_stories(max_results=10), []),
     ]
 
     results = await asyncio.gather(*coros)
-    gdata, news, yt, tt, reddit, hn = results
+    gdata, news, yt, tt, instagram, pinterest, x_posts, reddit = results
 
     sections = [
         DailyPlatformSection(
@@ -244,14 +283,24 @@ async def get_daily_trending():
             items=_items_from_tiktok(tt),
         ),
         DailyPlatformSection(
+            key="instagram",
+            label="Instagram Reels",
+            items=_items_from_instagram(instagram),
+        ),
+        DailyPlatformSection(
+            key="pinterest",
+            label="Pinterest",
+            items=_items_from_pinterest(pinterest),
+        ),
+        DailyPlatformSection(
+            key="x",
+            label="X",
+            items=_items_from_x(x_posts),
+        ),
+        DailyPlatformSection(
             key="reddit",
             label="Reddit",
             items=_items_from_reddit(reddit),
-        ),
-        DailyPlatformSection(
-            key="hackernews",
-            label="Hacker News",
-            items=_items_from_hn(hn),
         ),
     ]
 

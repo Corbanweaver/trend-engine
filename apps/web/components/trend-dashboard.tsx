@@ -66,10 +66,10 @@ const NICHE_HISTORY_KEY = "trend_dashboard:niche_history";
 const CALENDAR_PLAN_STORAGE_KEY = "calendar:plans";
 const ANALYSIS_PROGRESS_STEPS = [
   "Starting live trend scan...",
-  "Checking TikTok, Instagram, and YouTube signals...",
-  "Reading Reddit, news, and search momentum...",
+  "Checking TikTok, X, Instagram, Pinterest, and YouTube...",
+  "Reading social, news, and search momentum...",
   "Generating creator-ready ideas and scripts...",
-  "Creating AI idea-card images...",
+  "Attaching organic source thumbnails...",
   "Packaging your trend cards...",
 ] as const;
 
@@ -129,6 +129,8 @@ function getTrendDetectedLabel(trend: TrendIdea): string {
     ...trend.example_videos,
     ...trend.reddit_posts,
     ...trend.instagram_posts,
+    ...(trend.x_posts ?? []),
+    ...trend.pinterest_pins,
     ...trend.google_news,
     ...trend.hackernews_stories,
     ...trend.web_results,
@@ -260,7 +262,8 @@ type PlatformChip =
   | "YouTube"
   | "Reddit"
   | "Instagram"
-  | "Twitter";
+  | "Pinterest"
+  | "X";
 
 const PLATFORM_CHIPS: PlatformChip[] = [
   "All",
@@ -268,7 +271,8 @@ const PLATFORM_CHIPS: PlatformChip[] = [
   "YouTube",
   "Reddit",
   "Instagram",
-  "Twitter",
+  "Pinterest",
+  "X",
 ];
 
 const platformIconStyles: Record<string, string> = {
@@ -276,15 +280,17 @@ const platformIconStyles: Record<string, string> = {
   YouTube: "bg-red-500/20 text-red-200 border-red-400/40",
   Reddit: "bg-orange-500/20 text-orange-200 border-orange-400/40",
   Instagram: "bg-purple-500/20 text-purple-200 border-purple-400/40",
-  Twitter: "bg-sky-500/20 text-sky-200 border-sky-400/40",
+  Pinterest: "bg-rose-500/20 text-rose-200 border-rose-400/40",
+  X: "bg-sky-500/20 text-sky-200 border-sky-400/40",
 };
 
 const platformGlyph: Record<string, string> = {
-  TikTok: "♪",
-  YouTube: "▶",
+  TikTok: "T",
+  YouTube: "Y",
   Reddit: "R",
-  Instagram: "◎",
-  Twitter: "X",
+  Instagram: "IG",
+  Pinterest: "P",
+  X: "X",
 };
 
 function hasPlatform(
@@ -323,7 +329,20 @@ function hasPlatform(
       )
     );
   }
-  return trend.web_results.length > 0 || trend.hackernews_stories.length > 0;
+  if (platform === "Pinterest") {
+    return (
+      trend.pinterest_pins.length > 0 ||
+      trend.pinterest_pins.some(
+        (p) => (p as { platform?: string }).platform === "pinterest",
+      )
+    );
+  }
+  return (
+    (trend.x_posts ?? []).length > 0 ||
+    (trend.x_posts ?? []).some(
+      (p) => (p as { platform?: string }).platform === "x",
+    )
+  );
 }
 
 function getPlatformBadges(trend: TrendIdea): string[] {
@@ -332,21 +351,34 @@ function getPlatformBadges(trend: TrendIdea): string[] {
   if (hasPlatform(trend, "YouTube")) badges.push("YouTube");
   if (hasPlatform(trend, "Reddit")) badges.push("Reddit");
   if (hasPlatform(trend, "Instagram")) badges.push("Instagram");
-  if (hasPlatform(trend, "Twitter")) badges.push("Twitter");
+  if (hasPlatform(trend, "Pinterest")) badges.push("Pinterest");
+  if (hasPlatform(trend, "X")) badges.push("X");
   return [...new Set(badges)].slice(0, 5);
 }
 
 function getCardVisual(trend: TrendIdea) {
-  const generatedIdeaThumb = trend.ideas
-    .flatMap(getVideoIdeaThumbnailUrls)
-    .find((url) => url.length > 0);
   const youtubeThumb = trend.example_videos.find(
     (v) => typeof v.thumbnail === "string" && v.thumbnail,
   )?.thumbnail as string | undefined;
+  const pinterestImage = trend.pinterest_pins.find(
+    (p) => typeof p.image_url === "string" && p.image_url,
+  )?.image_url as string | undefined;
+  const instagramImage = trend.instagram_posts.find(
+    (p) =>
+      (typeof p.thumbnail_url === "string" && p.thumbnail_url) ||
+      (typeof p.media_url === "string" && p.media_url),
+  ) as Record<string, unknown> | undefined;
   const tiktokCover = trend.tiktok_videos.find(
     (v) => typeof v.cover === "string" && v.cover,
   )?.cover as string | undefined;
-  return generatedIdeaThumb || youtubeThumb || tiktokCover || null;
+  return (
+    youtubeThumb ||
+    pinterestImage ||
+    (instagramImage?.thumbnail_url as string | undefined) ||
+    (instagramImage?.media_url as string | undefined) ||
+    tiktokCover ||
+    null
+  );
 }
 
 function getYouTubeUrl(trend: TrendIdea): string | null {
@@ -405,6 +437,36 @@ function getInstagramUrl(trend: TrendIdea): string | null {
     : null;
 }
 
+function getPinterestUrl(trend: TrendIdea): string | null {
+  const candidate = trend.pinterest_pins.find((pin) => {
+    const sourceKeys = ["url", "link", "permalink"] as const;
+    return sourceKeys.some((key) => {
+      const value = pin[key];
+      return typeof value === "string" && value.trim().length > 0;
+    });
+  });
+  if (!candidate) return null;
+  const preferred = candidate.url ?? candidate.link ?? candidate.permalink;
+  return typeof preferred === "string" && preferred.trim().length > 0
+    ? preferred
+    : null;
+}
+
+function getXUrl(trend: TrendIdea): string | null {
+  const candidate = (trend.x_posts ?? []).find((post) => {
+    const sourceKeys = ["url", "link", "permalink"] as const;
+    return sourceKeys.some((key) => {
+      const value = post[key];
+      return typeof value === "string" && value.trim().length > 0;
+    });
+  });
+  if (!candidate) return null;
+  const preferred = candidate.url ?? candidate.link ?? candidate.permalink;
+  return typeof preferred === "string" && preferred.trim().length > 0
+    ? preferred
+    : null;
+}
+
 function TrendCard({
   trend,
   index,
@@ -436,6 +498,7 @@ function TrendCard({
     trend.google_news.length +
     trend.web_results.length +
     trend.pinterest_pins.length +
+    (trend.x_posts ?? []).length +
     trend.medium_articles.length;
   const platformBadges = getPlatformBadges(trend);
   const visual = getCardVisual(trend);
@@ -443,6 +506,8 @@ function TrendCard({
   const tiktokUrl = getTikTokUrl(trend);
   const redditUrl = getRedditUrl(trend);
   const instagramUrl = getInstagramUrl(trend);
+  const pinterestUrl = getPinterestUrl(trend);
+  const xUrl = getXUrl(trend);
   const trendLabel = getTrendDetectedLabel(trend);
   const [imageFailed, setImageFailed] = useState(false);
   const showVisual = Boolean(visual && !imageFailed);
@@ -565,7 +630,12 @@ function TrendCard({
               style={{ width: raw > 0 ? `${heat}%` : "0%" }}
             />
           </div>
-          {youtubeUrl || tiktokUrl || redditUrl || instagramUrl ? (
+          {youtubeUrl ||
+          tiktokUrl ||
+          redditUrl ||
+          instagramUrl ||
+          pinterestUrl ||
+          xUrl ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {tiktokUrl ? (
                 <a
@@ -632,6 +702,40 @@ function TrendCard({
                 >
                   <Instagram className="size-3.5" />
                   View on Instagram
+                  <ExternalLink className="size-3.5" />
+                </a>
+              ) : null}
+              {pinterestUrl ? (
+                <a
+                  href={pinterestUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    platformIconStyles.Pinterest,
+                    "hover:bg-rose-500/30",
+                  )}
+                >
+                  <span className="text-xs font-bold">P</span>
+                  View on Pinterest
+                  <ExternalLink className="size-3.5" />
+                </a>
+              ) : null}
+              {xUrl ? (
+                <a
+                  href={xUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    platformIconStyles.X,
+                    "hover:bg-sky-500/30",
+                  )}
+                >
+                  <span className="text-xs font-bold">X</span>
+                  View on X
                   <ExternalLink className="size-3.5" />
                 </a>
               ) : null}
@@ -715,7 +819,8 @@ function LoadingState({
           Time running:{" "}
           <span className="font-medium text-slate-200">{elapsedDisplay}</span> -
           This usually takes 30 to 90 seconds while we scan sources and generate
-          images. Leave this tab open and don&apos;t refresh.
+          source links and thumbnails. Leave this tab open and don&apos;t
+          refresh.
         </p>
       </div>
       <div className="grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -914,9 +1019,9 @@ export function TrendDashboard() {
   });
 
   const runAnalysis = useCallback(async () => {
-    if (!isAdmin && creditsRemaining < CREDIT_COSTS.analysisWithImages) {
+    if (!isAdmin && creditsRemaining < CREDIT_COSTS.analysis) {
       setError(
-        `You need ${CREDIT_COSTS.analysisWithImages} credits to run a full analysis with images. Upgrade for more monthly credits.`,
+        `You need ${CREDIT_COSTS.analysis} credits to run a full trend analysis. Upgrade for more monthly credits.`,
       );
       return;
     }
@@ -1141,7 +1246,7 @@ export function TrendDashboard() {
   }, []);
 
   const analysisCreditBlocked =
-    !isAdmin && creditsRemaining < CREDIT_COSTS.analysisWithImages;
+    !isAdmin && creditsRemaining < CREDIT_COSTS.analysis;
   const favoriteSet = new Set(favoriteNiches);
   const favoriteOptions = NICHE_OPTIONS.filter((o) => favoriteSet.has(o.value));
   const regularOptions = NICHE_OPTIONS.filter((o) => !favoriteSet.has(o.value));
@@ -1184,12 +1289,26 @@ export function TrendDashboard() {
         ...(sourceTrend?.tiktok_videos ?? []).map((post) => ({
           label: "TikTok",
           url: String(post.url || post.link || post.webVideoUrl || ""),
-          title: String(post.title || post.desc || "TikTok video"),
+          title: String(
+            post.title || post.description || post.desc || "TikTok video",
+          ),
         })),
+        ...((sourceTrend?.x_posts ?? []) as Record<string, unknown>[]).map(
+          (post) => ({
+            label: "X",
+            url: String(post.url || post.link || post.permalink || ""),
+            title: String(post.title || post.snippet || "X post"),
+          }),
+        ),
         ...(sourceTrend?.example_videos ?? []).map((post) => ({
           label: "YouTube",
           url: String(post.url || post.link || ""),
           title: String(post.title || "YouTube video"),
+        })),
+        ...(sourceTrend?.pinterest_pins ?? []).map((post) => ({
+          label: "Pinterest",
+          url: String(post.url || post.link || post.permalink || ""),
+          title: String(post.title || "Pinterest pin"),
         })),
         ...(sourceTrend?.reddit_posts ?? []).map((post) => ({
           label: "Reddit",
@@ -1920,9 +2039,8 @@ export function TrendDashboard() {
 
       {analysisCreditBlocked ? (
         <div className="mx-4 mt-4 rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary dark:border-fuchsia-400/40 dark:bg-fuchsia-500/10 dark:text-fuchsia-100">
-          You need {CREDIT_COSTS.analysisWithImages} credits for another full
-          analysis with images. Upgrade to Creator or Pro for higher monthly
-          credits.
+          You need {CREDIT_COSTS.analysis} credits for another full trend
+          analysis. Upgrade to Creator or Pro for higher monthly credits.
           <Link href="/pricing" className="ml-2 underline underline-offset-2">
             View pricing
           </Link>
