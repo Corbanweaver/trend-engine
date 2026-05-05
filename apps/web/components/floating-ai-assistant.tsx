@@ -31,7 +31,7 @@ const ASSISTANT_POSITION_STORAGE_KEY = "trend_engine:assistant_position";
 const INITIAL_ASSISTANT_MESSAGE: ChatMessage = {
   role: "assistant",
   content:
-    "Hi! I can help with niche discovery, trend explanations, content brainstorming, and navigating Content Idea Maker.",
+    "Hi! I can help with niche discovery, trend explanations, content brainstorming, and navigating Content Buddy.",
 };
 
 type AssistantPosition = {
@@ -61,8 +61,14 @@ function clampAssistantPosition(
   if (typeof window === "undefined") return position;
   const margin = 12;
   return {
-    x: Math.min(Math.max(position.x, margin), window.innerWidth - width - margin),
-    y: Math.min(Math.max(position.y, margin), window.innerHeight - height - margin),
+    x: Math.min(
+      Math.max(position.x, margin),
+      window.innerWidth - width - margin,
+    ),
+    y: Math.min(
+      Math.max(position.y, margin),
+      window.innerHeight - height - margin,
+    ),
   };
 }
 
@@ -71,7 +77,9 @@ export function FloatingAiAssistant() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_ASSISTANT_MESSAGE]);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    INITIAL_ASSISTANT_MESSAGE,
+  ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assistantPosition, setAssistantPosition] =
@@ -117,16 +125,24 @@ export function FloatingAiAssistant() {
 
   useEffect(() => {
     try {
-      const savedMessages = window.localStorage.getItem(ASSISTANT_MESSAGES_STORAGE_KEY);
+      const savedMessages = window.localStorage.getItem(
+        ASSISTANT_MESSAGES_STORAGE_KEY,
+      );
       if (savedMessages) {
         const parsed = JSON.parse(savedMessages) as ChatMessage[];
         if (Array.isArray(parsed) && parsed.length > 0) {
           const normalized = parsed
             .filter((message) => {
-              if (!message || (message.role !== "user" && message.role !== "assistant")) {
+              if (
+                !message ||
+                (message.role !== "user" && message.role !== "assistant")
+              ) {
                 return false;
               }
-              return typeof message.content === "string" && message.content.trim().length > 0;
+              return (
+                typeof message.content === "string" &&
+                message.content.trim().length > 0
+              );
             })
             .slice(-20);
           if (normalized.length > 0) {
@@ -172,7 +188,11 @@ export function FloatingAiAssistant() {
     const onResize = () => {
       const { width, height } = getButtonSize();
       setAssistantPosition((prev) =>
-        clampAssistantPosition(prev ?? getDefaultAssistantPosition(), width, height),
+        clampAssistantPosition(
+          prev ?? getDefaultAssistantPosition(),
+          width,
+          height,
+        ),
       );
     };
     window.addEventListener("resize", onResize);
@@ -278,9 +298,14 @@ export function FloatingAiAssistant() {
         throw new Error(body.error ?? "Failed to get AI response.");
       }
 
-      setMessages((prev) => [...prev, { role: "assistant", content: body.reply ?? "" }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: body.reply ?? "" },
+      ]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to get AI response.");
+      setError(
+        err instanceof Error ? err.message : "Failed to get AI response.",
+      );
     } finally {
       setLoading(false);
     }
@@ -329,7 +354,9 @@ export function FloatingAiAssistant() {
               <Bot className="size-4 text-primary dark:text-cyan-300" />
               <div>
                 <p className="text-sm font-semibold">Trend Assistant</p>
-                <p className="text-[11px] text-muted-foreground dark:text-slate-400">Model: GPT-4</p>
+                <p className="text-[11px] text-muted-foreground dark:text-slate-400">
+                  Model: GPT-4
+                </p>
               </div>
             </div>
           </header>
@@ -356,7 +383,9 @@ export function FloatingAiAssistant() {
           </div>
 
           {error ? (
-            <p className="border-t border-red-300/60 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-400/25 dark:bg-red-500/10 dark:text-red-200">{error}</p>
+            <p className="border-t border-red-300/60 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-400/25 dark:bg-red-500/10 dark:text-red-200">
+              {error}
+            </p>
           ) : null}
 
           <div className="border-t border-border px-3 py-2 dark:border-white/10">
@@ -373,7 +402,10 @@ export function FloatingAiAssistant() {
                 </button>
               ))}
             </div>
-            <form onSubmit={(e) => void onSubmit(e)} className="flex items-center gap-2">
+            <form
+              onSubmit={(e) => void onSubmit(e)}
+              className="flex items-center gap-2"
+            >
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}

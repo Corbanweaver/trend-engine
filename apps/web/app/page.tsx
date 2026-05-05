@@ -120,7 +120,7 @@ const testimonials = [
 
 const faqItems = [
   {
-    q: "Which platforms does Content Idea Maker scan?",
+    q: "Which platforms does Content Buddy scan?",
     a: "We aggregate momentum signals from short-form video, community discussions, news, and search—so you see a cross-platform picture instead of one siloed feed.",
   },
   {
@@ -155,7 +155,7 @@ export default function Home() {
           href="/"
           className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
         >
-          Content Idea Maker
+          Content Buddy
         </Link>
         <nav className="flex items-center gap-6 text-sm">
           <Link
@@ -199,7 +199,7 @@ export default function Home() {
 
       <section className="relative mx-auto flex min-h-[calc(100svh-5.5rem)] w-full max-w-6xl flex-col items-center justify-center px-6 py-18 text-center">
         <span className="glass-surface hairline-ring rounded-full border border-border bg-card px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-primary dark:text-cyan-200">
-          Content Idea Maker
+          Content Buddy
         </span>
 
         <h1 className="mt-8 max-w-5xl text-balance bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-5xl font-extrabold leading-tight text-transparent sm:text-6xl lg:text-7xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
@@ -294,7 +294,7 @@ export default function Home() {
             Built for creators who ship on deadlines
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-            Practical examples of how Content Idea Maker turns live momentum into
+            Practical examples of how Content Buddy turns live momentum into
             content you can plan, save, and publish.
           </p>
         </div>
@@ -327,7 +327,9 @@ export default function Home() {
                   <p className="truncate text-xs text-primary dark:text-cyan-300">
                     {t.handle}
                   </p>
-                  <p className="truncate text-xs text-muted-foreground">{t.role}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {t.role}
+                  </p>
                 </div>
               </figcaption>
             </figure>
@@ -406,11 +408,11 @@ export default function Home() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-14 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-sm">
             <p className="text-sm font-semibold tracking-[0.18em] text-foreground">
-              Content Idea Maker
+              Content Buddy
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Content Idea Maker turns live trend signals into creator-ready
-              briefs, scripts, and polished idea cards.
+              Content Buddy turns live trend signals into creator-ready briefs,
+              scripts, and polished idea cards.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-10 sm:flex sm:gap-16">
@@ -544,7 +546,7 @@ export default function Home() {
         </div>
         <div className="border-t border-border py-6 dark:border-white/10">
           <p className="text-center text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Content Idea Maker. All rights reserved.
+            © {new Date().getFullYear()} Content Buddy. All rights reserved.
           </p>
         </div>
       </footer>

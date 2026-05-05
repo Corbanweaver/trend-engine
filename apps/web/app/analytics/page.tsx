@@ -21,7 +21,10 @@ export default function AnalyticsPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
-  const totalAnalyses = useMemo(() => (ready ? readTotalAnalyses() : 0), [ready]);
+  const totalAnalyses = useMemo(
+    () => (ready ? readTotalAnalyses() : 0),
+    [ready],
+  );
   const history = useMemo(() => (ready ? readTrendHistory() : []), [ready]);
   const nicheRanks = useMemo(() => getNicheCounts(history), [history]);
   const earned = useMemo(
@@ -30,7 +33,7 @@ export default function AnalyticsPage() {
   );
 
   useEffect(() => {
-    document.title = "Analytics — Content Idea Maker";
+    document.title = "Analytics — Content Buddy";
   }, []);
 
   useEffect(() => {
@@ -43,7 +46,9 @@ export default function AnalyticsPage() {
           error: userError,
         } = await supabase.auth.getUser();
         if (userError || !user) {
-          setLoadError("Please log in to view analytics tied to your saved ideas.");
+          setLoadError(
+            "Please log in to view analytics tied to your saved ideas.",
+          );
           setSavedCount(0);
           setReady(true);
           return;
@@ -99,7 +104,9 @@ export default function AnalyticsPage() {
           <h2 className="text-sm font-medium text-foreground">Overview</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             <div className="rounded-xl border border-border bg-card/50 p-4">
-              <p className="text-xs text-muted-foreground">Analyses (lifetime)</p>
+              <p className="text-xs text-muted-foreground">
+                Analyses (lifetime)
+              </p>
               <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
                 {ready ? totalAnalyses : "—"}
               </p>
@@ -120,7 +127,9 @@ export default function AnalyticsPage() {
         </section>
 
         <section className="glass-surface rounded-2xl border border-border p-5">
-          <h2 className="text-sm font-medium text-foreground">Most analyzed niches</h2>
+          <h2 className="text-sm font-medium text-foreground">
+            Most analyzed niches
+          </h2>
           {!ready || nicheRanks.length === 0 ? (
             <p className="mt-3 text-sm text-muted-foreground">
               {ready
@@ -182,7 +191,8 @@ export default function AnalyticsPage() {
         <section className="glass-surface rounded-2xl border border-border p-5">
           <h2 className="text-sm font-medium text-foreground">Achievements</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Badges use lifetime analyses (this device) and total saved ideas in your account.
+            Badges use lifetime analyses (this device) and total saved ideas in
+            your account.
           </p>
           <div className="mt-4">
             {ready && savedCount !== null ? (
@@ -194,7 +204,10 @@ export default function AnalyticsPage() {
         </section>
 
         <p className="text-center text-xs text-muted-foreground">
-          <Link href="/profile" className="underline underline-offset-2 hover:text-foreground">
+          <Link
+            href="/profile"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
             View profile
           </Link>
         </p>

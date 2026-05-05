@@ -9,7 +9,8 @@ import { FormEvent, useState } from "react";
 import { getPasswordStrength } from "@/lib/password-strength";
 import { getSupabaseClient } from "@/lib/supabase";
 
-const googleAuthEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
+const googleAuthEnabled =
+  process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -81,7 +82,7 @@ export default function SignupPage() {
           href="/"
           className="mb-6 block text-xs font-semibold uppercase tracking-[0.2em] text-primary dark:text-cyan-300"
         >
-          Content Idea Maker
+          Content Buddy
         </Link>
         <h1 className="text-2xl font-semibold">Sign up</h1>
         <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
@@ -90,7 +91,9 @@ export default function SignupPage() {
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm">
-            <span className="mb-1 block text-muted-foreground dark:text-slate-300">Email</span>
+            <span className="mb-1 block text-muted-foreground dark:text-slate-300">
+              Email
+            </span>
             <input
               type="email"
               required
@@ -101,7 +104,9 @@ export default function SignupPage() {
           </label>
 
           <label className="block text-sm">
-            <span className="mb-1 block text-muted-foreground dark:text-slate-300">Password</span>
+            <span className="mb-1 block text-muted-foreground dark:text-slate-300">
+              Password
+            </span>
             <input
               type="password"
               required
@@ -160,9 +165,12 @@ export default function SignupPage() {
                 </p>
               </div>
             ) : (
-              <p id="password-strength-hint" className="mt-1.5 text-xs text-muted-foreground dark:text-slate-500">
-                Use at least 8 characters with upper and lower case, a number, and a symbol for a
-                strong password.
+              <p
+                id="password-strength-hint"
+                className="mt-1.5 text-xs text-muted-foreground dark:text-slate-500"
+              >
+                Use at least 8 characters with upper and lower case, a number,
+                and a symbol for a strong password.
               </p>
             )}
           </label>
@@ -201,7 +209,10 @@ export default function SignupPage() {
 
         <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
           Already have an account?{" "}
-          <Link href="/login" className="text-primary hover:underline dark:text-cyan-300">
+          <Link
+            href="/login"
+            className="text-primary hover:underline dark:text-cyan-300"
+          >
             Log in
           </Link>
         </p>

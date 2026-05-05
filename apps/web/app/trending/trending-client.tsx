@@ -115,7 +115,7 @@ export function TrendingLivePage() {
             href="/"
             className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
           >
-            Content Idea Maker
+            Content Buddy
           </Link>
           <nav className="flex items-center gap-6 text-sm">
             <span className="font-medium text-primary">Trending</span>
@@ -178,8 +178,8 @@ export function TrendingLivePage() {
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
             A live-weighted snapshot from Google Trends, news wires, Shorts,
-            TikTok, Reddit, and Hacker News — auto-refreshes every minute or
-            so for a real-time feel.
+            TikTok, Reddit, and Hacker News — auto-refreshes every minute or so
+            for a real-time feel.
           </p>
         </div>
 
@@ -219,7 +219,9 @@ export function TrendingLivePage() {
                       <Icon className="size-5 text-primary dark:text-cyan-300" />
                     </div>
                     <div>
-                      <h2 className="text-base font-semibold">{section.label}</h2>
+                      <h2 className="text-base font-semibold">
+                        {section.label}
+                      </h2>
                       <p className="text-xs text-muted-foreground">
                         {section.items.length} signals
                       </p>
@@ -300,7 +302,7 @@ export function TrendingLivePage() {
             href="/dashboard"
             className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-lg hover:opacity-95 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
           >
-            Open Content Idea Maker
+            Open Content Buddy
             <ArrowRight className="size-4" />
           </Link>
         </div>

@@ -1151,7 +1151,13 @@ export function TrendDashboard() {
     { href: "/profile", label: "Profile", icon: UserRound },
     { href: "/support", label: "Support", icon: HelpCircle },
     ...(isAdmin
-      ? [{ href: "/admin", label: "Admin", icon: ShieldCheck } satisfies DashboardNavItem]
+      ? [
+          {
+            href: "/admin",
+            label: "Admin",
+            icon: ShieldCheck,
+          } satisfies DashboardNavItem,
+        ]
       : []),
   ];
 
@@ -1324,7 +1330,7 @@ export function TrendDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 dark:bg-slate-950/80">
           <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl dark:border-white/15 dark:bg-slate-900">
             <h2 className="text-xl font-semibold text-foreground dark:text-white">
-              Welcome to Content Idea Maker
+              Welcome to Content Buddy
             </h2>
             <p className="mt-2 text-sm text-muted-foreground dark:text-slate-300">
               Your first workflow takes just a few steps:
@@ -1355,13 +1361,13 @@ export function TrendDashboard() {
         <Link
           href="/dashboard"
           className="mb-6 flex items-center justify-center gap-3 rounded-2xl px-3 py-2 text-primary dark:text-cyan-200 xl:justify-start"
-          aria-label="Content Idea Maker dashboard"
+          aria-label="Content Buddy dashboard"
         >
           <span className="flex size-10 items-center justify-center rounded-2xl bg-primary text-sm font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
             C
           </span>
           <span className="hidden text-sm font-bold tracking-tight xl:inline">
-            Content Idea Maker
+            Content Buddy
           </span>
         </Link>
         <nav className="flex flex-1 flex-col gap-1">
@@ -1411,7 +1417,7 @@ export function TrendDashboard() {
               <span className="flex size-9 items-center justify-center rounded-2xl bg-primary text-xs font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
                 C
               </span>
-              <span>Content Idea Maker</span>
+              <span>Content Buddy</span>
             </Link>
             <div className="hidden min-w-0 lg:block">
               <h1 className="truncate text-xl font-bold tracking-tight">
@@ -1568,11 +1574,12 @@ export function TrendDashboard() {
                   <span className="font-semibold text-foreground dark:text-white">
                     {lastAnalyzed.niche}
                   </span>{" "}
-                  at {formatShortDateTime(lastAnalyzed.analyzedAt) ?? "just now"}
+                  at{" "}
+                  {formatShortDateTime(lastAnalyzed.analyzedAt) ?? "just now"}
                 </span>
               ) : (
                 <span className="rounded-full bg-background px-3 py-1 text-xs text-muted-foreground shadow-sm dark:bg-white/5 dark:text-slate-300">
-                  Run an analysis to fill the board
+                  Pick a niche, then tap Analyze
                 </span>
               )}
               {analysisCreditBlocked ? (
@@ -1613,7 +1620,7 @@ export function TrendDashboard() {
             </div>
             <div className="min-w-0">
               <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">
-                Content Idea Maker
+                Content Buddy
               </h1>
               <p className="hidden text-xs text-muted-foreground dark:text-slate-400 sm:block">
                 AI trend intelligence for creators

@@ -7,7 +7,7 @@ import { CREDIT_LIMITS } from "@/lib/credits";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Choose a Content Idea Maker plan for trend analyses, niches, saved ideas, and AI thumbnails.",
+    "Choose a Content Buddy plan for trend analyses, niches, saved ideas, and AI thumbnails.",
 };
 
 const plans = [
@@ -73,7 +73,7 @@ function PricingHeader() {
         href="/"
         className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
       >
-        Content Idea Maker
+        Content Buddy
       </Link>
       <nav className="flex items-center gap-6 text-sm">
         <Link
@@ -234,7 +234,9 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
               ) : null}
 
               <div className="mb-6">
-                <h2 className="text-xl font-bold text-foreground dark:text-white">{plan.name}</h2>
+                <h2 className="text-xl font-bold text-foreground dark:text-white">
+                  {plan.name}
+                </h2>
                 <p className="mt-2 min-h-[3rem] text-sm leading-relaxed text-muted-foreground dark:text-slate-400">
                   {plan.description}
                 </p>
@@ -242,7 +244,9 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                   <span className="text-4xl font-extrabold tracking-tight text-foreground dark:text-white">
                     {plan.price}
                   </span>
-                  <span className="text-muted-foreground dark:text-slate-400">{plan.period}</span>
+                  <span className="text-muted-foreground dark:text-slate-400">
+                    {plan.period}
+                  </span>
                 </div>
               </div>
 

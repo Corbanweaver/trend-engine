@@ -19,7 +19,8 @@ import { computeEarnedBadgeIds, readTotalAnalyses } from "@/lib/user-stats";
 type SubscriptionPlan = "free" | "creator" | "pro";
 
 const supportEmail =
-  process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "support@contentideamaker.com";
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() ||
+  "support@contentideamaker.com";
 
 type UserSubscriptionRow = {
   plan: SubscriptionPlan;
@@ -109,7 +110,7 @@ export default function ProfilePage() {
     [totalAnalyses, savedCount],
   );
   const privacyRequestHref = useMemo(() => {
-    const subject = "Content Idea Maker data request";
+    const subject = "Content Buddy data request";
     const body = email
       ? `Account email: ${email}\n\nI would like help with my account data.`
       : "I would like help with my account data.";
@@ -131,7 +132,7 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-    document.title = "Profile — Content Idea Maker";
+    document.title = "Profile — Content Buddy";
   }, []);
 
   useEffect(() => {
@@ -361,7 +362,7 @@ export default function ProfilePage() {
                           cancelAtPeriodEnd,
                           currentPeriodEnd,
                         )
-                    : "Loading..."}
+                      : "Loading..."}
                 </span>
               </p>
               {ready && plan && plan !== "free" && cancelAtPeriodEnd ? (
@@ -441,7 +442,9 @@ export default function ProfilePage() {
         </section>
 
         <section className="glass-surface rounded-2xl border border-border p-5">
-          <h2 className="text-sm font-medium text-foreground">Data and privacy</h2>
+          <h2 className="text-sm font-medium text-foreground">
+            Data and privacy
+          </h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             Request an account export, correction, or deletion from the email
             connected to your account. Billing changes should still be handled

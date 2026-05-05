@@ -45,7 +45,7 @@ export default function CalendarPage() {
   }, []);
 
   useEffect(() => {
-    document.title = "Content Calendar — Content Idea Maker";
+    document.title = "Content Calendar — Content Buddy";
   }, []);
 
   useEffect(() => {
@@ -208,6 +208,9 @@ export default function CalendarPage() {
   const selectedIdea = selectedIdeaId
     ? (ideaById.get(selectedIdeaId) ?? null)
     : null;
+  const selectedIdeaIsScheduled = selectedIdeaId
+    ? Object.values(calendarMap).some((ids) => ids.includes(selectedIdeaId))
+    : false;
 
   return (
     <main className="min-h-svh bg-background p-4 text-foreground">
@@ -384,31 +387,8 @@ export default function CalendarPage() {
                                 />
                               </div>
                             ) : null}
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="min-w-0 flex-1 truncate font-medium">
-                                {idea.idea_title || "Saved idea"}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeFromCalendar(id);
-                                }}
-                                className="shrink-0 rounded border border-border px-1 text-[10px] text-foreground hover:bg-muted"
-                              >
-                                Remove
-                              </button>
-                              <button
-                                type="button"
-                                disabled={deletingIdeaId === id}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void deleteIdea(id);
-                                }}
-                                className="shrink-0 rounded border border-red-300/50 px-1 text-[10px] text-red-700 hover:bg-red-50 disabled:opacity-60 dark:border-red-300/40 dark:text-red-100 dark:hover:bg-red-500/20"
-                              >
-                                {deletingIdeaId === id ? "..." : "Delete"}
-                              </button>
+                            <div className="truncate font-medium">
+                              {idea.idea_title || "Saved idea"}
                             </div>
                           </div>
                         );
@@ -428,7 +408,7 @@ export default function CalendarPage() {
           onClick={() => closeDetail()}
         >
           <div
-            className="flex max-h-[70vh] w-[min(100%-2rem,60vw)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl"
+            className="flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl"
             role="dialog"
             aria-modal="true"
             aria-labelledby="calendar-idea-detail-title"
@@ -437,7 +417,7 @@ export default function CalendarPage() {
             <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-3">
               <div className="min-w-0">
                 <p className="text-[11px] text-muted-foreground">
-                  {selectedIdea.niche} ·{" "}
+                  {selectedIdea.niche} -{" "}
                   {new Date(selectedIdea.created_at).toLocaleString()}
                 </p>
                 <h3
@@ -473,6 +453,30 @@ export default function CalendarPage() {
                 }
                 className="rounded-lg border border-border bg-muted/40 p-3 text-sm leading-relaxed text-foreground"
               />
+            </div>
+            <div className="flex shrink-0 flex-col gap-2 border-t border-border px-4 py-3 sm:flex-row sm:justify-end">
+              {selectedIdeaIsScheduled ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    removeFromCalendar(selectedIdea.id);
+                    closeDetail();
+                  }}
+                  className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+                >
+                  Remove from calendar
+                </button>
+              ) : null}
+              <button
+                type="button"
+                disabled={deletingIdeaId === selectedIdea.id}
+                onClick={() => void deleteIdea(selectedIdea.id)}
+                className="rounded-lg border border-red-300/50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60 dark:border-red-300/40 dark:text-red-100 dark:hover:bg-red-500/20"
+              >
+                {deletingIdeaId === selectedIdea.id
+                  ? "Deleting..."
+                  : "Delete idea"}
+              </button>
             </div>
           </div>
         </div>

@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Activity, CheckCircle2, ExternalLink, ShieldCheck } from "lucide-react";
+import {
+  Activity,
+  CheckCircle2,
+  ExternalLink,
+  ShieldCheck,
+} from "lucide-react";
 
 export const metadata: Metadata = {
   title: "System Status",
-  description: "Production health and support status for Content Idea Maker.",
+  description: "Production health and support status for Content Buddy.",
 };
 
 export default function StatusPage() {
@@ -16,7 +21,7 @@ export default function StatusPage() {
             href="/"
             className="text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
           >
-            Content Idea Maker
+            Content Buddy
           </Link>
           <Link
             href="/support"
@@ -41,10 +46,10 @@ export default function StatusPage() {
             </div>
           </div>
           <p className="mt-5 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Content Idea Maker has a public health endpoint, protected deep
-            health checks, and a scheduled production monitor. If something
-            feels wrong inside the app, support can use the operational event
-            stream and provider dashboards to investigate.
+            Content Buddy has a public health endpoint, protected deep health
+            checks, and a scheduled production monitor. If something feels wrong
+            inside the app, support can use the operational event stream and
+            provider dashboards to investigate.
           </p>
         </section>
 
@@ -65,7 +70,9 @@ export default function StatusPage() {
           </div>
           <div className="rounded-2xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/45">
             <ShieldCheck className="size-6 text-primary dark:text-cyan-300" />
-            <h2 className="mt-4 text-base font-semibold">Protected deep checks</h2>
+            <h2 className="mt-4 text-base font-semibold">
+              Protected deep checks
+            </h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Deeper Supabase, Stripe, OpenAI, and backend checks require a
               private health secret.

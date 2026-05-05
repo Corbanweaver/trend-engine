@@ -528,7 +528,7 @@ export function IdeaPanel({
         </h2>
         <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
           {trend.ideas.length} idea{trend.ideas.length === 1 ? "" : "s"} from
-          Content Idea Maker
+          Content Buddy
         </p>
       </div>
 
@@ -797,22 +797,22 @@ export function IdeaPanel({
                         Actions
                       </p>
                       <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => void setIdeaRating(idea, i, "up")}
-                        aria-label="Mark idea as useful"
-                        className="inline-flex size-8 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10 text-emerald-700 transition-colors hover:bg-emerald-500/15 dark:text-emerald-200"
-                      >
-                        <ThumbsUp className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void setIdeaRating(idea, i, "down")}
-                        aria-label="Mark idea as not useful"
-                        className="inline-flex size-8 items-center justify-center rounded-full border border-amber-400/30 bg-amber-500/10 text-amber-700 transition-colors hover:bg-amber-500/15 dark:text-amber-100"
-                      >
-                        <ThumbsDown className="size-4" />
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => void setIdeaRating(idea, i, "up")}
+                          aria-label="Mark idea as useful"
+                          className="inline-flex size-8 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10 text-emerald-700 transition-colors hover:bg-emerald-500/15 dark:text-emerald-200"
+                        >
+                          <ThumbsUp className="size-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void setIdeaRating(idea, i, "down")}
+                          aria-label="Mark idea as not useful"
+                          className="inline-flex size-8 items-center justify-center rounded-full border border-amber-400/30 bg-amber-500/10 text-amber-700 transition-colors hover:bg-amber-500/15 dark:text-amber-100"
+                        >
+                          <ThumbsDown className="size-4" />
+                        </button>
                       </div>
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">

@@ -5,7 +5,7 @@ import { ArrowRight, CheckCircle2, Compass, Sparkles } from "lucide-react";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn how Content Idea Maker helps creators turn live trend signals into scripts, hooks, hashtags, and idea cards.",
+    "Learn how Content Buddy helps creators turn live trend signals into scripts, hooks, hashtags, and idea cards.",
 };
 
 const principles = [
@@ -23,7 +23,7 @@ export default function AboutPage() {
             href="/"
             className="text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
           >
-            Content Idea Maker
+            Content Buddy
           </Link>
           <nav className="flex items-center gap-4 text-sm text-muted-foreground">
             <Link href="/pricing" className="hover:text-foreground">
@@ -43,10 +43,11 @@ export default function AboutPage() {
             About
           </p>
           <h1 className="mt-4 max-w-3xl text-balance text-4xl font-extrabold tracking-tight sm:text-5xl">
-            Built for creators who need sharper ideas while the topic is still moving.
+            Built for creators who need sharper ideas while the topic is still
+            moving.
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">
-            Content Idea Maker gathers live momentum signals, turns them into
+            Content Buddy gathers live momentum signals, turns them into
             short-form video angles, and keeps the full creative brief together
             so you can move from research to publishing without rebuilding the
             context from scratch.
@@ -71,7 +72,9 @@ export default function AboutPage() {
         <section className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/45">
             <Compass className="size-6 text-primary dark:text-cyan-300" />
-            <h2 className="mt-4 text-base font-semibold">Live signal research</h2>
+            <h2 className="mt-4 text-base font-semibold">
+              Live signal research
+            </h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               The app combines public trend signals across search, social,
               communities, news, and video sources when they are available.
@@ -87,7 +90,9 @@ export default function AboutPage() {
           </div>
           <div className="rounded-2xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/45">
             <CheckCircle2 className="size-6 text-primary dark:text-cyan-300" />
-            <h2 className="mt-4 text-base font-semibold">Built for launch discipline</h2>
+            <h2 className="mt-4 text-base font-semibold">
+              Built for launch discipline
+            </h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Credits, billing, alerts, saved ideas, and calendar planning are
               designed around real creator workflows.

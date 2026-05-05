@@ -22,13 +22,16 @@ export default function ResetPasswordPage() {
     let active = true;
 
     async function verifyResetSession() {
-      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const hashParams = new URLSearchParams(
+        window.location.hash.replace(/^#/, ""),
+      );
       const searchParams = new URLSearchParams(window.location.search);
       const access_token = hashParams.get("access_token");
       const refresh_token = hashParams.get("refresh_token");
       const code = searchParams.get("code");
       const tokenHash = searchParams.get("token_hash");
-      const errorDescription = searchParams.get("error_description") ?? searchParams.get("error");
+      const errorDescription =
+        searchParams.get("error_description") ?? searchParams.get("error");
 
       if (errorDescription) {
         setError(errorDescription);
@@ -42,7 +45,9 @@ export default function ResetPasswordPage() {
         } = await supabase.auth.getSession();
 
         if (active && !session) {
-          setError("This reset link is missing its secure token. Please request a fresh password reset email.");
+          setError(
+            "This reset link is missing its secure token. Please request a fresh password reset email.",
+          );
         }
         return;
       }
@@ -54,7 +59,8 @@ export default function ResetPasswordPage() {
       try {
         const supabase = getSupabaseClient();
         if (code) {
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          const { error: exchangeError } =
+            await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) throw exchangeError;
         } else if (tokenHash) {
           const { error: verifyError } = await supabase.auth.verifyOtp({
@@ -63,15 +69,22 @@ export default function ResetPasswordPage() {
           });
           if (verifyError) throw verifyError;
         } else {
-          if (!access_token || !refresh_token) throw new Error("That reset link is missing its secure tokens.");
+          if (!access_token || !refresh_token)
+            throw new Error("That reset link is missing its secure tokens.");
           const response = await fetch("/auth/session", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ access_token, refresh_token, next: "/reset-password" }),
+            body: JSON.stringify({
+              access_token,
+              refresh_token,
+              next: "/reset-password",
+            }),
           });
           if (!response.ok) {
             const body = await response.json().catch(() => null);
-            throw new Error(body?.error || "That reset link could not be verified.");
+            throw new Error(
+              body?.error || "That reset link could not be verified.",
+            );
           }
         }
 
@@ -80,7 +93,11 @@ export default function ResetPasswordPage() {
       } catch (err) {
         if (active) {
           setMessage(null);
-          setError(err instanceof Error ? err.message : "That reset link could not be verified.");
+          setError(
+            err instanceof Error
+              ? err.message
+              : "That reset link could not be verified.",
+          );
         }
       } finally {
         if (active) setVerifyingLink(false);
@@ -102,7 +119,9 @@ export default function ResetPasswordPage() {
 
     try {
       const supabase = getSupabaseClient();
-      const { error: updateError } = await supabase.auth.updateUser({ password });
+      const { error: updateError } = await supabase.auth.updateUser({
+        password,
+      });
       if (updateError) {
         setError(updateError.message);
         return;
@@ -113,7 +132,9 @@ export default function ResetPasswordPage() {
         router.refresh();
       }, 700);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not update password.");
+      setError(
+        err instanceof Error ? err.message : "Could not update password.",
+      );
     } finally {
       setLoading(false);
     }
@@ -124,11 +145,13 @@ export default function ResetPasswordPage() {
       <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
         <h1 className="text-2xl font-semibold">Choose a new password</h1>
         <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
-          Enter a new password for your Content Idea Maker account.
+          Enter a new password for your Content Buddy account.
         </p>
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm">
-            <span className="mb-1 block text-muted-foreground dark:text-slate-300">New password</span>
+            <span className="mb-1 block text-muted-foreground dark:text-slate-300">
+              New password
+            </span>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -145,7 +168,11 @@ export default function ResetPasswordPage() {
                 className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 dark:focus:ring-cyan-300/60"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Eye className="h-4 w-4" aria-hidden="true" />
+                )}
               </button>
             </div>
           </label>
@@ -164,12 +191,19 @@ export default function ResetPasswordPage() {
             disabled={loading || verifyingLink}
             className="w-full rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950"
           >
-            {verifyingLink ? "Verifying..." : loading ? "Updating..." : "Update password"}
+            {verifyingLink
+              ? "Verifying..."
+              : loading
+                ? "Updating..."
+                : "Update password"}
           </button>
         </form>
         <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
           Need a new reset link?{" "}
-          <Link href="/forgot-password" className="text-primary hover:underline dark:text-cyan-300">
+          <Link
+            href="/forgot-password"
+            className="text-primary hover:underline dark:text-cyan-300"
+          >
             Start over
           </Link>
         </p>

@@ -32,7 +32,9 @@ export default function TrendAlertsPage() {
   const [rows, setRows] = useState<SubscriptionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [preset, setPreset] = useState<string>(selectable[0]?.value ?? "fitness");
+  const [preset, setPreset] = useState<string>(
+    selectable[0]?.value ?? "fitness",
+  );
   const [customNiche, setCustomNiche] = useState("");
   const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -44,7 +46,7 @@ export default function TrendAlertsPage() {
   };
 
   useEffect(() => {
-    document.title = "Trend Alerts — Content Idea Maker";
+    document.title = "Trend Alerts — Content Buddy";
   }, []);
 
   const loadSubscriptions = useCallback(async () => {
@@ -55,10 +57,13 @@ export default function TrendAlertsPage() {
         method: "GET",
         credentials: "same-origin",
       });
-      const data = (await response.json().catch(() => ({}))) as SubscriptionsResponse;
+      const data = (await response
+        .json()
+        .catch(() => ({}))) as SubscriptionsResponse;
 
       if (!response.ok) {
-        const message = data.error ?? "Unable to load trend alert subscriptions.";
+        const message =
+          data.error ?? "Unable to load trend alert subscriptions.";
         trackUiEvent({
           area: "alerts",
           action: "load_failed",
@@ -72,7 +77,9 @@ export default function TrendAlertsPage() {
 
       setRows(data.subscriptions ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load subscriptions.");
+      setError(
+        err instanceof Error ? err.message : "Failed to load subscriptions.",
+      );
       setRows([]);
     } finally {
       setLoading(false);
@@ -83,13 +90,13 @@ export default function TrendAlertsPage() {
     void loadSubscriptions();
   }, [loadSubscriptions]);
 
-  const subscribedValues = useMemo(() => new Set(rows.map((r) => r.niche.toLowerCase())), [rows]);
+  const subscribedValues = useMemo(
+    () => new Set(rows.map((r) => r.niche.toLowerCase())),
+    [rows],
+  );
 
   const addSubscription = async () => {
-    const raw =
-      preset === "custom"
-        ? customNiche.trim()
-        : preset.trim();
+    const raw = preset === "custom" ? customNiche.trim() : preset.trim();
     if (!raw) {
       setError("Choose a niche or enter a custom one.");
       return;
@@ -109,7 +116,9 @@ export default function TrendAlertsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ niche: stored }),
       });
-      const data = (await response.json().catch(() => ({}))) as SubscriptionsResponse;
+      const data = (await response
+        .json()
+        .catch(() => ({}))) as SubscriptionsResponse;
 
       if (!response.ok) {
         if (response.status === 409) {
@@ -124,7 +133,9 @@ export default function TrendAlertsPage() {
         const subscription = data.subscription;
         if (subscription) {
           setRows((prev) =>
-            prev.some((row) => row.id === subscription.id) ? prev : [...prev, subscription],
+            prev.some((row) => row.id === subscription.id)
+              ? prev
+              : [...prev, subscription],
           );
         }
         showToast("Already subscribed to this niche");
@@ -134,11 +145,17 @@ export default function TrendAlertsPage() {
       if (data.subscription) {
         setRows((prev) => [...prev, data.subscription as SubscriptionRow]);
         showToast("Niche added");
-        trackUiEvent({ area: "alerts", action: "subscribe", context: { niche: stored } });
+        trackUiEvent({
+          area: "alerts",
+          action: "subscribe",
+          context: { niche: stored },
+        });
       }
       if (preset === "custom") setCustomNiche("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add subscription.");
+      setError(
+        err instanceof Error ? err.message : "Failed to add subscription.",
+      );
     } finally {
       setAdding(false);
     }
@@ -148,11 +165,16 @@ export default function TrendAlertsPage() {
     setRemovingId(id);
     setError(null);
     try {
-      const response = await fetch(`/api/alerts/subscriptions?id=${encodeURIComponent(id)}`, {
-        method: "DELETE",
-        credentials: "same-origin",
-      });
-      const data = (await response.json().catch(() => ({}))) as SubscriptionsResponse;
+      const response = await fetch(
+        `/api/alerts/subscriptions?id=${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+          credentials: "same-origin",
+        },
+      );
+      const data = (await response
+        .json()
+        .catch(() => ({}))) as SubscriptionsResponse;
 
       if (!response.ok) {
         setError(data.error ?? "Unable to remove trend alert subscription.");
@@ -179,7 +201,9 @@ export default function TrendAlertsPage() {
         ) : null}
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">Trend Alerts</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Trend Alerts
+          </h1>
           <Link
             href="/dashboard"
             className="fluid-transition glass-surface rounded-xl border border-border px-3 py-2 text-sm text-foreground hover:bg-muted dark:border-white/20 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -191,9 +215,10 @@ export default function TrendAlertsPage() {
 
         <div className="glass-surface rounded-2xl border border-border p-6 dark:border-white/10">
           <p className="text-sm leading-relaxed text-muted-foreground dark:text-slate-300">
-            Subscribe to niches you care about. Each week you&apos;ll get one email with the top three
-            trending topics per niche, powered by the same discovery engine as the dashboard. Delivery is
-            typically Monday morning (UTC). You can add or remove niches anytime.
+            Subscribe to niches you care about. Each week you&apos;ll get one
+            email with the top three trending topics per niche, powered by the
+            same discovery engine as the dashboard. Delivery is typically Monday
+            morning (UTC). You can add or remove niches anytime.
           </p>
         </div>
 
@@ -260,8 +285,8 @@ export default function TrendAlertsPage() {
                 No trend alerts yet
               </p>
               <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-muted-foreground dark:text-slate-400">
-                Add your strongest niche above and Content Idea Maker will keep
-                it ready for weekly trend checks.
+                Add your strongest niche above and Content Buddy will keep it
+                ready for weekly trend checks.
               </p>
             </div>
           ) : null}
@@ -273,7 +298,9 @@ export default function TrendAlertsPage() {
               style={{ ["--stagger" as string]: `${Math.min(index, 12)}` }}
             >
               <div>
-                <p className="font-medium text-foreground">{nicheLabel(row.niche)}</p>
+                <p className="font-medium text-foreground">
+                  {nicheLabel(row.niche)}
+                </p>
                 <p className="text-xs text-muted-foreground">
                   Added {new Date(row.created_at).toLocaleDateString()}
                 </p>

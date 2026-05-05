@@ -29,7 +29,8 @@ function nicheDisplayName(niche: string): string {
 }
 
 function getSiteBaseUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL ?? "https://contentideamaker.com";
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://contentideamaker.com";
   return raw.replace(/\/$/, "");
 }
 
@@ -44,7 +45,9 @@ async function fetchDigestTopics(niche: string): Promise<string[]> {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`digest-topics failed (${res.status}): ${text.slice(0, 400)}`);
+    throw new Error(
+      `digest-topics failed (${res.status}): ${text.slice(0, 400)}`,
+    );
   }
   const data = (await res.json()) as TrendDigestTopicsResponse;
   return data.topics ?? [];
@@ -68,13 +71,13 @@ function buildDigestEmailHtml(payload: {
   return `
     <div style="font-family:system-ui,Segoe UI,sans-serif;max-width:600px;line-height:1.5;color:#111827;background:#ffffff;">
       <div style="background:#0f172a;color:#f8fafc;border-radius:18px;padding:22px 24px;margin-bottom:24px;">
-        <p style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#67e8f9;margin:0 0 8px;">Content Idea Maker</p>
+        <p style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#67e8f9;margin:0 0 8px;">Content Buddy</p>
         <h1 style="font-size:24px;margin:0;">Your weekly trend digest</h1>
         <p style="color:#dbeafe;margin:10px 0 0;">Top topics across the niches you follow. Open the dashboard to generate full video ideas.</p>
       </div>
       ${blocks.join("")}
       <p style="margin-top:28px;">
-        <a href="${escapeHtml(siteUrl + "/dashboard")}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;">Open Content Idea Maker</a>
+        <a href="${escapeHtml(siteUrl + "/dashboard")}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;">Open Content Buddy</a>
       </p>
       <p style="font-size:12px;color:#888;margin-top:32px;">You receive this because you subscribed on Trend Alerts. <a href="${escapeHtml(siteUrl + "/alerts")}" style="color:#2563eb;">Manage niches</a>.</p>
     </div>
@@ -85,7 +88,7 @@ function buildDigestEmailText(payload: {
   sections: { niche: string; topics: string[]; error?: string }[];
   siteUrl: string;
 }): string {
-  const lines: string[] = ["Content Idea Maker", "Your weekly trend digest", ""];
+  const lines: string[] = ["Content Buddy", "Your weekly trend digest", ""];
   for (const s of payload.sections) {
     lines.push(nicheDisplayName(s.niche));
     if (s.error) {
@@ -131,7 +134,11 @@ export async function GET(request: Request) {
   }
 
   if (!rows?.length) {
-    return NextResponse.json({ ok: true, message: "No subscriptions", sent: 0 });
+    return NextResponse.json({
+      ok: true,
+      message: "No subscriptions",
+      sent: 0,
+    });
   }
 
   const byUser = new Map<string, string[]>();
@@ -153,14 +160,19 @@ export async function GET(request: Request) {
   for (const [userId, niches] of byUser) {
     let email: string | undefined;
     try {
-      const { data: userResult, error: userErr } = await admin.auth.admin.getUserById(userId);
+      const { data: userResult, error: userErr } =
+        await admin.auth.admin.getUserById(userId);
       if (userErr || !userResult.user?.email) {
-        errors.push(`user ${userId}: no email (${userErr?.message ?? "missing"})`);
+        errors.push(
+          `user ${userId}: no email (${userErr?.message ?? "missing"})`,
+        );
         continue;
       }
       email = userResult.user.email;
     } catch (e) {
-      errors.push(`user ${userId}: ${e instanceof Error ? e.message : String(e)}`);
+      errors.push(
+        `user ${userId}: ${e instanceof Error ? e.message : String(e)}`,
+      );
       continue;
     }
 
@@ -173,7 +185,8 @@ export async function GET(request: Request) {
         sections.push({
           niche,
           topics: [],
-          error: e instanceof Error ? e.message : "Could not load trends this week.",
+          error:
+            e instanceof Error ? e.message : "Could not load trends this week.",
         });
       }
     }
@@ -182,13 +195,15 @@ export async function GET(request: Request) {
       await transporter.sendMail({
         from: gmailUser,
         to: email,
-        subject: "Your weekly trend digest - Content Idea Maker",
+        subject: "Your weekly trend digest - Content Buddy",
         text: buildDigestEmailText({ sections, siteUrl }),
         html: buildDigestEmailHtml({ sections, siteUrl }),
       });
       sent += 1;
     } catch (e) {
-      errors.push(`send to ${email}: ${e instanceof Error ? e.message : String(e)}`);
+      errors.push(
+        `send to ${email}: ${e instanceof Error ? e.message : String(e)}`,
+      );
     }
   }
 

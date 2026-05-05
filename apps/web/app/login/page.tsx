@@ -8,7 +8,8 @@ import { FormEvent, Suspense, useState } from "react";
 
 import { getSupabaseClient } from "@/lib/supabase";
 
-const googleAuthEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
+const googleAuthEnabled =
+  process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
 
 function LoginForm() {
   const router = useRouter();
@@ -19,7 +20,8 @@ function LoginForm() {
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const verifyPrompt = searchParams.get("verify") === "1";
-  const redirectTarget = searchParams.get("next") ?? searchParams.get("redirect");
+  const redirectTarget =
+    searchParams.get("next") ?? searchParams.get("redirect");
   const safeRedirectTarget =
     redirectTarget?.startsWith("/") && !redirectTarget.startsWith("//")
       ? redirectTarget
@@ -33,10 +35,12 @@ function LoginForm() {
 
     try {
       const supabase = getSupabaseClient();
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error: authError } = await supabase.auth.signInWithPassword(
+        {
+          email,
+          password,
+        },
+      );
       if (authError) {
         setError(authError.message);
         return;
@@ -90,7 +94,7 @@ function LoginForm() {
           href="/"
           className="mb-6 block text-xs font-semibold uppercase tracking-[0.2em] text-primary dark:text-cyan-300"
         >
-          Content Idea Maker
+          Content Buddy
         </Link>
         <h1 className="text-2xl font-semibold">Log in</h1>
         <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
@@ -104,7 +108,9 @@ function LoginForm() {
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm">
-            <span className="mb-1 block text-muted-foreground dark:text-slate-300">Email</span>
+            <span className="mb-1 block text-muted-foreground dark:text-slate-300">
+              Email
+            </span>
             <input
               type="email"
               required
@@ -115,7 +121,9 @@ function LoginForm() {
           </label>
 
           <label className="block text-sm">
-            <span className="mb-1 block text-muted-foreground dark:text-slate-300">Password</span>
+            <span className="mb-1 block text-muted-foreground dark:text-slate-300">
+              Password
+            </span>
             <input
               type="password"
               required
@@ -166,7 +174,10 @@ function LoginForm() {
 
         <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
           No account?{" "}
-          <Link href="/signup" className="text-primary hover:underline dark:text-cyan-300">
+          <Link
+            href="/signup"
+            className="text-primary hover:underline dark:text-cyan-300"
+          >
             Sign up
           </Link>
         </p>
@@ -181,7 +192,9 @@ export default function LoginPage() {
       fallback={
         <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
           <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 dark:border-white/10 dark:bg-slate-900">
-            <p className="text-sm text-muted-foreground dark:text-slate-300">Loading login...</p>
+            <p className="text-sm text-muted-foreground dark:text-slate-300">
+              Loading login...
+            </p>
           </div>
         </main>
       }
