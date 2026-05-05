@@ -8,7 +8,12 @@ from app.apify_client import common_search_input, configured_actor_id, run_actor
 DEFAULT_TIKTOK_ACTOR_ID = "clockworks/free-tiktok-scraper"
 
 
-async def _run_apify_tiktok_actor(query: str, max_results: int, days_back: int = 7) -> list[dict]:
+async def _run_apify_tiktok_actor(
+    query: str,
+    max_results: int,
+    days_back: int = 7,
+    timeout_seconds: float | None = None,
+) -> list[dict]:
     since = datetime.now(timezone.utc) - timedelta(days=max(days_back, 1))
     since_iso = since.isoformat()
     since_unix = int(since.timestamp())
@@ -20,7 +25,12 @@ async def _run_apify_tiktok_actor(query: str, max_results: int, days_back: int =
         "minCreatedAt": since_unix,
     }
     actor_id = configured_actor_id("APIFY_TIKTOK_ACTOR_ID", DEFAULT_TIKTOK_ACTOR_ID)
-    return await run_actor_items(actor_id, actor_input, max_results=max_results, timeout_seconds=45.0)
+    return await run_actor_items(
+        actor_id,
+        actor_input,
+        max_results=max_results,
+        timeout_seconds=timeout_seconds or 45.0,
+    )
 
 
 def _to_int(value: object) -> int:
@@ -80,8 +90,18 @@ def _map_apify_tiktok_item(item: dict) -> dict:
     }
 
 
-async def tiktok_trending_search(query: str, max_results: int = 6, days_back: int = 7) -> list[dict]:
-    raw_items = await _run_apify_tiktok_actor(query, max_results, days_back=days_back)
+async def tiktok_trending_search(
+    query: str,
+    max_results: int = 6,
+    days_back: int = 7,
+    timeout_seconds: float | None = None,
+) -> list[dict]:
+    raw_items = await _run_apify_tiktok_actor(
+        query,
+        max_results,
+        days_back=days_back,
+        timeout_seconds=timeout_seconds,
+    )
     since_unix = int((datetime.now(timezone.utc) - timedelta(days=max(days_back, 1))).timestamp())
     recent_items: list[dict] = []
     for item in raw_items:

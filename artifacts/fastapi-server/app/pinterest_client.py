@@ -9,8 +9,12 @@ from app.apify_client import common_search_input, configured_actor_id, run_actor
 logger = logging.getLogger(__name__)
 
 
-async def pinterest_search(query: str, max_results: int = 6) -> list[dict]:
-    results = await _run_apify_pinterest_actor(query, max_results)
+async def pinterest_search(
+    query: str,
+    max_results: int = 6,
+    timeout_seconds: float | None = None,
+) -> list[dict]:
+    results = await _run_apify_pinterest_actor(query, max_results, timeout_seconds=timeout_seconds)
     if results:
         return results
 
@@ -46,7 +50,11 @@ async def pinterest_search(query: str, max_results: int = 6) -> list[dict]:
     return results
 
 
-async def _run_apify_pinterest_actor(query: str, max_results: int) -> list[dict]:
+async def _run_apify_pinterest_actor(
+    query: str,
+    max_results: int,
+    timeout_seconds: float | None = None,
+) -> list[dict]:
     actor_id = configured_actor_id("APIFY_PINTEREST_ACTOR_ID")
     if not actor_id:
         return []
@@ -54,7 +62,12 @@ async def _run_apify_pinterest_actor(query: str, max_results: int) -> list[dict]
         **common_search_input(query, max_results),
         "startUrls": [{"url": f"https://www.pinterest.com/search/pins/?q={quote(query)}"}],
     }
-    data = await run_actor_items(actor_id, actor_input, max_results=max_results)
+    data = await run_actor_items(
+        actor_id,
+        actor_input,
+        max_results=max_results,
+        timeout_seconds=timeout_seconds,
+    )
     results: list[dict] = []
     seen: set[str] = set()
     for item in data:

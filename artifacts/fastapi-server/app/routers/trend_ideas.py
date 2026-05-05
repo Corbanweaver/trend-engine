@@ -34,6 +34,7 @@ from app.multi_reddit_client import multi_reddit_ingest
 from app.pinterest_client import pinterest_search
 from app.medium_client import medium_search
 from app.x_client import search_x
+from app.apify_client import apify_timeout_seconds
 from app.social_signal_fetcher import cached_or_fetch, fetch_platform_signals
 
 router = APIRouter(
@@ -342,6 +343,7 @@ async def discover_trends(niche: str) -> tuple[list[str], dict]:
 async def gather_topic_media(niche: str, topic: str) -> dict:
     search_query = f"{niche} {topic}"
     instagram_query = search_query.strip()
+    timeout_seconds = apify_timeout_seconds(background=False)
     logger.info("Starting media gather for topic '%s'", topic)
     logger.info("Calling Instagram search for niche '%s'", instagram_query)
     coros = [
@@ -358,7 +360,11 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
             niche,
             instagram_query,
             max_results=5,
-            fetch=lambda: search_instagram(instagram_query, max_results=5),
+            fetch=lambda: search_instagram(
+                instagram_query,
+                max_results=5,
+                timeout_seconds=timeout_seconds,
+            ),
             source="apify-instagram",
         ), []),
         _safe_fetch(cached_or_fetch(
@@ -366,7 +372,12 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
             niche,
             search_query,
             max_results=5,
-            fetch=lambda: tiktok_trending_search(search_query, max_results=5, days_back=RECENCY_DAYS),
+            fetch=lambda: tiktok_trending_search(
+                search_query,
+                max_results=5,
+                days_back=RECENCY_DAYS,
+                timeout_seconds=timeout_seconds,
+            ),
             source="apify-tiktok",
         ), []),
         _safe_fetch(cached_or_fetch(
@@ -374,7 +385,11 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
             niche,
             search_query,
             max_results=5,
-            fetch=lambda: search_x(search_query, max_results=5),
+            fetch=lambda: search_x(
+                search_query,
+                max_results=5,
+                timeout_seconds=timeout_seconds,
+            ),
             source="apify-x",
         ), []),
         _safe_fetch(google_news_search(search_query, max_results=4), []),
@@ -384,7 +399,11 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
             niche,
             search_query,
             max_results=5,
-            fetch=lambda: pinterest_search(search_query, max_results=5),
+            fetch=lambda: pinterest_search(
+                search_query,
+                max_results=5,
+                timeout_seconds=timeout_seconds,
+            ),
             source="apify-pinterest",
         ), []),
         _safe_fetch(medium_search(search_query, max_results=4), []),

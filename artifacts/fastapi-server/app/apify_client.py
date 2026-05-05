@@ -16,6 +16,17 @@ def configured_actor_id(env_name: str, default: str = "") -> str:
     return os.environ.get(env_name, default).strip()
 
 
+def apify_timeout_seconds(*, background: bool) -> float:
+    if background:
+        raw = os.environ.get("APIFY_RUN_TIMEOUT_SECONDS", "60").strip()
+    else:
+        raw = os.environ.get("APIFY_INTERACTIVE_TIMEOUT_SECONDS", "6").strip()
+    try:
+        return max(float(raw), 1.0)
+    except ValueError:
+        return 60.0 if background else 6.0
+
+
 async def run_actor_items(
     actor_id: str,
     actor_input: dict,

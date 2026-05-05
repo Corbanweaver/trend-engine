@@ -5,6 +5,7 @@ import logging
 import os
 from collections.abc import Awaitable, Callable
 
+from app.apify_client import apify_timeout_seconds
 from app.instagram_client import search_instagram
 from app.multi_reddit_client import multi_reddit_ingest
 from app.pinterest_client import pinterest_search
@@ -90,6 +91,7 @@ async def fetch_platform_signals(
     force_refresh: bool = False,
 ) -> list[dict]:
     query = platform_query(platform, niche)
+    timeout_seconds = apify_timeout_seconds(background=force_refresh)
     if platform == "youtube":
         return await cached_or_fetch(
             platform,
@@ -106,7 +108,12 @@ async def fetch_platform_signals(
             niche,
             query,
             max_results=max_results,
-            fetch=lambda: tiktok_trending_search(query, max_results=max_results, days_back=days_back),
+            fetch=lambda: tiktok_trending_search(
+                query,
+                max_results=max_results,
+                days_back=days_back,
+                timeout_seconds=timeout_seconds,
+            ),
             source="apify-tiktok",
             force_refresh=force_refresh,
         )
@@ -116,7 +123,11 @@ async def fetch_platform_signals(
             niche,
             query,
             max_results=max_results,
-            fetch=lambda: search_instagram(query, max_results=max_results),
+            fetch=lambda: search_instagram(
+                query,
+                max_results=max_results,
+                timeout_seconds=timeout_seconds,
+            ),
             source="apify-instagram",
             force_refresh=force_refresh,
         )
@@ -126,7 +137,11 @@ async def fetch_platform_signals(
             niche,
             query,
             max_results=max_results,
-            fetch=lambda: pinterest_search(query, max_results=max_results),
+            fetch=lambda: pinterest_search(
+                query,
+                max_results=max_results,
+                timeout_seconds=timeout_seconds,
+            ),
             source="apify-pinterest",
             force_refresh=force_refresh,
         )
@@ -136,7 +151,11 @@ async def fetch_platform_signals(
             niche,
             query,
             max_results=max_results,
-            fetch=lambda: search_x(query, max_results=max_results),
+            fetch=lambda: search_x(
+                query,
+                max_results=max_results,
+                timeout_seconds=timeout_seconds,
+            ),
             source="apify-x",
             force_refresh=force_refresh,
         )

@@ -36,9 +36,11 @@ The Pinterest and X actor IDs are intentionally blank by default because Apify h
 - `TREND_CACHE_PLATFORMS=youtube,tiktok,instagram,pinterest,x,reddit`
 - `TREND_CACHE_MAX_RESULTS=8`
 - `TREND_SIGNAL_CACHE_TTL_MINUTES=45`
+- `APIFY_INTERACTIVE_TIMEOUT_SECONDS=6`
 - `APIFY_RUN_TIMEOUT_SECONDS=60`
 
 Keep `TREND_CACHE_MAX_RESULTS` between 5 and 10 until you know the Apify spend per refresh. Raise it only after reviewing Apify usage.
+Customer-facing requests use the shorter interactive timeout so Analyze does not feel frozen when an actor is cold or slow. Background cache refreshes use the longer run timeout.
 
 ## Database
 

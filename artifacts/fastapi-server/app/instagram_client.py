@@ -189,7 +189,11 @@ def _map_instagram_item(item: dict) -> dict | None:
     }
 
 
-async def search_instagram(query: str, max_results: int = 5) -> list[dict]:
+async def search_instagram(
+    query: str,
+    max_results: int = 5,
+    timeout_seconds: float | None = None,
+) -> list[dict]:
     if not apify_token():
         logger.warning("APIFY_API_TOKEN is not configured; using Instagram organic fallback links.")
         return await _organic_instagram_fallback(query, max_results)
@@ -209,7 +213,12 @@ async def search_instagram(query: str, max_results: int = 5) -> list[dict]:
             "search": query,
             "searchLimit": max_results,
         }
-        data = await run_actor_items(actor_id, actor_input, max_results=max_results, timeout_seconds=60.0)
+        data = await run_actor_items(
+            actor_id,
+            actor_input,
+            max_results=max_results,
+            timeout_seconds=timeout_seconds or 60.0,
+        )
         normalized = []
         seen: set[str] = set()
         for item in data:

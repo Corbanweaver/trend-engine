@@ -46,7 +46,11 @@ def _fallback_x_links(query: str, max_results: int) -> list[dict]:
     ]
 
 
-async def _run_apify_x_actor(query: str, max_results: int) -> list[dict]:
+async def _run_apify_x_actor(
+    query: str,
+    max_results: int,
+    timeout_seconds: float | None = None,
+) -> list[dict]:
     actor_id = configured_actor_id("APIFY_X_ACTOR_ID") or configured_actor_id("APIFY_TWITTER_ACTOR_ID")
     if not actor_id:
         return []
@@ -55,7 +59,12 @@ async def _run_apify_x_actor(query: str, max_results: int) -> list[dict]:
         "searchMode": "live",
         "sort": "Latest",
     }
-    data = await run_actor_items(actor_id, actor_input, max_results=max_results)
+    data = await run_actor_items(
+        actor_id,
+        actor_input,
+        max_results=max_results,
+        timeout_seconds=timeout_seconds,
+    )
     results: list[dict] = []
     seen: set[str] = set()
     for item in data:
@@ -123,10 +132,18 @@ def _map_apify_x_item(item: dict) -> dict | None:
     }
 
 
-async def search_x(query: str, max_results: int = 5) -> list[dict]:
+async def search_x(
+    query: str,
+    max_results: int = 5,
+    timeout_seconds: float | None = None,
+) -> list[dict]:
     """Find X/Twitter posts via public search results, with safe search-link fallback."""
 
-    apify_results = await _run_apify_x_actor(query, max_results)
+    apify_results = await _run_apify_x_actor(
+        query,
+        max_results,
+        timeout_seconds=timeout_seconds,
+    )
     if apify_results:
         return apify_results
 
