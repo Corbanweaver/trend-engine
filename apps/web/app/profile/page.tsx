@@ -110,7 +110,7 @@ export default function ProfilePage() {
     [totalAnalyses, savedCount],
   );
   const privacyRequestHref = useMemo(() => {
-    const subject = "Content Buddy data request";
+    const subject = "TrendBoard data request";
     const body = email
       ? `Account email: ${email}\n\nI would like help with my account data.`
       : "I would like help with my account data.";
@@ -132,7 +132,7 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-    document.title = "Profile — Content Buddy";
+    document.title = "Profile — TrendBoard";
   }, []);
 
   useEffect(() => {

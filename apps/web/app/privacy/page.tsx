@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How Content Buddy handles account, billing, and trend analysis data.",
+    "How TrendBoard handles account, billing, and trend analysis data.",
 };
 
 const supportEmail =
@@ -13,7 +13,7 @@ const supportEmail =
 
 export default function PrivacyPage() {
   const supportHref = `mailto:${supportEmail}?subject=${encodeURIComponent(
-    "Content Buddy privacy request",
+    "TrendBoard privacy request",
   )}`;
 
   return (
@@ -23,7 +23,7 @@ export default function PrivacyPage() {
           href="/"
           className="text-sm font-medium text-primary hover:underline"
         >
-          Content Buddy
+          TrendBoard
         </Link>
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">
@@ -36,13 +36,13 @@ export default function PrivacyPage() {
 
         <section className="space-y-3 text-sm leading-6 text-muted-foreground">
           <p>
-            Content Buddy collects the account details you provide, such as your
+            TrendBoard collects the account details you provide, such as your
             email address, saved ideas, selected niches, subscription status,
             and product usage. We use this information to run the app,
             personalize your dashboard, prevent abuse, and provide support.
           </p>
           <p>
-            Payments are processed by Stripe. Content Buddy does not store full
+            Payments are processed by Stripe. TrendBoard does not store full
             card numbers. We store Stripe customer and subscription identifiers
             so your plan can be updated when billing events occur.
           </p>
@@ -55,7 +55,7 @@ export default function PrivacyPage() {
           <p>
             We do not sell personal data. We may disclose information when
             needed to comply with law, protect the service, process payments, or
-            work with vendors who help operate Content Buddy.
+            work with vendors who help operate TrendBoard.
           </p>
           <p>
             To request account help or data deletion, contact{" "}

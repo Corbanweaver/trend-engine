@@ -145,7 +145,7 @@ export default function ResetPasswordPage() {
       <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
         <h1 className="text-2xl font-semibold">Choose a new password</h1>
         <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
-          Enter a new password for your Content Buddy account.
+          Enter a new password for your TrendBoard account.
         </p>
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm">

@@ -45,7 +45,7 @@ export default function CalendarPage() {
   }, []);
 
   useEffect(() => {
-    document.title = "Content Calendar — Content Buddy";
+    document.title = "Content Calendar — TrendBoard";
   }, []);
 
   useEffect(() => {

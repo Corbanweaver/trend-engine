@@ -107,7 +107,7 @@ async function sendFeedbackEmail({
       body: JSON.stringify({
         from: senderEmail,
         to: recipientEmail,
-        subject: `Content Buddy feedback: ${prettyFeedback}`,
+        subject: `TrendBoard feedback: ${prettyFeedback}`,
         html,
         text,
       }),
@@ -131,7 +131,7 @@ async function sendFeedbackEmail({
     await transporter.sendMail({
       from: senderEmail,
       to: recipientEmail,
-      subject: `Content Buddy feedback: ${prettyFeedback}`,
+      subject: `TrendBoard feedback: ${prettyFeedback}`,
       html,
       text,
     });

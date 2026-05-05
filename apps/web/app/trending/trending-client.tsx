@@ -6,20 +6,40 @@ import {
   ArrowRight,
   ExternalLink,
   Flame,
+  Instagram,
   Loader2,
   Music2,
   Newspaper,
-  Radio,
   RefreshCw,
   TrendingUp,
   Youtube,
 } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
-import type { DailyTrendingResponse } from "@/lib/daily-trending-types";
+import type {
+  DailyPlatformSection,
+  DailyTrendingResponse,
+} from "@/lib/daily-trending-types";
 import { cn } from "@/lib/utils";
 
 const REFRESH_MS = 75_000;
+const SOCIAL_SECTION_ORDER = [
+  "tiktok",
+  "instagram",
+  "youtube",
+  "reddit",
+  "google_trends",
+  "news",
+] as const;
+
+const SOCIAL_SECTION_LABELS: Record<string, string> = {
+  tiktok: "TikTok",
+  instagram: "Instagram Reels",
+  youtube: "YouTube Shorts",
+  reddit: "Reddit conversations",
+  google_trends: "Search demand",
+  news: "News context",
+};
 
 function sectionIcon(key: string) {
   switch (key) {
@@ -31,13 +51,34 @@ function sectionIcon(key: string) {
       return Youtube;
     case "tiktok":
       return Music2;
+    case "instagram":
+      return Instagram;
     case "reddit":
       return Flame;
-    case "hackernews":
-      return Radio;
     default:
       return TrendingUp;
   }
+}
+
+function socialSections(data: DailyTrendingResponse): DailyPlatformSection[] {
+  const sectionsByKey = new Map(
+    data.sections.map((section) => [section.key, section]),
+  );
+  return SOCIAL_SECTION_ORDER.map((key) => {
+    const existing = sectionsByKey.get(key);
+    return {
+      key,
+      label: SOCIAL_SECTION_LABELS[key],
+      items: existing?.items ?? [],
+    };
+  });
+}
+
+function emptySectionMessage(key: string) {
+  if (key === "instagram") {
+    return "Waiting for live Instagram/Reels rows from the trend API.";
+  }
+  return "No live rows yet - this source may be warming up or rate-limited.";
 }
 
 function formatRelative(iso: string, tick: number): string {
@@ -115,7 +156,7 @@ export function TrendingLivePage() {
             href="/"
             className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
           >
-            Content Buddy
+            TrendBoard
           </Link>
           <nav className="flex items-center gap-6 text-sm">
             <span className="font-medium text-primary">Trending</span>
@@ -148,7 +189,7 @@ export function TrendingLivePage() {
             Live pulse
             {relative ? (
               <span className="text-emerald-700/90 dark:text-emerald-300/90">
-                · updated {relative}
+                - updated {relative}
               </span>
             ) : null}
           </div>
@@ -171,22 +212,22 @@ export function TrendingLivePage() {
       <section className="relative z-10 mx-auto max-w-7xl px-6 pb-16">
         <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary dark:text-cyan-200">
-            Today&apos;s momentum
+            Social momentum
           </p>
           <h1 className="mt-4 text-balance text-4xl font-extrabold tracking-tight sm:text-5xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
-            Top trends across the open web
+            What creators are reacting to now
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            A live-weighted snapshot from Google Trends, news wires, Shorts,
-            TikTok, Reddit, and Hacker News — auto-refreshes every minute or so
-            for a real-time feel.
+            A creator-focused snapshot from TikTok, Instagram/Reels, YouTube
+            Shorts, Reddit conversations, plus search and news context. It
+            refreshes automatically so the page feels alive.
           </p>
         </div>
 
         {loading ? (
           <div className="mt-14 flex flex-col items-center justify-center gap-3 py-24 text-muted-foreground">
             <Loader2 className="size-10 animate-spin text-primary" />
-            <p className="text-sm">Pulling cross-platform signals…</p>
+            <p className="text-sm">Pulling creator-platform signals...</p>
           </div>
         ) : error ? (
           <div className="mt-10 rounded-2xl border border-destructive/40 bg-destructive/10 px-5 py-4 text-sm text-destructive-foreground">
@@ -202,7 +243,7 @@ export function TrendingLivePage() {
           </div>
         ) : data ? (
           <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {data.sections.map((section, si) => {
+            {socialSections(data).map((section, si) => {
               const Icon = sectionIcon(section.key);
               return (
                 <div
@@ -230,7 +271,7 @@ export function TrendingLivePage() {
                   <ul className="mt-4 flex max-h-[min(420px,50vh)] flex-col gap-2 overflow-y-auto pr-1">
                     {section.items.length === 0 ? (
                       <li className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground dark:border-white/15">
-                        No live rows yet — sources may be rate-limited.
+                        {emptySectionMessage(section.key)}
                       </li>
                     ) : (
                       section.items.map((item, ii) => {
@@ -296,13 +337,13 @@ export function TrendingLivePage() {
         <div className="mt-14 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-muted/45 px-6 py-5 dark:border-white/10 dark:bg-gradient-to-r dark:from-slate-950/80 dark:via-slate-900/60 dark:to-indigo-950/40">
           <p className="max-w-xl text-sm text-muted-foreground">
             Turn these signals into full scripts, hooks, and thumbnails in the
-            dashboard — niches from breaking news to gaming.
+            dashboard - niches from breaking news to gaming.
           </p>
           <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-lg hover:opacity-95 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
           >
-            Open Content Buddy
+            Open TrendBoard
             <ArrowRight className="size-4" />
           </Link>
         </div>

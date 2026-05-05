@@ -33,7 +33,7 @@ export default function AnalyticsPage() {
   );
 
   useEffect(() => {
-    document.title = "Analytics — Content Buddy";
+    document.title = "Analytics — TrendBoard";
   }, []);
 
   useEffect(() => {

@@ -5,7 +5,7 @@ import { ArrowRight, CheckCircle2, Compass, Sparkles } from "lucide-react";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn how Content Buddy helps creators turn live trend signals into scripts, hooks, hashtags, and idea cards.",
+    "Learn how TrendBoard helps creators turn live trend signals into scripts, hooks, hashtags, and idea cards.",
 };
 
 const principles = [
@@ -23,7 +23,7 @@ export default function AboutPage() {
             href="/"
             className="text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
           >
-            Content Buddy
+            TrendBoard
           </Link>
           <nav className="flex items-center gap-4 text-sm text-muted-foreground">
             <Link href="/pricing" className="hover:text-foreground">
@@ -47,10 +47,10 @@ export default function AboutPage() {
             moving.
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">
-            Content Buddy gathers live momentum signals, turns them into
-            short-form video angles, and keeps the full creative brief together
-            so you can move from research to publishing without rebuilding the
-            context from scratch.
+            TrendBoard gathers live momentum signals, turns them into short-form
+            video angles, and keeps the full creative brief together so you can
+            move from research to publishing without rebuilding the context from
+            scratch.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link

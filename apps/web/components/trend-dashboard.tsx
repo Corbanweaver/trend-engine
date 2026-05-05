@@ -14,7 +14,6 @@ import {
   Search,
   Sparkles,
   Star,
-  Info,
   Instagram,
   Calendar,
   Bookmark,
@@ -419,6 +418,25 @@ function TrendCard({
 }) {
   const raw = computeEngagementRaw(trend);
   const heat = engagementHeat(raw);
+  const momentumLabel =
+    heat >= 85
+      ? "Very strong"
+      : heat >= 70
+        ? "Strong"
+        : heat >= 45
+          ? "Building"
+          : heat > 0
+            ? "Early signal"
+            : "No clear signal";
+  const signalCount =
+    trend.tiktok_videos.length +
+    trend.instagram_posts.length +
+    trend.example_videos.length +
+    trend.reddit_posts.length +
+    trend.google_news.length +
+    trend.web_results.length +
+    trend.pinterest_pins.length +
+    trend.medium_articles.length;
   const platformBadges = getPlatformBadges(trend);
   const visual = getCardVisual(trend);
   const youtubeUrl = getYouTubeUrl(trend);
@@ -428,14 +446,6 @@ function TrendCard({
   const trendLabel = getTrendDetectedLabel(trend);
   const [imageFailed, setImageFailed] = useState(false);
   const showVisual = Boolean(visual && !imageFailed);
-  const heightClass =
-    index % 5 === 0
-      ? "h-72"
-      : index % 5 === 2
-        ? "h-60"
-        : index % 5 === 3
-          ? "h-80"
-          : "h-52";
 
   useEffect(() => {
     setImageFailed(false);
@@ -454,13 +464,13 @@ function TrendCard({
       }}
       style={{ animationDelay: `${Math.min(index, 10) * 70}ms` }}
       className={cn(
-        "mb-5 w-full break-inside-avoid text-left transition-all duration-200 motion-safe:animate-card-in",
+        "h-full w-full text-left transition-all duration-200 motion-safe:animate-card-in",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300",
       )}
     >
       <Card
         className={cn(
-          "group relative cursor-pointer overflow-hidden rounded-[1.35rem] border-border bg-card text-foreground shadow-sm shadow-slate-900/8 dark:border-white/10 dark:bg-slate-900/95 dark:text-slate-100 dark:shadow-black/30",
+          "group relative flex h-full min-h-[31rem] cursor-pointer flex-col overflow-hidden rounded-[1.35rem] border-border bg-card text-foreground shadow-sm shadow-slate-900/8 dark:border-white/10 dark:bg-slate-900/95 dark:text-slate-100 dark:shadow-black/30",
           "transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-xl hover:shadow-primary/10 dark:hover:border-cyan-300/40 dark:hover:shadow-cyan-500/10",
           selected &&
             "ring-2 ring-cyan-300/80 shadow-[0_0_0_1px_rgba(56,189,248,0.5),0_0_36px_rgba(56,189,248,0.28)]",
@@ -471,8 +481,7 @@ function TrendCard({
         ) : null}
         <div
           className={cn(
-            "relative overflow-hidden border-b border-border dark:border-white/10",
-            heightClass,
+            "relative h-64 shrink-0 overflow-hidden border-b border-border dark:border-white/10 sm:h-72",
           )}
         >
           {showVisual && visual ? (
@@ -511,7 +520,7 @@ function TrendCard({
           </div>
         </div>
         <CardHeader className="space-y-3 pb-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-1.5">
               {platformBadges.map((badge) => (
                 <span
@@ -525,34 +534,31 @@ function TrendCard({
                 </span>
               ))}
             </div>
-            <div className="text-right">
-              <p className="flex items-center justify-end gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground dark:text-slate-400">
-                Engagement
-                <span
-                  title="Trend score combines Reddit score/comments, TikTok likes/plays, Hacker News score, and counts from YouTube/news/web/Pinterest/Medium, then log-scales to 0-100."
-                  className="inline-flex"
-                >
-                  <Info className="size-3 text-muted-foreground dark:text-slate-500" />
+            <div className="rounded-2xl border border-border bg-muted/40 p-3 dark:border-white/10 dark:bg-white/5">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:text-slate-400">
+                Momentum
+              </p>
+              <p className="mt-0.5 flex items-baseline justify-between gap-3 text-lg font-bold tabular-nums leading-none text-foreground dark:text-white">
+                <span className="text-sm">{momentumLabel}</span>
+                <span>
+                  {raw > 0 ? heat : "--"}
+                  {raw > 0 ? (
+                    <span className="text-xs font-normal text-muted-foreground dark:text-slate-400">
+                      /100
+                    </span>
+                  ) : null}
                 </span>
               </p>
-              <p className="text-lg font-bold tabular-nums leading-none text-foreground dark:text-white">
-                {raw > 0 ? heat : "—"}
-                {raw > 0 ? (
-                  <span className="text-xs font-normal text-muted-foreground dark:text-slate-400">
-                    /100
-                  </span>
-                ) : null}
+              <p className="mt-2 text-xs leading-snug text-muted-foreground dark:text-slate-400">
+                {signalCount > 0
+                  ? `Based on ${signalCount} social, search, and creator-platform signal${signalCount === 1 ? "" : "s"}. Higher means more people are already reacting or searching.`
+                  : "Waiting on enough live social and search signals to score this trend."}
               </p>
-              {raw > 0 ? (
-                <p className="text-[10px] text-muted-foreground dark:text-slate-500">
-                  raw {raw.toLocaleString()}
-                </p>
-              ) : null}
             </div>
           </div>
           <CardTitle className="sr-only">{trend.trend}</CardTitle>
         </CardHeader>
-        <CardContent className="pb-2">
+        <CardContent className="flex-1 pb-2">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
             <div
               className="h-full rounded-full bg-primary transition-all dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500"
@@ -632,8 +638,8 @@ function TrendCard({
             </div>
           ) : null}
         </CardContent>
-        <CardFooter className="pt-0 text-xs text-muted-foreground dark:text-slate-400">
-          {trend.ideas.length} AI idea{trend.ideas.length === 1 ? "" : "s"} ·
+        <CardFooter className="mt-auto pt-0 text-xs text-muted-foreground dark:text-slate-400">
+          {trend.ideas.length} AI idea{trend.ideas.length === 1 ? "" : "s"} -
           Click for details
           <ChevronRight className="ml-1 size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
         </CardFooter>
@@ -707,7 +713,7 @@ function LoadingState({
         </div>
         <p className="text-xs text-slate-400">
           Time running:{" "}
-          <span className="font-medium text-slate-200">{elapsedDisplay}</span> ·
+          <span className="font-medium text-slate-200">{elapsedDisplay}</span> -
           This usually takes 30 to 90 seconds while we scan sources and generate
           images. Leave this tab open and don&apos;t refresh.
         </p>
@@ -1330,7 +1336,7 @@ export function TrendDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 dark:bg-slate-950/80">
           <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl dark:border-white/15 dark:bg-slate-900">
             <h2 className="text-xl font-semibold text-foreground dark:text-white">
-              Welcome to Content Buddy
+              Welcome to TrendBoard
             </h2>
             <p className="mt-2 text-sm text-muted-foreground dark:text-slate-300">
               Your first workflow takes just a few steps:
@@ -1361,13 +1367,13 @@ export function TrendDashboard() {
         <Link
           href="/dashboard"
           className="mb-6 flex items-center justify-center gap-3 rounded-2xl px-3 py-2 text-primary dark:text-cyan-200 xl:justify-start"
-          aria-label="Content Buddy dashboard"
+          aria-label="TrendBoard dashboard"
         >
           <span className="flex size-10 items-center justify-center rounded-2xl bg-primary text-sm font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
-            C
+            T
           </span>
           <span className="hidden text-sm font-bold tracking-tight xl:inline">
-            Content Buddy
+            TrendBoard
           </span>
         </Link>
         <nav className="flex flex-1 flex-col gap-1">
@@ -1415,9 +1421,9 @@ export function TrendDashboard() {
               className="flex items-center gap-2 rounded-2xl text-sm font-bold text-foreground dark:text-white lg:hidden"
             >
               <span className="flex size-9 items-center justify-center rounded-2xl bg-primary text-xs font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
-                C
+                T
               </span>
-              <span>Content Buddy</span>
+              <span>TrendBoard</span>
             </Link>
             <div className="hidden min-w-0 lg:block">
               <h1 className="truncate text-xl font-bold tracking-tight">
@@ -1620,7 +1626,7 @@ export function TrendDashboard() {
             </div>
             <div className="min-w-0">
               <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">
-                Content Buddy
+                TrendBoard
               </h1>
               <p className="hidden text-xs text-muted-foreground dark:text-slate-400 sm:block">
                 AI trend intelligence for creators
@@ -1953,7 +1959,7 @@ export function TrendDashboard() {
 
           {data ? (
             filteredTrends.length > 0 ? (
-              <div className="columns-1 gap-4 md:columns-2 xl:columns-3 2xl:columns-4">
+              <div className="grid auto-rows-fr grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {filteredTrends.map((trend, index) => {
                   const realIndex = data.trend_ideas.findIndex(
                     (t) => t.trend === trend.trend,

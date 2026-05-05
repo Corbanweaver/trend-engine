@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Content Buddy",
-    short_name: "Buddy",
+    name: "TrendBoard",
+    short_name: "Board",
     description:
       "Find live content trends and turn them into hooks, scripts, hashtags, and polished idea cards.",
     start_url: "/dashboard",

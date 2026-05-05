@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Support",
   description:
-    "Get help with Content Buddy billing, credits, account access, and ideas.",
+    "Get help with TrendBoard billing, credits, account access, and ideas.",
 };
 
 const topics = [
@@ -41,7 +41,7 @@ const supportEmailHref = `mailto:${supportEmail}`;
 
 export default function SupportPage() {
   const supportHref = `${supportEmailHref}?subject=${encodeURIComponent(
-    "Content Buddy support request",
+    "TrendBoard support request",
   )}`;
 
   return (
@@ -51,7 +51,7 @@ export default function SupportPage() {
           href="/"
           className="text-sm font-medium text-primary hover:underline"
         >
-          Content Buddy
+          TrendBoard
         </Link>
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Support</h1>
@@ -86,7 +86,7 @@ export default function SupportPage() {
             >
               {supportEmail}
             </a>{" "}
-            from the address connected to your Content Buddy account. Include
+            from the address connected to your TrendBoard account. Include
             screenshots and the niche you analyzed when a generated result looks
             wrong.
           </p>

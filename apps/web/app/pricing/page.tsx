@@ -7,7 +7,7 @@ import { CREDIT_LIMITS } from "@/lib/credits";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Choose a Content Buddy plan for trend analyses, niches, saved ideas, and AI thumbnails.",
+    "Choose a TrendBoard plan for trend analyses, niches, saved ideas, and AI thumbnails.",
 };
 
 const plans = [
@@ -73,7 +73,7 @@ function PricingHeader() {
         href="/"
         className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
       >
-        Content Buddy
+        TrendBoard
       </Link>
       <nav className="flex items-center gap-6 text-sm">
         <Link

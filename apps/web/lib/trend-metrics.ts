@@ -2,6 +2,7 @@ import type { TrendIdea } from "@/lib/trend-ideas-types";
 
 export type PlatformKey =
   | "tiktok"
+  | "instagram"
   | "youtube"
   | "reddit"
   | "hackernews"
@@ -13,9 +14,10 @@ export type PlatformKey =
 
 const PLATFORM_LABEL: Record<PlatformKey, string> = {
   tiktok: "TikTok",
+  instagram: "Instagram",
   youtube: "YouTube",
   reddit: "Reddit",
-  hackernews: "Hacker News",
+  hackernews: "Tech forums",
   news: "Google News",
   web: "Web",
   pinterest: "Pinterest",
@@ -38,6 +40,7 @@ export function computeEngagementRaw(trend: TrendIdea): number {
   for (const v of trend.tiktok_videos) {
     score += num(v.like_count) + num(v.play_count) / 10_000;
   }
+  score += trend.instagram_posts.length * 35;
   for (const s of trend.hackernews_stories) {
     score += num(s.score);
   }
@@ -51,10 +54,13 @@ export function computeEngagementRaw(trend: TrendIdea): number {
   return Math.round(score);
 }
 
-/** 0–100 heat for display (log-scaled). */
+/** 0-100 heat for display (log-scaled). */
 export function engagementHeat(raw: number): number {
   if (raw <= 0) return 0;
-  return Math.min(100, Math.round((Math.log10(raw + 12) / Math.log10(320)) * 100));
+  return Math.min(
+    100,
+    Math.round((Math.log10(raw + 12) / Math.log10(320)) * 100),
+  );
 }
 
 export function primaryPlatform(trend: TrendIdea): {
@@ -68,6 +74,10 @@ export function primaryPlatform(trend: TrendIdea): {
         (a, v) => a + num(v.like_count) + num(v.play_count) / 15_000,
         0,
       ),
+    },
+    {
+      key: "instagram",
+      w: trend.instagram_posts.length * 45,
     },
     {
       key: "reddit",

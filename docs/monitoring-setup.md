@@ -1,6 +1,6 @@
 # Monitoring Setup
 
-This is the production monitoring checklist for Content Idea Maker.
+This is the production monitoring checklist for TrendBoard.
 
 ## What Is Already In Code
 

@@ -9,7 +9,7 @@ import {
 
 export const metadata: Metadata = {
   title: "System Status",
-  description: "Production health and support status for Content Buddy.",
+  description: "Production health and support status for TrendBoard.",
 };
 
 export default function StatusPage() {
@@ -21,7 +21,7 @@ export default function StatusPage() {
             href="/"
             className="text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
           >
-            Content Buddy
+            TrendBoard
           </Link>
           <Link
             href="/support"
@@ -46,7 +46,7 @@ export default function StatusPage() {
             </div>
           </div>
           <p className="mt-5 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Content Buddy has a public health endpoint, protected deep health
+            TrendBoard has a public health endpoint, protected deep health
             checks, and a scheduled production monitor. If something feels wrong
             inside the app, support can use the operational event stream and
             provider dashboards to investigate.

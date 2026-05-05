@@ -136,7 +136,7 @@ export default function SavedIdeasPage() {
   };
 
   useEffect(() => {
-    document.title = "Saved Ideas - Content Buddy";
+    document.title = "Saved Ideas - TrendBoard";
   }, []);
 
   useEffect(() => {

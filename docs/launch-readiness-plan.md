@@ -1,6 +1,6 @@
 # Launch Readiness Plan
 
-Use this as the shared checklist before letting real customers into Content Idea Maker.
+Use this as the shared checklist before letting real customers into TrendBoard.
 
 ## 1. Full Live Smoke Test
 

@@ -19,10 +19,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.contentideamaker.com"),
   title: {
-    default: "Content Buddy - AI Content Ideas From Live Trends",
-    template: "%s | Content Buddy",
+    default: "TrendBoard - AI Content Ideas From Live Trends",
+    template: "%s | TrendBoard",
   },
-  applicationName: "Content Buddy",
+  applicationName: "TrendBoard",
   description:
     "Find live content trends, generate polished idea cards, and turn them into hooks, scripts, and hashtags.",
   manifest: "/manifest.webmanifest",
@@ -42,16 +42,16 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "Content Buddy - AI Content Ideas From Live Trends",
+    title: "TrendBoard - AI Content Ideas From Live Trends",
     description:
       "Analyze trend signals across creator platforms and generate AI-powered content ideas with thumbnails.",
     url: "https://www.contentideamaker.com",
-    siteName: "Content Buddy",
+    siteName: "TrendBoard",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Content Buddy - AI Content Ideas From Live Trends",
+    title: "TrendBoard - AI Content Ideas From Live Trends",
     description:
       "Find live trends and turn them into AI-assisted content ideas.",
   },

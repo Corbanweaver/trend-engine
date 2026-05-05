@@ -94,7 +94,7 @@ function LoginForm() {
           href="/"
           className="mb-6 block text-xs font-semibold uppercase tracking-[0.2em] text-primary dark:text-cyan-300"
         >
-          Content Buddy
+          TrendBoard
         </Link>
         <h1 className="text-2xl font-semibold">Log in</h1>
         <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">

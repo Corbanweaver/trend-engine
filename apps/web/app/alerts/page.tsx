@@ -46,7 +46,7 @@ export default function TrendAlertsPage() {
   };
 
   useEffect(() => {
-    document.title = "Trend Alerts — Content Buddy";
+    document.title = "Trend Alerts — TrendBoard";
   }, []);
 
   const loadSubscriptions = useCallback(async () => {
@@ -285,8 +285,8 @@ export default function TrendAlertsPage() {
                 No trend alerts yet
               </p>
               <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-muted-foreground dark:text-slate-400">
-                Add your strongest niche above and Content Buddy will keep it
-                ready for weekly trend checks.
+                Add your strongest niche above and TrendBoard will keep it ready
+                for weekly trend checks.
               </p>
             </div>
           ) : null}

@@ -31,7 +31,7 @@ const ASSISTANT_POSITION_STORAGE_KEY = "trend_engine:assistant_position";
 const INITIAL_ASSISTANT_MESSAGE: ChatMessage = {
   role: "assistant",
   content:
-    "Hi! I can help with niche discovery, trend explanations, content brainstorming, and navigating Content Buddy.",
+    "Hi! I can help with niche discovery, trend explanations, content brainstorming, and navigating TrendBoard.",
 };
 
 type AssistantPosition = {

@@ -1,20 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="72" y1="56" x2="452" y2="456" gradientUnits="userSpaceOnUse">
+    <linearGradient
+      id="bg"
+      x1="72"
+      y1="56"
+      x2="452"
+      y2="456"
+      gradientUnits="userSpaceOnUse"
+    >
       <stop stop-color="#0f172a" />
       <stop offset="0.48" stop-color="#1e3a8a" />
       <stop offset="1" stop-color="#7c3aed" />
     </linearGradient>
-    <linearGradient id="spark" x1="125" y1="96" x2="401" y2="396" gradientUnits="userSpaceOnUse">
+    <linearGradient
+      id="spark"
+      x1="125"
+      y1="96"
+      x2="401"
+      y2="396"
+      gradientUnits="userSpaceOnUse"
+    >
       <stop stop-color="#67e8f9" />
       <stop offset="1" stop-color="#f0abfc" />
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="116" fill="url(#bg)" />
-  <path
-    d="M155 258c0-68 50-118 123-118 40 0 75 15 97 41l-39 42c-16-17-34-25-55-25-36 0-62 25-62 60 0 36 26 61 62 61 21 0 39-8 55-25l39 42c-22 26-57 41-97 41-73 0-123-50-123-119Z"
-    fill="#f8fafc"
-  />
+  <path d="M139 140h234v64h-84v174h-66V204h-84Z" fill="#f8fafc" />
   <path
     d="M366 101 384 154 437 172 384 190 366 243 348 190 295 172 348 154 366 101Z"
     fill="url(#spark)"
