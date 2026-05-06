@@ -78,9 +78,6 @@ def build_tiktok_actor_input(query: str, max_results: int, days_back: int = 7) -
         "publishedAfter": since_iso,
         "minCreatedAt": since_unix,
         "resultsPerPage": max_results,
-        "maxProfilesPerQuery": 0,
-        "maxFollowersPerProfile": 0,
-        "maxFollowingPerProfile": 0,
         "shouldDownloadCovers": True,
         "shouldDownloadVideos": False,
     }
