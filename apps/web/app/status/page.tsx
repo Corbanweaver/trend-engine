@@ -61,7 +61,9 @@ export default function StatusPage() {
               The site exposes a lightweight health check for uptime monitoring.
             </p>
             <a
-              href="/api/health"
+              href="https://www.contentideamaker.com/api/health"
+              target="_blank"
+              rel="noreferrer"
               className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
             >
               Open health endpoint
