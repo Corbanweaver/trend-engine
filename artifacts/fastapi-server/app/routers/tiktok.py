@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException
+import httpx
 from pydantic import BaseModel, Field
-from app.apify_client import apify_token
+from app.apify_client import APIFY_API_BASE, apify_token
 from app.tiktok_client import (
+    build_tiktok_actor_input,
     configured_tiktok_actor_id,
     tiktok_hashtag_info,
     tiktok_trending_search,
@@ -46,6 +48,60 @@ async def provider_status():
         "apify_token_configured": bool(apify_token()),
         "actor_id": actor_id,
         "actor_id_configured": bool(actor_id),
+    }
+
+
+@router.get("/provider-probe")
+async def provider_probe(query: str = "fitness viral"):
+    token = apify_token()
+    actor_id = configured_tiktok_actor_id()
+    actor_input = build_tiktok_actor_input(query, 1)
+    if not token or not actor_id:
+        return {
+            "apify_token_configured": bool(token),
+            "actor_id": actor_id,
+            "status_code": None,
+            "detail": "Apify token or actor id is missing.",
+        }
+
+    url = f"{APIFY_API_BASE}/acts/{actor_id.replace('/', '~')}/run-sync-get-dataset-items"
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                url,
+                params={"token": token, "limit": 1, "clean": "true"},
+                json=actor_input,
+            )
+    except Exception as exc:
+        return {
+            "apify_token_configured": True,
+            "actor_id": actor_id,
+            "status_code": None,
+            "input_hashtags": actor_input.get("hashtags", []),
+            "detail": str(exc)[:500],
+        }
+
+    body_text = response.text[:800]
+    item_count = None
+    first_item_keys: list[str] = []
+    try:
+        data = response.json()
+        if isinstance(data, list):
+            item_count = len(data)
+            if data and isinstance(data[0], dict):
+                first_item_keys = sorted(list(data[0].keys()))[:40]
+    except Exception:
+        pass
+
+    return {
+        "apify_token_configured": True,
+        "actor_id": actor_id,
+        "status_code": response.status_code,
+        "input_hashtags": actor_input.get("hashtags", []),
+        "input_keys": sorted(actor_input.keys()),
+        "item_count": item_count,
+        "first_item_keys": first_item_keys,
+        "body_preview": body_text,
     }
 
 

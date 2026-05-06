@@ -52,11 +52,22 @@ async def _run_apify_tiktok_actor(
     days_back: int = 7,
     timeout_seconds: float | None = None,
 ) -> list[dict]:
+    actor_input = build_tiktok_actor_input(query, max_results, days_back=days_back)
+    actor_id = configured_tiktok_actor_id()
+    return await run_actor_items(
+        actor_id,
+        actor_input,
+        max_results=max_results,
+        timeout_seconds=timeout_seconds or 45.0,
+    )
+
+
+def build_tiktok_actor_input(query: str, max_results: int, days_back: int = 7) -> dict:
     since = datetime.now(timezone.utc) - timedelta(days=max(days_back, 1))
     since_iso = since.isoformat()
     since_unix = int(since.timestamp())
 
-    actor_input = {
+    return {
         **common_search_input(query, max_results),
         "hashtags": _candidate_hashtags(query),
         "searchQueries": [query],
@@ -73,13 +84,6 @@ async def _run_apify_tiktok_actor(
         "shouldDownloadCovers": True,
         "shouldDownloadVideos": False,
     }
-    actor_id = configured_tiktok_actor_id()
-    return await run_actor_items(
-        actor_id,
-        actor_input,
-        max_results=max_results,
-        timeout_seconds=timeout_seconds or 45.0,
-    )
 
 
 def _to_int(value: object) -> int:
