@@ -1,24 +1,35 @@
 import type { MetadataRoute } from "next";
 
+import { allSeoPages } from "@/lib/seo-content";
+
 const BASE_URL = "https://www.contentideamaker.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  return [
+  const corePaths = [
     "",
     "/pricing",
     "/about",
     "/trending",
+    "/niches",
     "/login",
     "/signup",
     "/support",
     "/status",
     "/privacy",
     "/terms",
-  ].map((path) => ({
+  ];
+  const seoPaths = allSeoPages.map((page) => page.path);
+
+  return [...corePaths, ...seoPaths].map((path) => ({
     url: `${BASE_URL}${path}`,
     lastModified: now,
-    changeFrequency: path === "" || path === "/trending" ? "daily" : "monthly",
-    priority: path === "" ? 1 : 0.7,
+    changeFrequency:
+      path === "" || path === "/trending"
+        ? "daily"
+        : seoPaths.includes(path)
+          ? "weekly"
+          : "monthly",
+    priority: path === "" ? 1 : seoPaths.includes(path) ? 0.8 : 0.7,
   }));
 }

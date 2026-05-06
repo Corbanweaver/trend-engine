@@ -6,6 +6,8 @@ import { FloatingAiAssistant } from "@/components/floating-ai-assistant";
 
 import "./globals.css";
 
+const SITE_URL = "https://www.contentideamaker.com";
+
 const geistSans = Geist({
   subsets: ["latin"],
   variable: "--font-geist-sans",
@@ -17,14 +19,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.contentideamaker.com"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "TrendBoard - AI Content Ideas From Live Trends",
+    default:
+      "TrendBoard - AI Content Idea Generator for TikTok, Instagram, YouTube Shorts, and Pinterest",
     template: "%s | TrendBoard",
   },
   applicationName: "TrendBoard",
   description:
-    "Find live content trends, generate polished idea cards, and turn them into hooks, scripts, and hashtags.",
+    "Find live content trends, generate polished idea cards, and turn them into hooks, scripts, hashtags, and calendar-ready posts.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -42,19 +45,60 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "TrendBoard - AI Content Ideas From Live Trends",
+    title:
+      "TrendBoard - AI Content Idea Generator for TikTok, Instagram, YouTube Shorts, and Pinterest",
     description:
       "Analyze trend signals across creator platforms and generate AI-powered content ideas with source-backed thumbnails.",
-    url: "https://www.contentideamaker.com",
+    url: SITE_URL,
     siteName: "TrendBoard",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "TrendBoard - AI Content Ideas From Live Trends",
+    title:
+      "TrendBoard - AI Content Idea Generator for TikTok, Instagram, YouTube Shorts, and Pinterest",
     description:
       "Find live trends and turn them into AI-assisted content ideas.",
   },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "TrendBoard",
+  url: SITE_URL,
+  logo: `${SITE_URL}/icon.svg`,
+};
+
+const softwareJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "TrendBoard",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  url: SITE_URL,
+  description:
+    "AI content idea generator for TikTok, Instagram, YouTube Shorts, Pinterest, and creator content calendars.",
+  offers: [
+    {
+      "@type": "Offer",
+      name: "Free",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    {
+      "@type": "Offer",
+      name: "Creator",
+      price: "19.99",
+      priceCurrency: "USD",
+    },
+    {
+      "@type": "Offer",
+      name: "Pro",
+      price: "49.99",
+      priceCurrency: "USD",
+    },
+  ],
 };
 
 async function hasAuthenticatedUser() {
@@ -94,6 +138,18 @@ export default async function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(softwareJsonLd),
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `

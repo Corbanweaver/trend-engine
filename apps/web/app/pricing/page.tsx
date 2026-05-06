@@ -66,6 +66,34 @@ const plans = [
   },
 ];
 
+const pricingFaqItems = [
+  {
+    q: "Can I try TrendBoard before paying?",
+    a: "Yes. The free plan and public resources let you explore the workflow before upgrading to higher monthly credits.",
+  },
+  {
+    q: "Why does TrendBoard use credits?",
+    a: "Credits keep heavier trend scans predictable, fair, and harder to abuse while still giving paid creators enough room to work.",
+  },
+  {
+    q: "Can I cancel anytime?",
+    a: "Yes. You can cancel through billing management, and paid access continues through the current billing period.",
+  },
+];
+
+const pricingFaqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: pricingFaqItems.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.a,
+    },
+  })),
+};
+
 function PricingHeader() {
   return (
     <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-7">
@@ -157,6 +185,10 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
 
   return (
     <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingFaqJsonLd) }}
+      />
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-primary/10 blur-3xl dark:bg-fuchsia-500/25" />
         <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-secondary/70 blur-3xl dark:bg-cyan-500/20" />
@@ -295,6 +327,32 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           Full trend analyses cost 30 credits. Smaller AI tools such as hooks,
           hashtags, and scripts use fewer credits.
         </p>
+
+        <section className="mx-auto mt-14 max-w-3xl">
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary dark:text-cyan-200">
+              Pricing FAQ
+            </p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight">
+              Pick the plan that fits your pace
+            </h2>
+          </div>
+          <div className="mt-8 space-y-3">
+            {pricingFaqItems.map((item) => (
+              <details
+                key={item.q}
+                className="rounded-2xl border border-border bg-card px-5 py-2 dark:border-white/10 dark:bg-slate-950/55"
+              >
+                <summary className="cursor-pointer py-3 text-sm font-semibold">
+                  {item.q}
+                </summary>
+                <p className="border-t border-border pb-4 pt-3 text-sm leading-6 text-muted-foreground dark:border-white/10">
+                  {item.a}
+                </p>
+              </details>
+            ))}
+          </div>
+        </section>
 
         <nav className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
           <Link href="/support" className="hover:text-foreground">

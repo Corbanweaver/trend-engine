@@ -45,6 +45,21 @@ const SOCIAL_SECTION_LABELS: Record<string, string> = {
   news: "News context",
 };
 
+const TRENDING_PUBLIC_GUIDES = [
+  {
+    title: "Trending creator topics today",
+    body: "Watch for topics that appear across more than one source, then connect them to a specific niche before filming.",
+  },
+  {
+    title: "Platforms scanned",
+    body: "TrendBoard checks creator platforms like TikTok, Instagram, X, Pinterest, YouTube Shorts, Reddit, search, and news context when available.",
+  },
+  {
+    title: "Content examples",
+    body: "Use a live signal as a reaction, quick explainer, myth check, carousel, Shorts script, or save-worthy checklist.",
+  },
+];
+
 function sectionIcon(key: string) {
   switch (key) {
     case "google_trends":
@@ -230,6 +245,20 @@ export function TrendingLivePage() {
             Shorts, Reddit conversations, plus search and news context. It
             refreshes automatically so the page feels alive.
           </p>
+        </div>
+
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          {TRENDING_PUBLIC_GUIDES.map((guide) => (
+            <article
+              key={guide.title}
+              className="rounded-2xl border border-border bg-card/80 p-5 shadow-sm dark:border-white/10 dark:bg-slate-900/55"
+            >
+              <h2 className="text-base font-semibold">{guide.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {guide.body}
+              </p>
+            </article>
+          ))}
         </div>
 
         {loading ? (

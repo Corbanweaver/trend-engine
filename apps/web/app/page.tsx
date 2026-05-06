@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Bot,
@@ -16,6 +17,21 @@ import {
 
 import { EmailWaitlistForm } from "@/components/email-waitlist-form";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
+import {
+  keywordLandingPages,
+  nicheLandingPages,
+  resourcePages,
+} from "@/lib/seo-content";
+
+export const metadata: Metadata = {
+  title:
+    "AI Content Idea Generator for TikTok, Instagram, YouTube Shorts, and Pinterest",
+  description:
+    "Use TrendBoard to find live trends, create short idea cards, generate hooks and scripts, and plan content for TikTok, Instagram, YouTube Shorts, and Pinterest.",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 const howSteps = [
   {
@@ -30,8 +46,8 @@ const howSteps = [
   },
   {
     step: "03",
-    title: "Ship scroll-stopping ideas",
-    body: "Get hooks, full scripts, hashtags, SEO blurbs, and source-backed thumbnails you can use for context.",
+    title: "Ship warmer ideas",
+    body: "Start with short idea cards, then expand only the winners into hooks, scripts, hashtags, and saved calendar plans.",
   },
 ] as const;
 
@@ -43,8 +59,8 @@ const featureCards = [
   },
   {
     icon: Sparkles,
-    title: "AI scripts & hooks",
-    body: "Every trend ships with punchy hooks and tight 30–60s scripts tuned for Shorts and Reels.",
+    title: "Short idea cards first",
+    body: "Analyze faster with concise idea cards, then generate hooks or full scripts only when an idea is worth expanding.",
   },
   {
     icon: Zap,
@@ -141,9 +157,40 @@ const faqItems = [
   },
 ] as const;
 
+const freeResourceLinks = resourcePages.map((page) => ({
+  title: page.title,
+  description: page.description,
+  href: page.path,
+}));
+
+const seoTopicLinks = [
+  ...keywordLandingPages.slice(0, 4),
+  ...nicheLandingPages.slice(0, 2),
+].map((page) => ({
+  title: page.title,
+  href: page.path,
+}));
+
+const homepageFaqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqItems.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.a,
+    },
+  })),
+};
+
 export default function Home() {
   return (
     <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageFaqJsonLd) }}
+      />
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-primary/10 blur-3xl dark:bg-fuchsia-500/25" />
         <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-secondary/70 blur-3xl dark:bg-cyan-500/20" />
@@ -203,20 +250,22 @@ export default function Home() {
         </span>
 
         <h1 className="mt-8 max-w-5xl text-balance bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-5xl font-extrabold leading-tight text-transparent sm:text-6xl lg:text-7xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
-          Turn Trends Into Scroll-Stopping Content
+          AI Content Idea Generator for TikTok, Instagram, YouTube Shorts, and Pinterest
         </h1>
 
         <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">
-          Discover viral trends and generate AI video ideas instantly
+          Find live creator trends, draft short idea cards, generate warmer
+          hooks and scripts, and move the winners into a simple content
+          calendar.
         </p>
 
         <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
-          <a
+          <Link
             href="/dashboard"
             className="fluid-transition inline-flex items-center justify-center rounded-2xl bg-primary px-10 py-4 text-base font-bold text-primary-foreground shadow-[0_12px_28px_rgba(54,95,125,0.2)] hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_36px_rgba(54,95,125,0.24)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
           >
             Start Finding Trends
-          </a>
+          </Link>
           <Link
             href="/trending"
             className="fluid-transition inline-flex items-center justify-center rounded-2xl border border-border bg-card px-8 py-4 text-base font-semibold text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/60 dark:hover:bg-slate-800"
@@ -227,6 +276,44 @@ export default function Home() {
       </section>
 
       <HowItWorksSection steps={howSteps} />
+
+      <section className="relative z-20 mx-auto w-full max-w-6xl px-6 py-12">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary dark:text-cyan-200">
+              Free resources
+            </span>
+            <h2 className="mt-4 max-w-2xl text-balance text-3xl font-extrabold tracking-tight sm:text-4xl">
+              Useful pages people can try before paying
+            </h2>
+            <p className="mt-3 max-w-2xl text-muted-foreground">
+              Start with free hook ideas, calendar templates, platform guides,
+              and niche idea lists. Upgrade when you want live scans, source
+              links, saved ideas, and full workflow tools.
+            </p>
+          </div>
+          <Link
+            href="/free-tiktok-hook-ideas"
+            className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted dark:border-white/10 dark:bg-slate-900 dark:hover:bg-slate-800"
+          >
+            Try a free tool
+          </Link>
+        </div>
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {freeResourceLinks.map((resource) => (
+            <Link
+              key={resource.href}
+              href={resource.href}
+              className="rounded-2xl border border-border bg-card/85 p-5 shadow-sm hover:border-primary/30 hover:bg-muted/40 dark:border-white/10 dark:bg-slate-900/50 dark:hover:border-cyan-300/30"
+            >
+              <h3 className="text-base font-semibold">{resource.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {resource.description}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       <section className="relative z-20 mx-auto w-full max-w-6xl px-6 py-12">
         <div className="grid gap-4 md:grid-cols-4">
@@ -415,7 +502,7 @@ export default function Home() {
               scripts, and polished idea cards.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-10 sm:flex sm:gap-16">
+          <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 sm:gap-12">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 Product
@@ -540,6 +627,23 @@ export default function Home() {
                     Pricing
                   </Link>
                 </li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Guides
+              </p>
+              <ul className="mt-4 flex flex-col gap-3 text-sm">
+                {seoTopicLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="fluid-transition text-muted-foreground hover:text-foreground"
+                    >
+                      {link.title}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>

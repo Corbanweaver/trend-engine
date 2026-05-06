@@ -3,9 +3,12 @@ import type { Metadata } from "next";
 import { TrendingLivePage } from "./trending-client";
 
 export const metadata: Metadata = {
-  title: "Live trending",
+  title: "Live Creator Trends Across TikTok, Instagram, Pinterest, YouTube, and Search",
   description:
-    "Today's top trends across Google, news, YouTube Shorts, TikTok, Reddit, and tech communities.",
+    "See a public creator-focused trend pulse across TikTok, Instagram, X, Pinterest, YouTube Shorts, search, and news context.",
+  alternates: {
+    canonical: "/trending",
+  },
 };
 
 export const dynamic = "force-dynamic";
