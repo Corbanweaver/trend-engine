@@ -6,6 +6,14 @@ import httpx
 from app.apify_client import common_search_input, configured_actor_id, run_actor_items
 
 DEFAULT_TIKTOK_ACTOR_ID = "clockworks/tiktok-scraper"
+DEPRECATED_TIKTOK_ACTOR_IDS = {"clockworks/free-tiktok-scraper"}
+
+
+def configured_tiktok_actor_id() -> str:
+    actor_id = configured_actor_id("APIFY_TIKTOK_ACTOR_ID", DEFAULT_TIKTOK_ACTOR_ID)
+    if actor_id in DEPRECATED_TIKTOK_ACTOR_IDS:
+        return DEFAULT_TIKTOK_ACTOR_ID
+    return actor_id
 
 
 def _candidate_hashtags(query: str, limit: int = 4) -> list[str]:
@@ -65,7 +73,7 @@ async def _run_apify_tiktok_actor(
         "shouldDownloadCovers": True,
         "shouldDownloadVideos": False,
     }
-    actor_id = configured_actor_id("APIFY_TIKTOK_ACTOR_ID", DEFAULT_TIKTOK_ACTOR_ID)
+    actor_id = configured_tiktok_actor_id()
     return await run_actor_items(
         actor_id,
         actor_input,
