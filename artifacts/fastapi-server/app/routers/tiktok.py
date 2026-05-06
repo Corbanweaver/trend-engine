@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
+from app.apify_client import apify_token, configured_actor_id
 from app.tiktok_client import tiktok_trending_search, tiktok_hashtag_info
 
 router = APIRouter(prefix="/tiktok", tags=["tiktok"])
@@ -32,6 +33,16 @@ class TikTokHashtagResponse(BaseModel):
     hashtag: str
     views: int
     videos: int
+
+
+@router.get("/provider-status")
+async def provider_status():
+    actor_id = configured_actor_id("APIFY_TIKTOK_ACTOR_ID", "clockworks/tiktok-scraper")
+    return {
+        "apify_token_configured": bool(apify_token()),
+        "actor_id": actor_id,
+        "actor_id_configured": bool(actor_id),
+    }
 
 
 @router.post("/search", response_model=TikTokSearchResponse)
