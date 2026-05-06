@@ -115,6 +115,37 @@ function formatPlanLabel(plan: SubscriptionPlan): "Free" | "Creator" | "Pro" {
   return "Free";
 }
 
+const SELECTABLE_NICHE_OPTIONS = NICHE_OPTIONS.filter(
+  (option) => !option.value.startsWith("__group_") && option.value !== "custom",
+);
+
+function normalizeNicheValue(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function findNicheOption(value: string) {
+  const normalized = normalizeNicheValue(value);
+  return SELECTABLE_NICHE_OPTIONS.find(
+    (option) =>
+      normalizeNicheValue(option.value) === normalized ||
+      normalizeNicheValue(option.label) === normalized,
+  );
+}
+
+function getNicheStorageValue(value: string) {
+  const trimmed = value.trim().replace(/\s+/g, " ");
+  if (!trimmed) return "";
+  return findNicheOption(trimmed)?.value ?? trimmed;
+}
+
+function getNicheDisplayLabel(value: string) {
+  const normalized = normalizeNicheValue(value);
+  const option = SELECTABLE_NICHE_OPTIONS.find(
+    (candidate) => normalizeNicheValue(candidate.value) === normalized,
+  );
+  return option?.label ?? value.trim().replace(/\s+/g, " ");
+}
+
 function parseTimestampCandidate(value: unknown): Date | null {
   if (typeof value !== "string" && typeof value !== "number") return null;
   const date = new Date(value);
@@ -866,10 +897,24 @@ function FilterChip({
   );
 }
 
+function BrandMark({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "flex items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm shadow-primary/20 dark:bg-cyan-400 dark:text-slate-950 dark:shadow-cyan-400/20",
+        className,
+      )}
+      aria-hidden="true"
+    >
+      <BarChart3 className="size-5" strokeWidth={2.4} />
+    </span>
+  );
+}
+
 export function TrendDashboard() {
   const router = useRouter();
   const [nicheKey, setNicheKey] = useState("fitness");
-  const [customNiche, setCustomNiche] = useState("");
+  const [customNiche, setCustomNiche] = useState("Fitness");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<TrendIdeasResponse | null>(null);
@@ -944,11 +989,13 @@ export function TrendDashboard() {
   }, []);
 
   const toggleFavoriteNiche = useCallback((value: string) => {
-    if (!value || value === "custom") return;
+    const storageValue = getNicheStorageValue(value);
+    if (!storageValue || storageValue === "custom") return;
+    const normalizedValue = normalizeNicheValue(storageValue);
     setFavoriteNiches((prev) => {
-      const next = prev.includes(value)
-        ? prev.filter((x) => x !== value)
-        : [value, ...prev];
+      const next = prev.some((x) => normalizeNicheValue(x) === normalizedValue)
+        ? prev.filter((x) => normalizeNicheValue(x) !== normalizedValue)
+        : [storageValue, ...prev];
       try {
         window.localStorage.setItem(
           NICHE_FAVORITES_KEY,
@@ -992,7 +1039,27 @@ export function TrendDashboard() {
   }, []);
 
   const effectiveNiche =
-    nicheKey === "custom" ? customNiche.trim() || "fitness" : nicheKey;
+    nicheKey === "custom" ? customNiche.trim() : nicheKey;
+  const activeNicheValue = getNicheStorageValue(
+    nicheKey === "custom" ? customNiche : nicheKey,
+  );
+
+  const chooseNiche = useCallback((value: string) => {
+    const match = findNicheOption(value);
+    if (match) {
+      setNicheKey(match.value);
+      setCustomNiche(match.label);
+      return;
+    }
+    setNicheKey("custom");
+    setCustomNiche(value);
+  }, []);
+
+  const handleNicheInputChange = useCallback((value: string) => {
+    setCustomNiche(value);
+    const match = findNicheOption(value);
+    setNicheKey(match?.value ?? "custom");
+  }, []);
 
   const selectedTrend =
     data && selectedIndex !== null
@@ -1018,6 +1085,12 @@ export function TrendDashboard() {
   });
 
   const runAnalysis = useCallback(async () => {
+    const nicheForAnalysis = effectiveNiche.trim();
+    if (!nicheForAnalysis) {
+      setError("Type a niche or choose one from presets before analyzing.");
+      return;
+    }
+
     if (!isAdmin && creditsRemaining < CREDIT_COSTS.analysis) {
       setError(
         `You need ${CREDIT_COSTS.analysis} credits to run a full trend analysis. Upgrade for more monthly credits.`,
@@ -1047,10 +1120,10 @@ export function TrendDashboard() {
       setAnalysisProgress(Math.min(Math.round((elapsedSeconds / 75) * 94), 94));
     }, 1000);
     try {
-      const res = await fetchTrendIdeas(effectiveNiche);
+      const res = await fetchTrendIdeas(nicheForAnalysis);
       setData(res);
       const analyzedSnapshot = {
-        niche: effectiveNiche,
+        niche: nicheForAnalysis,
         analyzedAt: new Date().toISOString(),
         trendCount: res.trend_ideas.length,
         ideaCount: res.trend_ideas.reduce(
@@ -1071,11 +1144,14 @@ export function TrendDashboard() {
         applyCreditSnapshot(res.credits);
       }
       setAnalysisProgress(100);
-      recordTrendAnalysis(effectiveNiche);
+      recordTrendAnalysis(nicheForAnalysis);
       setNicheHistory((prev) => {
         const next = [
-          effectiveNiche,
-          ...prev.filter((n) => n !== effectiveNiche),
+          nicheForAnalysis,
+          ...prev.filter(
+            (n) =>
+              normalizeNicheValue(n) !== normalizeNicheValue(nicheForAnalysis),
+          ),
         ].slice(0, 5);
         try {
           window.localStorage.setItem(NICHE_HISTORY_KEY, JSON.stringify(next));
@@ -1246,12 +1322,33 @@ export function TrendDashboard() {
 
   const analysisCreditBlocked =
     !isAdmin && creditsRemaining < CREDIT_COSTS.analysis;
-  const favoriteSet = new Set(favoriteNiches);
-  const favoriteOptions = NICHE_OPTIONS.filter((o) => favoriteSet.has(o.value));
-  const regularOptions = NICHE_OPTIONS.filter((o) => !favoriteSet.has(o.value));
-  const canFavoriteNiche =
-    nicheKey !== "custom" && !nicheKey.startsWith("__group_");
-  const selectedNicheIsFavorite = favoriteSet.has(nicheKey);
+  const favoriteOptions = favoriteNiches
+    .filter((value) => Boolean(getNicheStorageValue(value)))
+    .map((value) => ({
+      value: getNicheStorageValue(value),
+      label: getNicheDisplayLabel(value),
+    }));
+  const favoriteOptionKeys = new Set(
+    favoriteOptions.map((option) => normalizeNicheValue(option.value)),
+  );
+  const regularOptions = SELECTABLE_NICHE_OPTIONS.filter(
+    (option) => !favoriteOptionKeys.has(normalizeNicheValue(option.value)),
+  );
+  const canFavoriteNiche = Boolean(activeNicheValue);
+  const selectedNicheIsFavorite = favoriteOptionKeys.has(
+    normalizeNicheValue(activeNicheValue),
+  );
+  const selectedFavoriteOption = favoriteOptions.find(
+    (option) =>
+      normalizeNicheValue(option.value) === normalizeNicheValue(activeNicheValue),
+  );
+  const presetSelectValue =
+    nicheKey !== "custom" ? nicheKey : (selectedFavoriteOption?.value ?? "");
+  const analyzeDisabled =
+    loading ||
+    analysisCreditBlocked ||
+    subscriptionLoading ||
+    !effectiveNiche.trim();
   const dashboardNavItems: DashboardNavItem[] = [
     { href: "/dashboard", label: "Create", icon: Sparkles, active: true },
     { href: "/saved", label: "Saved", icon: Bookmark },
@@ -1487,9 +1584,7 @@ export function TrendDashboard() {
           className="mb-6 flex items-center justify-center gap-3 rounded-2xl px-3 py-2 text-primary dark:text-cyan-200 xl:justify-start"
           aria-label="TrendBoard dashboard"
         >
-          <span className="flex size-10 items-center justify-center rounded-2xl bg-primary text-sm font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
-            T
-          </span>
+          <BrandMark className="size-10" />
           <span className="hidden text-sm font-bold tracking-tight xl:inline">
             TrendBoard
           </span>
@@ -1538,9 +1633,7 @@ export function TrendDashboard() {
               href="/dashboard"
               className="flex items-center gap-2 rounded-2xl text-sm font-bold text-foreground dark:text-white lg:hidden"
             >
-              <span className="flex size-9 items-center justify-center rounded-2xl bg-primary text-xs font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
-                T
-              </span>
+              <BrandMark className="size-9" />
               <span>TrendBoard</span>
             </Link>
             <div className="hidden min-w-0 lg:block">
@@ -1593,56 +1686,56 @@ export function TrendDashboard() {
           </div>
 
           <div className="rounded-[1.75rem] border border-border bg-card p-2 shadow-sm dark:border-white/10 dark:bg-slate-900/95">
-            <div className="grid grid-cols-[1fr_auto] gap-2 md:grid-cols-[minmax(220px,360px)_1fr_auto_auto] md:items-center">
+            <div className="grid grid-cols-[auto_1fr] gap-2 md:grid-cols-[minmax(0,1fr)_minmax(190px,260px)_auto_auto] md:items-center">
+              <div className="relative col-span-2 md:col-span-1">
+                <label className="sr-only" htmlFor="quick-niche-search">
+                  Search any niche
+                </label>
+                <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground dark:text-slate-500" />
+                <input
+                  id="quick-niche-search"
+                  type="text"
+                  value={customNiche}
+                  onChange={(e) => handleNicheInputChange(e.target.value)}
+                  placeholder="Search any niche..."
+                  disabled={loading}
+                  className="h-12 w-full rounded-[1.15rem] border border-border bg-background py-0 pl-11 pr-4 text-base font-bold capitalize text-foreground outline-none placeholder:font-medium placeholder:normal-case placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/60 dark:border-white/10 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-cyan-300/60 sm:text-lg md:text-base"
+                />
+              </div>
               <label className="sr-only" htmlFor="quick-niche-select">
-                Niche
+                Choose a preset niche
               </label>
               <select
                 id="quick-niche-select"
-                value={nicheKey}
-                onChange={(e) => setNicheKey(e.target.value)}
+                value={presetSelectValue}
+                onChange={(e) => chooseNiche(e.target.value)}
                 disabled={loading}
-                className="h-12 rounded-[1.15rem] border border-border bg-background px-4 text-center text-base font-bold capitalize text-foreground outline-none focus:ring-2 focus:ring-primary/60 dark:border-white/10 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-cyan-300/60 sm:text-lg md:text-base"
+                className="col-span-2 h-12 rounded-[1.15rem] border border-border bg-background px-4 text-sm font-bold text-foreground outline-none focus:ring-2 focus:ring-primary/60 dark:border-white/10 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-cyan-300/60 md:col-span-1"
               >
+                <option value="" disabled>
+                  Preset niches
+                </option>
                 {favoriteOptions.length > 0 ? (
                   <optgroup label="Favorites">
                     {favoriteOptions.map((o) => (
-                      <option
-                        key={o.value}
-                        value={o.value}
-                        disabled={o.value.startsWith("__group_")}
-                      >
+                      <option key={o.value} value={o.value}>
                         {o.label}
                       </option>
                     ))}
                   </optgroup>
                 ) : null}
-                {regularOptions.map((o) => (
-                  <option
-                    key={o.value}
-                    value={o.value}
-                    disabled={o.value.startsWith("__group_")}
-                  >
-                    {o.label}
-                  </option>
-                ))}
+                <optgroup label="Popular niches">
+                  {regularOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
-              {nicheKey === "custom" ? (
-                <input
-                  type="text"
-                  value={customNiche}
-                  onChange={(e) => setCustomNiche(e.target.value)}
-                  placeholder="Describe your niche..."
-                  disabled={loading}
-                  className="col-span-2 h-12 rounded-[1.15rem] border border-border bg-background px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/60 dark:border-white/10 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-cyan-300/60 md:col-span-1"
-                />
-              ) : (
-                <div className="hidden md:block" />
-              )}
               {canFavoriteNiche ? (
                 <button
                   type="button"
-                  onClick={() => toggleFavoriteNiche(nicheKey)}
+                  onClick={() => toggleFavoriteNiche(activeNicheValue)}
                   aria-label={
                     selectedNicheIsFavorite
                       ? "Remove niche from favorites"
@@ -1669,11 +1762,12 @@ export function TrendDashboard() {
               ) : null}
               <Button
                 type="button"
-                disabled={
-                  loading || analysisCreditBlocked || subscriptionLoading
-                }
+                disabled={analyzeDisabled}
                 onClick={runAnalysis}
-                className="col-span-2 h-12 rounded-[1.15rem] bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300 md:col-span-1"
+                className={cn(
+                  "h-12 rounded-[1.15rem] bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300 md:col-span-1",
+                  !canFavoriteNiche && "col-span-2",
+                )}
               >
                 {loading ? (
                   <>
@@ -1703,7 +1797,7 @@ export function TrendDashboard() {
                 </span>
               ) : (
                 <span className="rounded-full bg-background px-3 py-1 text-xs text-muted-foreground shadow-sm dark:bg-white/5 dark:text-slate-300">
-                  Pick a niche, then tap Analyze
+                  Type a niche, then tap Analyze
                 </span>
               )}
               {analysisCreditBlocked ? (
@@ -1718,10 +1812,10 @@ export function TrendDashboard() {
                 <button
                   key={entry}
                   type="button"
-                  onClick={() => setNicheKey(entry)}
+                  onClick={() => chooseNiche(entry)}
                   className="rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:text-white"
                 >
-                  {entry}
+                  {getNicheDisplayLabel(entry)}
                 </button>
               ))}
             </div>
@@ -1870,33 +1964,28 @@ export function TrendDashboard() {
             </label>
             <select
               id="niche-select"
-              value={nicheKey}
-              onChange={(e) => setNicheKey(e.target.value)}
+              value={presetSelectValue}
+              onChange={(e) => chooseNiche(e.target.value)}
               disabled={loading}
               className={cn(
                 "h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground shadow-sm sm:h-9 sm:w-auto",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/15 dark:bg-slate-900 dark:text-slate-100 dark:focus-visible:ring-cyan-300",
               )}
             >
+              <option value="" disabled>
+                Preset niches
+              </option>
               {favoriteOptions.length > 0 ? (
                 <optgroup label="Favorites">
                   {favoriteOptions.map((o) => (
-                    <option
-                      key={o.value}
-                      value={o.value}
-                      disabled={o.value.startsWith("__group_")}
-                    >
+                    <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
                   ))}
                 </optgroup>
               ) : null}
               {regularOptions.map((o) => (
-                <option
-                  key={o.value}
-                  value={o.value}
-                  disabled={o.value.startsWith("__group_")}
-                >
+                <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
               ))}
@@ -1904,7 +1993,7 @@ export function TrendDashboard() {
             {canFavoriteNiche ? (
               <button
                 type="button"
-                onClick={() => toggleFavoriteNiche(nicheKey)}
+                onClick={() => toggleFavoriteNiche(activeNicheValue)}
                 className={cn(
                   "inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border px-3 text-xs font-medium transition-colors sm:h-9 sm:w-auto",
                   selectedNicheIsFavorite
@@ -1928,7 +2017,7 @@ export function TrendDashboard() {
               <input
                 type="text"
                 value={customNiche}
-                onChange={(e) => setCustomNiche(e.target.value)}
+                onChange={(e) => handleNicheInputChange(e.target.value)}
                 placeholder="Your niche…"
                 disabled={loading}
                 className={cn(
@@ -1939,7 +2028,7 @@ export function TrendDashboard() {
             ) : null}
             <Button
               type="button"
-              disabled={loading || analysisCreditBlocked || subscriptionLoading}
+              disabled={analyzeDisabled}
               onClick={runAnalysis}
               className="h-10 w-full bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 sm:h-9 sm:w-auto"
             >
@@ -1997,10 +2086,10 @@ export function TrendDashboard() {
                 <button
                   key={entry}
                   type="button"
-                  onClick={() => setNicheKey(entry)}
+                  onClick={() => chooseNiche(entry)}
                   className="fluid-transition shrink-0 rounded-full border border-border bg-card px-2.5 py-1 text-xs text-foreground hover:border-primary/30 hover:text-primary dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:border-cyan-300/40 dark:hover:text-cyan-100"
                 >
-                  {entry}
+                  {getNicheDisplayLabel(entry)}
                 </button>
               ))}
             </div>
