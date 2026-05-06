@@ -8,6 +8,7 @@ import { FormEvent, useState } from "react";
 
 import { getPasswordStrength } from "@/lib/password-strength";
 import { getSupabaseClient } from "@/lib/supabase";
+import { trackConversionEvent } from "@/lib/telemetry";
 
 const googleAuthEnabled =
   process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
@@ -29,6 +30,10 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
+      trackConversionEvent({
+        event: "signup_clicked",
+        context: { method: "email" },
+      });
       const supabase = getSupabaseClient();
       const { error: authError } = await supabase.auth.signUp({
         email,
@@ -45,6 +50,10 @@ export default function SignupPage() {
       setSuccess(
         "Account created. Check your email to confirm your account, then you will be sent to the dashboard.",
       );
+      trackConversionEvent({
+        event: "signup_completed",
+        context: { method: "email" },
+      });
       window.setTimeout(() => {
         router.push("/login?verify=1");
       }, 600);
@@ -60,6 +69,10 @@ export default function SignupPage() {
     setSuccess(null);
     setLoading(true);
     try {
+      trackConversionEvent({
+        event: "signup_google_clicked",
+        context: { method: "google" },
+      });
       const supabase = getSupabaseClient();
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",

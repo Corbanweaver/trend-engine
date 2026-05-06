@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
+import { recordConversionEvent } from "@/lib/conversion-events";
 import { recordOperationalEvent } from "@/lib/server-events";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -364,6 +365,17 @@ export async function POST(request: Request) {
         resetUsage: true,
       });
       if (result) return result;
+
+      await recordConversionEvent({
+        event: "checkout_completed",
+        userId,
+        metadata: {
+          plan: pricePlan,
+          sessionId: session.id,
+          subscriptionId,
+          status,
+        },
+      });
     }
 
     if (event.type === "customer.subscription.updated") {

@@ -55,6 +55,7 @@ import type {
   VideoIdea,
 } from "@/lib/trend-ideas-types";
 import { computeEngagementRaw, engagementHeat } from "@/lib/trend-metrics";
+import { trackConversionEvent } from "@/lib/telemetry";
 import { cn } from "@/lib/utils";
 import { recordTrendAnalysis } from "@/lib/user-stats";
 
@@ -1038,8 +1039,7 @@ export function TrendDashboard() {
     }
   }, []);
 
-  const effectiveNiche =
-    nicheKey === "custom" ? customNiche.trim() : nicheKey;
+  const effectiveNiche = nicheKey === "custom" ? customNiche.trim() : nicheKey;
   const activeNicheValue = getNicheStorageValue(
     nicheKey === "custom" ? customNiche : nicheKey,
   );
@@ -1090,6 +1090,15 @@ export function TrendDashboard() {
       setError("Type a niche or choose one from presets before analyzing.");
       return;
     }
+
+    trackConversionEvent({
+      event: "analyze_clicked",
+      context: {
+        niche: nicheForAnalysis,
+        isAdmin,
+        creditsCost: CREDIT_COSTS.analysis,
+      },
+    });
 
     if (!isAdmin && creditsRemaining < CREDIT_COSTS.analysis) {
       setError(
@@ -1159,6 +1168,14 @@ export function TrendDashboard() {
           /* ignore localStorage errors */
         }
         return next;
+      });
+      trackConversionEvent({
+        event: "analyze_completed",
+        context: {
+          niche: nicheForAnalysis,
+          trendCount: analyzedSnapshot.trendCount,
+          ideaCount: analyzedSnapshot.ideaCount,
+        },
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -1340,7 +1357,8 @@ export function TrendDashboard() {
   );
   const selectedFavoriteOption = favoriteOptions.find(
     (option) =>
-      normalizeNicheValue(option.value) === normalizeNicheValue(activeNicheValue),
+      normalizeNicheValue(option.value) ===
+      normalizeNicheValue(activeNicheValue),
   );
   const presetSelectValue =
     nicheKey !== "custom" ? nicheKey : (selectedFavoriteOption?.value ?? "");
@@ -2156,8 +2174,8 @@ export function TrendDashboard() {
                   Start with one niche
                 </p>
                 <p className="mt-1 max-w-md text-sm">
-                  The board fills with short trend cards. Open any card to
-                  build hooks, scripts, hashtags, and saved ideas.
+                  The board fills with short trend cards. Open any card to build
+                  hooks, scripts, hashtags, and saved ideas.
                 </p>
               </div>
             </div>

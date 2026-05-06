@@ -15,6 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 
+import { ConversionEventTracker } from "@/components/analytics/conversion-event-tracker";
 import { EmailWaitlistForm } from "@/components/email-waitlist-form";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import {
@@ -164,8 +165,10 @@ const freeResourceLinks = resourcePages.map((page) => ({
 }));
 
 const seoTopicLinks = [
-  ...keywordLandingPages.slice(0, 4),
-  ...nicheLandingPages.slice(0, 2),
+  ...keywordLandingPages,
+  { title: "Niche content ideas", path: "/niches" },
+  ...nicheLandingPages.slice(0, 4),
+  ...resourcePages.slice(0, 3),
 ].map((page) => ({
   title: page.title,
   href: page.path,
@@ -190,6 +193,10 @@ export default function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageFaqJsonLd) }}
+      />
+      <ConversionEventTracker
+        event="landing_page_viewed"
+        context={{ page: "home" }}
       />
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-primary/10 blur-3xl dark:bg-fuchsia-500/25" />
@@ -250,7 +257,8 @@ export default function Home() {
         </span>
 
         <h1 className="mt-8 max-w-5xl text-balance bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-5xl font-extrabold leading-tight text-transparent sm:text-6xl lg:text-7xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
-          AI Content Idea Generator for TikTok, Instagram, YouTube Shorts, and Pinterest
+          AI Content Idea Generator for TikTok, Instagram, YouTube Shorts, and
+          Pinterest
         </h1>
 
         <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">

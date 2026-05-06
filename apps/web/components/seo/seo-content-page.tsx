@@ -7,9 +7,10 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { ConversionEventTracker } from "@/components/analytics/conversion-event-tracker";
 import { FreeResourceWidget } from "@/components/seo/free-resource-widget";
 import type { SeoPage } from "@/lib/seo-content";
-import { seoPageUrl } from "@/lib/seo-content";
+import { allSeoPages, seoPageUrl } from "@/lib/seo-content";
 
 function JsonLd({ data }: { data: Record<string, unknown> }) {
   return (
@@ -87,12 +88,33 @@ function faqSchema(page: SeoPage) {
   };
 }
 
+function relatedLinkTitle(path: string) {
+  return (
+    allSeoPages.find((candidate) => candidate.path === path)?.title ??
+    path.replace("/niches/", "").replace("/", "").replace(/-/g, " ")
+  );
+}
+
+function breadcrumbItems(page: SeoPage) {
+  return [
+    { href: "/", label: "Home" },
+    ...(page.group === "niche" ? [{ href: "/niches", label: "Niches" }] : []),
+    { href: page.path, label: page.title },
+  ];
+}
+
 export function SeoContentPage({ page }: { page: SeoPage }) {
+  const breadcrumbs = breadcrumbItems(page);
+
   return (
     <main className="min-h-svh bg-background text-foreground">
       <JsonLd data={pageSchema(page)} />
       <JsonLd data={breadcrumbSchema(page)} />
       <JsonLd data={faqSchema(page)} />
+      <ConversionEventTracker
+        event="landing_page_viewed"
+        context={{ page: page.path, group: page.group }}
+      />
 
       <header className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-7">
         <Link
@@ -115,6 +137,12 @@ export function SeoContentPage({ page }: { page: SeoPage }) {
             Free tools
           </Link>
           <Link
+            href="/niches"
+            className="font-medium text-muted-foreground hover:text-foreground"
+          >
+            Niches
+          </Link>
+          <Link
             href="/pricing"
             className="font-medium text-muted-foreground hover:text-foreground"
           >
@@ -128,6 +156,31 @@ export function SeoContentPage({ page }: { page: SeoPage }) {
           </Link>
         </nav>
       </header>
+
+      <nav
+        aria-label="Breadcrumb"
+        className="mx-auto w-full max-w-6xl px-6 text-sm text-muted-foreground"
+      >
+        <ol className="flex flex-wrap items-center gap-2">
+          {breadcrumbs.map((crumb, index) => {
+            const isLast = index === breadcrumbs.length - 1;
+            return (
+              <li key={crumb.href} className="flex items-center gap-2">
+                {index > 0 ? <span aria-hidden>/</span> : null}
+                {isLast ? (
+                  <span className="font-medium text-foreground">
+                    {crumb.label}
+                  </span>
+                ) : (
+                  <Link href={crumb.href} className="hover:text-foreground">
+                    {crumb.label}
+                  </Link>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
 
       <section className="mx-auto grid w-full max-w-6xl gap-10 px-6 pb-14 pt-8 lg:grid-cols-[1fr_360px] lg:items-center">
         <div>
@@ -313,10 +366,7 @@ export function SeoContentPage({ page }: { page: SeoPage }) {
                 href={path}
                 className="rounded-2xl border border-border bg-muted/40 p-4 text-sm font-semibold text-foreground hover:border-primary/30 hover:bg-muted dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-cyan-300/30"
               >
-                {path
-                  .replace("/niches/", "")
-                  .replace("/", "")
-                  .replace(/-/g, " ")}
+                {relatedLinkTitle(path)}
               </Link>
             ))}
           </div>

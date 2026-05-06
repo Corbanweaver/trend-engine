@@ -27,7 +27,12 @@ export type SeoPage = {
   examples: SeoExample[];
   faqs: SeoFaq[];
   related: string[];
-  resourceKind?: "hooks" | "calendar" | "trend-checklist" | "comparison" | "fitness-ideas";
+  resourceKind?:
+    | "hooks"
+    | "calendar"
+    | "trend-checklist"
+    | "comparison"
+    | "fitness-ideas";
 };
 
 type KeywordEntry = {
@@ -51,8 +56,10 @@ const keywordEntries: KeywordEntry[] = [
       "Find TikTok content ideas from live social signals, organic thumbnails, hooks, hashtags, and creator-ready briefs.",
     keyword: "TikTok content ideas",
     focus: "short-form videos that can move while a topic is still fresh",
-    audience: "TikTok creators, social media managers, coaches, and small brands",
-    sources: "TikTok, Instagram, Pinterest, YouTube Shorts, X, search, and news",
+    audience:
+      "TikTok creators, social media managers, coaches, and small brands",
+    sources:
+      "TikTok, Instagram, Pinterest, YouTube Shorts, X, search, and news",
     examples: [
       {
         title: "Trend reaction",
@@ -76,8 +83,10 @@ const keywordEntries: KeywordEntry[] = [
       "Plan Instagram Reels, captions, carousels, hooks, and hashtags from current creator-platform signals.",
     keyword: "Instagram content ideas",
     focus: "Reels, carousels, captions, and saves-friendly posts",
-    audience: "Instagram creators, service businesses, influencers, and local brands",
-    sources: "Instagram/Reels, Pinterest, TikTok, YouTube Shorts, search, and news",
+    audience:
+      "Instagram creators, service businesses, influencers, and local brands",
+    sources:
+      "Instagram/Reels, Pinterest, TikTok, YouTube Shorts, search, and news",
     examples: [
       {
         title: "Save-worthy carousel",
@@ -100,9 +109,11 @@ const keywordEntries: KeywordEntry[] = [
     description:
       "Generate YouTube Shorts ideas, hooks, and brief scripts from trends across social, search, and news.",
     keyword: "YouTube Shorts ideas",
-    focus: "short videos that need a clear opening, quick payoff, and searchable topic",
+    focus:
+      "short videos that need a clear opening, quick payoff, and searchable topic",
     audience: "YouTube creators, educators, niche experts, and small channels",
-    sources: "YouTube Shorts, TikTok, search demand, news, Instagram, and Pinterest",
+    sources:
+      "YouTube Shorts, TikTok, search demand, news, Instagram, and Pinterest",
     examples: [
       {
         title: "Search-backed explainer",
@@ -126,7 +137,8 @@ const keywordEntries: KeywordEntry[] = [
       "Organize trend-backed content ideas, source links, hooks, hashtags, and scripts in one creator calendar.",
     keyword: "content calendar tool",
     focus: "turning fresh ideas into a repeatable weekly publishing plan",
-    audience: "creators, agencies, coaches, founders, and social media managers",
+    audience:
+      "creators, agencies, coaches, founders, and social media managers",
     sources: "saved idea cards, trend scans, hashtags, hooks, and source links",
     examples: [
       {
@@ -151,7 +163,8 @@ const keywordEntries: KeywordEntry[] = [
       "Write short, warmer hooks for TikTok, Instagram Reels, and YouTube Shorts without sounding robotic.",
     keyword: "AI hook generator",
     focus: "short opening lines that feel human and easy to say on camera",
-    audience: "creators who need faster hooks without fake urgency or clickbait",
+    audience:
+      "creators who need faster hooks without fake urgency or clickbait",
     sources: "trend context, niche inputs, saved ideas, and creator examples",
     examples: [
       {
@@ -175,9 +188,11 @@ const keywordEntries: KeywordEntry[] = [
     description:
       "Research creator trends across social platforms, search, and news before choosing what to film next.",
     keyword: "trend research tool",
-    focus: "finding signals early enough to create while the topic still has momentum",
+    focus:
+      "finding signals early enough to create while the topic still has momentum",
     audience: "content teams, creators, marketers, and small businesses",
-    sources: "TikTok, Instagram, X, Pinterest, YouTube, Reddit, search, and news",
+    sources:
+      "TikTok, Instagram, X, Pinterest, YouTube, Reddit, search, and news",
     examples: [
       {
         title: "Cross-platform check",
@@ -202,7 +217,8 @@ const keywordEntries: KeywordEntry[] = [
     keyword: "creator content planner",
     focus: "keeping research, idea cards, and publishing plans in one workflow",
     audience: "solo creators, creator-led brands, and lean marketing teams",
-    sources: "trend cards, saved ideas, hooks, scripts, hashtags, and calendar notes",
+    sources:
+      "trend cards, saved ideas, hooks, scripts, hashtags, and calendar notes",
     examples: [
       {
         title: "Daily idea sprint",
@@ -218,7 +234,255 @@ const keywordEntries: KeywordEntry[] = [
       },
     ],
   },
+  {
+    slug: "pinterest-content-ideas",
+    metaTitle: "Pinterest Content Ideas From Live Trend Signals",
+    title: "Pinterest Content Ideas",
+    description:
+      "Find Pinterest content ideas, pins, boards, hooks, and creator briefs from live social and search signals.",
+    keyword: "Pinterest content ideas",
+    focus: "visual ideas people can save, search, and come back to later",
+    audience:
+      "Pinterest creators, bloggers, ecommerce brands, coaches, and small businesses",
+    sources: "Pinterest, TikTok, Instagram, YouTube Shorts, search, and news",
+    examples: [
+      {
+        title: "Save-first pin",
+        body: "Turn one trend into a checklist, template, or before-and-after pin people want to keep.",
+      },
+      {
+        title: "Board angle",
+        body: "Group related ideas into a board theme so one trend can become a small content cluster.",
+      },
+      {
+        title: "Search-friendly caption",
+        body: "Use the trend phrase in a plain-language title that still sounds natural.",
+      },
+    ],
+  },
+  {
+    slug: "youtube-shorts-hooks",
+    metaTitle: "YouTube Shorts Hooks for Creators",
+    title: "YouTube Shorts Hooks",
+    description:
+      "Write short YouTube Shorts hooks that feel human, searchable, and easy to say on camera.",
+    keyword: "YouTube Shorts hooks",
+    focus:
+      "opening lines that quickly answer why a viewer should keep watching",
+    audience: "YouTube creators, educators, coaches, and niche experts",
+    sources: "YouTube Shorts, search, TikTok, Instagram, Pinterest, and news",
+    examples: [
+      {
+        title: "Question hook",
+        body: "Start with the exact question your viewer would type into search.",
+      },
+      {
+        title: "Mistake hook",
+        body: "Name one common mistake, then show the better way in the next beat.",
+      },
+      {
+        title: "Tiny proof hook",
+        body: "Open with one result, example, or visual that makes the answer feel real.",
+      },
+    ],
+  },
+  {
+    slug: "instagram-reels-hook-ideas",
+    metaTitle: "Instagram Reels Hook Ideas",
+    title: "Instagram Reels Hook Ideas",
+    description:
+      "Generate Instagram Reels hook ideas that feel warm, specific, and useful for creators and brands.",
+    keyword: "Instagram Reels hook ideas",
+    focus:
+      "opening lines that make a Reel feel worth saving, sharing, or watching again",
+    audience:
+      "Instagram creators, service providers, local brands, and social media managers",
+    sources:
+      "Instagram Reels, TikTok, Pinterest, YouTube Shorts, search, and news",
+    examples: [
+      {
+        title: "Relatable setup",
+        body: "Start with a feeling your audience already has, then give one small answer.",
+      },
+      {
+        title: "Save prompt angle",
+        body: "Promise a checklist, shortcut, or example people can keep for later.",
+      },
+      {
+        title: "Soft opinion",
+        body: "Use a grounded take instead of fake urgency so the hook feels more trustworthy.",
+      },
+    ],
+  },
+  {
+    slug: "social-media-content-calendar-template",
+    metaTitle: "Social Media Content Calendar Template",
+    title: "Social Media Content Calendar Template",
+    description:
+      "Plan a social media content calendar with trend-backed ideas, platform notes, hooks, and source links.",
+    keyword: "social media content calendar template",
+    focus:
+      "organizing a week or month of posts without losing the trend context",
+    audience:
+      "creators, small businesses, social media managers, agencies, and coaches",
+    sources:
+      "saved trend cards, platform links, hashtags, scripts, and calendar notes",
+    examples: [
+      {
+        title: "Weekly rhythm",
+        body: "Balance teaching, trend reactions, proof, and story posts across the week.",
+      },
+      {
+        title: "Platform notes",
+        body: "Keep TikTok, Reels, Shorts, and Pinterest versions attached to the same idea.",
+      },
+      {
+        title: "Source-backed plan",
+        body: "Save the links that inspired each post so your team can check context later.",
+      },
+    ],
+  },
+  {
+    slug: "30-content-ideas-for-real-estate-agents",
+    metaTitle: "30 Content Ideas for Real Estate Agents",
+    title: "30 Content Ideas for Real Estate Agents",
+    description:
+      "Find real estate content ideas for agents, local experts, investors, and mortgage creators.",
+    keyword: "30 content ideas for real estate agents",
+    focus:
+      "local, trust-building content that answers buyer and seller questions",
+    audience:
+      "real estate agents, mortgage creators, local experts, and property investors",
+    sources:
+      "local trends, TikTok, Instagram, Pinterest, YouTube Shorts, search, and news",
+    examples: [
+      {
+        title: "Local market answer",
+        body: "Explain one buyer or seller question using a current neighborhood example.",
+      },
+      {
+        title: "Listing lesson",
+        body: "Show one mistake in pricing, staging, photos, or offers and how to avoid it.",
+      },
+      {
+        title: "Neighborhood story",
+        body: "Connect a local trend to restaurants, schools, commute, lifestyle, or price range.",
+      },
+    ],
+  },
+  {
+    slug: "30-content-ideas-for-beauty-creators",
+    metaTitle: "30 Content Ideas for Beauty Creators",
+    title: "30 Content Ideas for Beauty Creators",
+    description:
+      "Find beauty content ideas for makeup, skincare, salon, hair, and product review creators.",
+    keyword: "30 content ideas for beauty creators",
+    focus:
+      "beauty videos that teach, compare, review, or simplify a current trend",
+    audience:
+      "beauty creators, salons, makeup artists, skincare brands, and reviewers",
+    sources:
+      "Instagram, TikTok, Pinterest, YouTube Shorts, search, and product news",
+    examples: [
+      {
+        title: "Routine edit",
+        body: "Show what you would keep, skip, or change in a trending routine.",
+      },
+      {
+        title: "Product reality check",
+        body: "Test one claim and explain who the product is actually for.",
+      },
+      {
+        title: "Beginner version",
+        body: "Make a complicated look or routine easier for your audience to copy.",
+      },
+    ],
+  },
+  {
+    slug: "30-content-ideas-for-coaches",
+    metaTitle: "30 Content Ideas for Coaches",
+    title: "30 Content Ideas for Coaches",
+    description:
+      "Find content ideas for business coaches, consultants, life coaches, and expert-led creators.",
+    keyword: "30 content ideas for coaches",
+    focus:
+      "short content that teaches one useful lesson without sounding stiff or salesy",
+    audience:
+      "coaches, consultants, course creators, and expert-led service businesses",
+    sources:
+      "TikTok, Instagram, LinkedIn-style topics, Pinterest, search, and news",
+    examples: [
+      {
+        title: "Client question",
+        body: "Answer one question you hear often in a short, practical way.",
+      },
+      {
+        title: "Tiny framework",
+        body: "Give viewers a simple three-step way to think through one problem.",
+      },
+      {
+        title: "Myth correction",
+        body: "Use a popular belief as the setup, then give the more grounded version.",
+      },
+    ],
+  },
 ];
+
+function uniqueRelated(paths: string[], selfPath: string) {
+  return Array.from(new Set(paths))
+    .filter((path) => path !== selfPath)
+    .slice(0, 4);
+}
+
+function keywordRelatedPaths(entry: KeywordEntry) {
+  const selfPath = `/${entry.slug}`;
+  const keyword = entry.keyword.toLowerCase();
+  const specific: string[] = [];
+
+  if (keyword.includes("tiktok")) {
+    specific.push(
+      "/free-tiktok-hook-ideas",
+      "/tiktok-vs-instagram-reels-content-ideas",
+    );
+  }
+  if (keyword.includes("instagram") || keyword.includes("reels")) {
+    specific.push("/instagram-content-ideas", "/instagram-reels-hook-ideas");
+  }
+  if (keyword.includes("youtube") || keyword.includes("shorts")) {
+    specific.push("/youtube-shorts-ideas", "/youtube-shorts-hooks");
+  }
+  if (keyword.includes("pinterest")) {
+    specific.push("/pinterest-content-ideas", "/niches/food-content-ideas");
+  }
+  if (keyword.includes("calendar")) {
+    specific.push("/free-content-calendar-template", "/content-calendar-tool");
+  }
+  if (keyword.includes("hook")) {
+    specific.push("/free-tiktok-hook-ideas", "/ai-hook-generator");
+  }
+  if (keyword.includes("real estate")) {
+    specific.push(
+      "/niches/real-estate-content-ideas",
+      "/content-calendar-tool",
+    );
+  }
+  if (keyword.includes("beauty")) {
+    specific.push("/niches/beauty-content-ideas", "/instagram-content-ideas");
+  }
+  if (keyword.includes("coach")) {
+    specific.push("/niches/coaching-content-ideas", "/creator-content-planner");
+  }
+
+  return uniqueRelated(
+    [
+      ...specific,
+      "/trend-research-tool",
+      "/creator-content-planner",
+      "/free-content-calendar-template",
+    ],
+    selfPath,
+  );
+}
 
 function makeKeywordPage(entry: KeywordEntry): SeoPage {
   return {
@@ -259,12 +523,7 @@ function makeKeywordPage(entry: KeywordEntry): SeoPage {
         a: "Yes. Saved ideas are built to keep source links, hashtags, hooks, scripts, and notes together.",
       },
     ],
-    related: [
-      "/trend-research-tool",
-      "/ai-hook-generator",
-      "/free-tiktok-hook-ideas",
-      "/creator-content-planner",
-    ].filter((path) => path !== `/${entry.slug}`),
+    related: keywordRelatedPaths(entry),
   };
 }
 
@@ -281,7 +540,12 @@ const nicheEntries: NicheEntry[] = [
     slug: "fitness-content-ideas",
     niche: "fitness",
     audience: "trainers, gym creators, wellness coaches, and fitness brands",
-    moments: ["workout trends", "nutrition conversations", "challenge formats", "before-and-after stories"],
+    moments: [
+      "workout trends",
+      "nutrition conversations",
+      "challenge formats",
+      "before-and-after stories",
+    ],
     examples: [
       {
         title: "Workout myth",
@@ -301,7 +565,12 @@ const nicheEntries: NicheEntry[] = [
     slug: "real-estate-content-ideas",
     niche: "real estate",
     audience: "agents, local experts, investors, and mortgage creators",
-    moments: ["local market shifts", "buyer questions", "rate conversations", "neighborhood stories"],
+    moments: [
+      "local market shifts",
+      "buyer questions",
+      "rate conversations",
+      "neighborhood stories",
+    ],
     examples: [
       {
         title: "Local market explainer",
@@ -320,8 +589,14 @@ const nicheEntries: NicheEntry[] = [
   {
     slug: "food-content-ideas",
     niche: "food",
-    audience: "food creators, recipe accounts, restaurants, and home cooking brands",
-    moments: ["recipe trends", "restaurant moments", "ingredient swaps", "meal prep formats"],
+    audience:
+      "food creators, recipe accounts, restaurants, and home cooking brands",
+    moments: [
+      "recipe trends",
+      "restaurant moments",
+      "ingredient swaps",
+      "meal prep formats",
+    ],
     examples: [
       {
         title: "Shortcut recipe",
@@ -340,8 +615,14 @@ const nicheEntries: NicheEntry[] = [
   {
     slug: "beauty-content-ideas",
     niche: "beauty",
-    audience: "beauty creators, makeup artists, salons, skincare brands, and product reviewers",
-    moments: ["makeup trends", "skincare questions", "product launches", "routine formats"],
+    audience:
+      "beauty creators, makeup artists, salons, skincare brands, and product reviewers",
+    moments: [
+      "makeup trends",
+      "skincare questions",
+      "product launches",
+      "routine formats",
+    ],
     examples: [
       {
         title: "Routine edit",
@@ -360,8 +641,14 @@ const nicheEntries: NicheEntry[] = [
   {
     slug: "coaching-content-ideas",
     niche: "coaching",
-    audience: "business coaches, life coaches, consultants, and expert-led creators",
-    moments: ["mindset conversations", "business lessons", "client questions", "frameworks people can save"],
+    audience:
+      "business coaches, life coaches, consultants, and expert-led creators",
+    moments: [
+      "mindset conversations",
+      "business lessons",
+      "client questions",
+      "frameworks people can save",
+    ],
     examples: [
       {
         title: "Client question",
@@ -377,7 +664,184 @@ const nicheEntries: NicheEntry[] = [
       },
     ],
   },
+  {
+    slug: "tech-ai-content-ideas",
+    niche: "tech and AI",
+    audience:
+      "AI tool reviewers, SaaS founders, educators, developers, and tech creators",
+    moments: [
+      "new tool launches",
+      "AI workflow debates",
+      "creator experiments",
+      "software updates",
+    ],
+    examples: [
+      {
+        title: "Tool test",
+        body: "Try one new tool on a real task and show what worked, what broke, and who should use it.",
+      },
+      {
+        title: "Plain-English update",
+        body: "Explain one technical change in a way a busy creator or founder can actually use.",
+      },
+      {
+        title: "Workflow teardown",
+        body: "Take a trending AI workflow and simplify it into three practical steps.",
+      },
+    ],
+  },
+  {
+    slug: "finance-content-ideas",
+    niche: "finance",
+    audience:
+      "financial educators, budgeting creators, advisors, and personal finance brands",
+    moments: [
+      "rate changes",
+      "budgeting trends",
+      "market questions",
+      "money habits",
+    ],
+    examples: [
+      {
+        title: "Money myth",
+        body: "Correct one common finance claim with a simple example and a clear caveat.",
+      },
+      {
+        title: "Budget scenario",
+        body: "Show how one choice changes a realistic monthly budget.",
+      },
+      {
+        title: "Question answer",
+        body: "Answer a question people are asking right now without making promises or hype.",
+      },
+    ],
+  },
+  {
+    slug: "travel-content-ideas",
+    niche: "travel",
+    audience:
+      "travel creators, local guides, hotels, tourism brands, and lifestyle creators",
+    moments: [
+      "destination trends",
+      "packing questions",
+      "seasonal trips",
+      "local recommendations",
+    ],
+    examples: [
+      {
+        title: "Local shortcut",
+        body: "Share one practical tip visitors would only learn after being there.",
+      },
+      {
+        title: "Itinerary swap",
+        body: "Compare the tourist version of a trip with a more realistic or local version.",
+      },
+      {
+        title: "Packing lesson",
+        body: "Use a trending destination to explain what to bring, skip, or plan ahead.",
+      },
+    ],
+  },
+  {
+    slug: "fashion-content-ideas",
+    niche: "fashion",
+    audience:
+      "fashion creators, stylists, boutiques, thrift creators, and clothing brands",
+    moments: [
+      "outfit trends",
+      "seasonal styling",
+      "celebrity looks",
+      "shopping questions",
+    ],
+    examples: [
+      {
+        title: "Style three ways",
+        body: "Turn one trending piece into casual, work, and night-out versions.",
+      },
+      {
+        title: "Trend reality check",
+        body: "Explain who a trend works for, how to wear it, and what to skip.",
+      },
+      {
+        title: "Closet remix",
+        body: "Recreate a popular look with pieces viewers may already own.",
+      },
+    ],
+  },
+  {
+    slug: "gaming-content-ideas",
+    niche: "gaming",
+    audience:
+      "gaming creators, streamers, esports commentators, and game communities",
+    moments: [
+      "new patches",
+      "challenge formats",
+      "streamer moments",
+      "community debates",
+    ],
+    examples: [
+      {
+        title: "Patch takeaway",
+        body: "Explain one update in terms of how it changes regular gameplay.",
+      },
+      {
+        title: "Challenge format",
+        body: "Turn a trend into a short challenge with a clear rule and quick payoff.",
+      },
+      {
+        title: "Community opinion",
+        body: "Give a grounded take on a debate and invite viewers to compare experiences.",
+      },
+    ],
+  },
 ];
+
+function nicheRelatedPaths(entry: NicheEntry) {
+  const selfPath = `/niches/${entry.slug}`;
+  const relatedBySlug: Record<string, string[]> = {
+    "fitness-content-ideas": [
+      "/30-content-ideas-for-fitness-creators",
+      "/free-tiktok-hook-ideas",
+    ],
+    "real-estate-content-ideas": [
+      "/30-content-ideas-for-real-estate-agents",
+      "/content-calendar-tool",
+    ],
+    "food-content-ideas": [
+      "/pinterest-content-ideas",
+      "/content-calendar-tool",
+    ],
+    "beauty-content-ideas": [
+      "/30-content-ideas-for-beauty-creators",
+      "/instagram-content-ideas",
+    ],
+    "coaching-content-ideas": [
+      "/30-content-ideas-for-coaches",
+      "/creator-content-planner",
+    ],
+    "tech-ai-content-ideas": ["/trend-research-tool", "/youtube-shorts-ideas"],
+    "finance-content-ideas": ["/trend-research-tool", "/youtube-shorts-hooks"],
+    "travel-content-ideas": [
+      "/pinterest-content-ideas",
+      "/instagram-content-ideas",
+    ],
+    "fashion-content-ideas": [
+      "/instagram-reels-hook-ideas",
+      "/pinterest-content-ideas",
+    ],
+    "gaming-content-ideas": ["/youtube-shorts-ideas", "/tiktok-content-ideas"],
+  };
+
+  return uniqueRelated(
+    [
+      ...(relatedBySlug[entry.slug] ?? []),
+      "/tiktok-content-ideas",
+      "/instagram-content-ideas",
+      "/content-calendar-tool",
+    ],
+    selfPath,
+  );
+}
 
 function makeNichePage(entry: NicheEntry): SeoPage {
   const moments = entry.moments.join(", ");
@@ -419,12 +883,7 @@ function makeNichePage(entry: NicheEntry): SeoPage {
         a: "Yes. Most ideas can be adapted for TikTok, Instagram Reels, YouTube Shorts, Pinterest, and other social platforms.",
       },
     ],
-    related: [
-      "/tiktok-content-ideas",
-      "/instagram-content-ideas",
-      "/youtube-shorts-ideas",
-      "/content-calendar-tool",
-    ],
+    related: nicheRelatedPaths(entry),
   };
 }
 
@@ -445,7 +904,8 @@ export const resourcePages: SeoPage[] = [
     intro:
       "Use this page to draft simple hooks before you run a full trend analysis. The best hooks sound like a real person, not a billboard.",
     primaryKeyword: "free TikTok hook ideas",
-    audience: "TikTok creators, Reels creators, Shorts creators, and small brands",
+    audience:
+      "TikTok creators, Reels creators, Shorts creators, and small brands",
     outcomes: [
       "Draft short hooks without spending credits.",
       "Avoid overused clickbait phrases.",
@@ -475,7 +935,11 @@ export const resourcePages: SeoPage[] = [
         a: "Yes. Short spoken hooks work across most vertical video platforms.",
       },
     ],
-    related: ["/ai-hook-generator", "/tiktok-content-ideas", "/trend-research-tool"],
+    related: [
+      "/ai-hook-generator",
+      "/tiktok-content-ideas",
+      "/trend-research-tool",
+    ],
     resourceKind: "hooks",
   },
   {
@@ -503,8 +967,14 @@ export const resourcePages: SeoPage[] = [
       "Run a TrendBoard scan for the days that need fresh examples.",
     ],
     examples: [
-      { title: "Monday", body: "Teach one basic mistake your audience keeps making." },
-      { title: "Wednesday", body: "React to a current trend with one grounded opinion." },
+      {
+        title: "Monday",
+        body: "Teach one basic mistake your audience keeps making.",
+      },
+      {
+        title: "Wednesday",
+        body: "React to a current trend with one grounded opinion.",
+      },
       { title: "Friday", body: "Show a quick win or before-and-after moment." },
     ],
     faqs: [
@@ -521,7 +991,11 @@ export const resourcePages: SeoPage[] = [
         a: "Yes. Inside the app you can save ideas and move them into your content calendar with the research context attached.",
       },
     ],
-    related: ["/content-calendar-tool", "/creator-content-planner", "/trend-research-tool"],
+    related: [
+      "/content-calendar-tool",
+      "/creator-content-planner",
+      "/trend-research-tool",
+    ],
     resourceKind: "calendar",
   },
   {
@@ -550,9 +1024,18 @@ export const resourcePages: SeoPage[] = [
       "Save the source links so your idea stays grounded.",
     ],
     examples: [
-      { title: "Signal cluster", body: "A topic appears on TikTok, Pinterest, and search in the same week." },
-      { title: "Comment demand", body: "People keep asking the same question under different posts." },
-      { title: "Niche translation", body: "A broad pop culture moment can teach something useful in your niche." },
+      {
+        title: "Signal cluster",
+        body: "A topic appears on TikTok, Pinterest, and search in the same week.",
+      },
+      {
+        title: "Comment demand",
+        body: "People keep asking the same question under different posts.",
+      },
+      {
+        title: "Niche translation",
+        body: "A broad pop culture moment can teach something useful in your niche.",
+      },
     ],
     faqs: [
       {
@@ -568,7 +1051,11 @@ export const resourcePages: SeoPage[] = [
         a: "Yes. TrendBoard is built to scan multiple sources and turn the strongest signals into idea cards.",
       },
     ],
-    related: ["/trend-research-tool", "/tiktok-content-ideas", "/instagram-content-ideas"],
+    related: [
+      "/trend-research-tool",
+      "/tiktok-content-ideas",
+      "/instagram-content-ideas",
+    ],
     resourceKind: "trend-checklist",
   },
   {
@@ -597,9 +1084,18 @@ export const resourcePages: SeoPage[] = [
       "Save the idea with platform-specific notes.",
     ],
     examples: [
-      { title: "TikTok version", body: "Start with a direct spoken hook and show the result quickly." },
-      { title: "Instagram version", body: "Add cleaner text overlays, a save-friendly caption, and a carousel follow-up." },
-      { title: "Shorts version", body: "Use a searchable title and answer the question in a clean sequence." },
+      {
+        title: "TikTok version",
+        body: "Start with a direct spoken hook and show the result quickly.",
+      },
+      {
+        title: "Instagram version",
+        body: "Add cleaner text overlays, a save-friendly caption, and a carousel follow-up.",
+      },
+      {
+        title: "Shorts version",
+        body: "Use a searchable title and answer the question in a clean sequence.",
+      },
     ],
     faqs: [
       {
@@ -615,7 +1111,11 @@ export const resourcePages: SeoPage[] = [
         a: "Yes. Trend cards show source platforms and help you expand ideas into hooks, scripts, and hashtags.",
       },
     ],
-    related: ["/tiktok-content-ideas", "/instagram-content-ideas", "/youtube-shorts-ideas"],
+    related: [
+      "/tiktok-content-ideas",
+      "/instagram-content-ideas",
+      "/youtube-shorts-ideas",
+    ],
     resourceKind: "comparison",
   },
   {
@@ -644,9 +1144,18 @@ export const resourcePages: SeoPage[] = [
       "Save the finished version in TrendBoard when you want to plan it.",
     ],
     examples: [
-      { title: "Beginner mistake", body: "Show one common form issue and one cue that fixes it." },
-      { title: "Myth check", body: "Correct a popular fitness claim without being harsh or preachy." },
-      { title: "Mini routine", body: "Give viewers a three-move version they can try today." },
+      {
+        title: "Beginner mistake",
+        body: "Show one common form issue and one cue that fixes it.",
+      },
+      {
+        title: "Myth check",
+        body: "Correct a popular fitness claim without being harsh or preachy.",
+      },
+      {
+        title: "Mini routine",
+        body: "Give viewers a three-move version they can try today.",
+      },
     ],
     faqs: [
       {
@@ -662,7 +1171,11 @@ export const resourcePages: SeoPage[] = [
         a: "Run a fitness trend scan, then connect the evergreen idea to a current conversation or platform signal.",
       },
     ],
-    related: ["/niches/fitness-content-ideas", "/tiktok-content-ideas", "/content-calendar-tool"],
+    related: [
+      "/niches/fitness-content-ideas",
+      "/tiktok-content-ideas",
+      "/content-calendar-tool",
+    ],
     resourceKind: "fitness-ideas",
   },
 ];

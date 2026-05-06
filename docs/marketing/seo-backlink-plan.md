@@ -9,6 +9,9 @@ Use these links when posting in creator communities, short-form marketing groups
 - https://www.contentideamaker.com/how-to-find-trends-before-they-blow-up
 - https://www.contentideamaker.com/tiktok-vs-instagram-reels-content-ideas
 - https://www.contentideamaker.com/30-content-ideas-for-fitness-creators
+- https://www.contentideamaker.com/pinterest-content-ideas
+- https://www.contentideamaker.com/instagram-reels-hook-ideas
+- https://www.contentideamaker.com/30-content-ideas-for-real-estate-agents
 - https://www.contentideamaker.com/trending
 
 ## Places To Share

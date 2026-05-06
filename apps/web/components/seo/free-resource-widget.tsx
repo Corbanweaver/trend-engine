@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
@@ -12,6 +12,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import type { SeoPage } from "@/lib/seo-content";
+import { trackConversionEvent } from "@/lib/telemetry";
 
 type ResourceKind = NonNullable<SeoPage["resourceKind"]>;
 
@@ -68,12 +69,28 @@ function hookIdeas(topic: string) {
 function calendarRows(niche: string) {
   return [
     ["Monday", "Teach", `Explain one beginner mistake in ${niche}.`],
-    ["Tuesday", "Proof", `Show a quick result, example, or before-and-after for ${niche}.`],
+    [
+      "Tuesday",
+      "Proof",
+      `Show a quick result, example, or before-and-after for ${niche}.`,
+    ],
     ["Wednesday", "Trend", `React to one current ${niche} conversation.`],
-    ["Thursday", "Trust", `Share a simple behind-the-scenes note about your ${niche} process.`],
+    [
+      "Thursday",
+      "Trust",
+      `Share a simple behind-the-scenes note about your ${niche} process.`,
+    ],
     ["Friday", "Save", `Make a checklist your ${niche} audience can keep.`],
-    ["Saturday", "Story", `Tell a short story about a ${niche} lesson you learned.`],
-    ["Sunday", "Plan", `Ask one question that helps plan next week's ${niche} content.`],
+    [
+      "Saturday",
+      "Story",
+      `Tell a short story about a ${niche} lesson you learned.`,
+    ],
+    [
+      "Sunday",
+      "Plan",
+      `Ask one question that helps plan next week's ${niche} content.`,
+    ],
   ];
 }
 
@@ -90,9 +107,21 @@ function trendChecklist(topic: string) {
 
 function comparisonRows(topic: string) {
   return [
-    ["TikTok", "Raw hook", `Open with the most direct ${topic} moment and show the payoff fast.`],
-    ["Instagram Reels", "Trust and save", `Make ${topic} more polished with text overlays and a useful caption.`],
-    ["YouTube Shorts", "Search answer", `Use ${topic} as a searchable question and answer it clearly.`],
+    [
+      "TikTok",
+      "Raw hook",
+      `Open with the most direct ${topic} moment and show the payoff fast.`,
+    ],
+    [
+      "Instagram Reels",
+      "Trust and save",
+      `Make ${topic} more polished with text overlays and a useful caption.`,
+    ],
+    [
+      "YouTube Shorts",
+      "Search answer",
+      `Use ${topic} as a searchable question and answer it clearly.`,
+    ],
   ];
 }
 
@@ -104,6 +133,7 @@ export function FreeResourceWidget({
   defaultTopic: string;
 }) {
   const [topic, setTopic] = useState(defaultTopic);
+  const trackedUseRef = useRef(false);
   const cleanTopic = normalizeTopic(topic, defaultTopic);
 
   const Icon =
@@ -167,7 +197,17 @@ export function FreeResourceWidget({
             </span>
             <input
               value={topic}
-              onChange={(event) => setTopic(event.target.value)}
+              onChange={(event) => {
+                const value = event.target.value;
+                setTopic(value);
+                if (!trackedUseRef.current && value.trim().length >= 3) {
+                  trackedUseRef.current = true;
+                  trackConversionEvent({
+                    event: "free_tool_used",
+                    context: { resourceKind: kind },
+                  });
+                }
+              }}
               className="mt-2 h-12 w-full rounded-2xl border border-border bg-background px-4 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/50 dark:border-white/10 dark:bg-slate-900 dark:focus:ring-cyan-300/60"
               placeholder="fitness, real estate, skincare..."
             />

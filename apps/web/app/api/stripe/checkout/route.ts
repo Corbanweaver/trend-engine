@@ -3,13 +3,14 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { recordConversionEvent } from "@/lib/conversion-events";
+
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const creatorPriceId = process.env.STRIPE_CREATOR_PRICE_ID;
 const proPriceId = process.env.STRIPE_PRO_PRICE_ID;
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(
-  /\/$/,
-  "",
-);
+const siteUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+).replace(/\/$/, "");
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -45,11 +46,17 @@ async function getCheckoutCustomer(
         return { customer: customer.id };
       }
     } catch (error) {
-      if (error instanceof Stripe.errors.StripeError && error.code === "resource_missing") {
-        console.error("Stored Stripe customer could not be found for checkout; creating a new customer", {
-          customerId,
-          requestId: error.requestId,
-        });
+      if (
+        error instanceof Stripe.errors.StripeError &&
+        error.code === "resource_missing"
+      ) {
+        console.error(
+          "Stored Stripe customer could not be found for checkout; creating a new customer",
+          {
+            customerId,
+            requestId: error.requestId,
+          },
+        );
       } else {
         throw error;
       }
@@ -174,6 +181,16 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
+
+    await recordConversionEvent({
+      event: "checkout_started",
+      userId: user.id,
+      metadata: {
+        plan: selectedPlan,
+        sessionId: session.id,
+        reusedStripeRecord: Boolean(subscription?.stripe_customer_id),
+      },
+    });
 
     return NextResponse.redirect(session.url, 303);
   } catch (error) {
