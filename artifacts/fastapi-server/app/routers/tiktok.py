@@ -5,6 +5,7 @@ from app.apify_client import APIFY_API_BASE, apify_token
 from app.tiktok_client import (
     build_tiktok_actor_input,
     configured_tiktok_actor_id,
+    _map_apify_tiktok_item,
     tiktok_hashtag_info,
     tiktok_trending_search,
 )
@@ -52,10 +53,11 @@ async def provider_status():
 
 
 @router.get("/provider-probe")
-async def provider_probe(query: str = "fitness viral"):
+async def provider_probe(query: str = "fitness viral", max_results: int = 1):
     token = apify_token()
     actor_id = configured_tiktok_actor_id()
-    actor_input = build_tiktok_actor_input(query, 1)
+    safe_max_results = min(max(max_results, 1), 5)
+    actor_input = build_tiktok_actor_input(query, safe_max_results)
     if not token or not actor_id:
         return {
             "apify_token_configured": bool(token),
@@ -69,7 +71,7 @@ async def provider_probe(query: str = "fitness viral"):
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 url,
-                params={"token": token, "limit": 1, "clean": "true"},
+                params={"token": token, "limit": safe_max_results, "clean": "true"},
                 json=actor_input,
             )
     except Exception as exc:
@@ -84,12 +86,21 @@ async def provider_probe(query: str = "fitness viral"):
     body_text = response.text[:800]
     item_count = None
     first_item_keys: list[str] = []
+    mapped_first: dict | None = None
     try:
         data = response.json()
         if isinstance(data, list):
             item_count = len(data)
             if data and isinstance(data[0], dict):
                 first_item_keys = sorted(list(data[0].keys()))[:40]
+                mapped = _map_apify_tiktok_item(data[0])
+                mapped_first = {
+                    "id": mapped.get("id"),
+                    "description": mapped.get("description"),
+                    "url": mapped.get("url"),
+                    "cover": mapped.get("cover"),
+                    "play_count": mapped.get("play_count"),
+                }
     except Exception:
         pass
 
@@ -101,6 +112,7 @@ async def provider_probe(query: str = "fitness viral"):
         "input_keys": sorted(actor_input.keys()),
         "item_count": item_count,
         "first_item_keys": first_item_keys,
+        "mapped_first": mapped_first,
         "body_preview": body_text,
     }
 
