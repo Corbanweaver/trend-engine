@@ -1,5 +1,6 @@
 import logging
 import os
+from urllib.parse import urlparse
 
 import httpx
 
@@ -13,7 +14,22 @@ def apify_token() -> str:
 
 
 def configured_actor_id(env_name: str, default: str = "") -> str:
-    return os.environ.get(env_name, default).strip()
+    raw = os.environ.get(env_name, "").strip() or default.strip()
+    if not raw:
+        return ""
+
+    parsed = urlparse(raw)
+    if parsed.scheme and parsed.netloc:
+        parts = [part for part in parsed.path.split("/") if part]
+        if parsed.netloc.endswith("apify.com") and len(parts) >= 2:
+            return f"{parts[-2]}/{parts[-1]}".strip()
+        return ""
+
+    normalized = raw.replace("~", "/").strip("/")
+    parts = [part for part in normalized.split("/") if part]
+    if len(parts) >= 2:
+        return f"{parts[-2]}/{parts[-1]}"
+    return normalized
 
 
 def apify_timeout_seconds(*, background: bool) -> float:
