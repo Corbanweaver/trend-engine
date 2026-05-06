@@ -68,7 +68,7 @@ const ANALYSIS_PROGRESS_STEPS = [
   "Starting live trend scan...",
   "Checking TikTok, X, Instagram, Pinterest, and YouTube...",
   "Reading social, news, and search momentum...",
-  "Generating creator-ready ideas and scripts...",
+  "Drafting short, human idea cards...",
   "Attaching organic source thumbnails...",
   "Packaging your trend cards...",
 ] as const;
@@ -818,9 +818,8 @@ function LoadingState({
         <p className="text-xs text-slate-400">
           Time running:{" "}
           <span className="font-medium text-slate-200">{elapsedDisplay}</span> -
-          This usually takes 30 to 90 seconds while we scan sources and generate
-          source links and thumbnails. Leave this tab open and don&apos;t
-          refresh.
+          This usually takes 30 to 90 seconds while we scan sources and draft
+          short idea cards. Leave this tab open and don&apos;t refresh.
         </p>
       </div>
       <div className="grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -2068,8 +2067,8 @@ export function TrendDashboard() {
                   Start with one niche
                 </p>
                 <p className="mt-1 max-w-md text-sm">
-                  The board fills with image-first trend cards. Open any card to
-                  see hooks, scripts, hashtags, and save actions.
+                  The board fills with short trend cards. Open any card to
+                  build hooks, scripts, hashtags, and saved ideas.
                 </p>
               </div>
             </div>

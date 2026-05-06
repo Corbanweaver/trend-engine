@@ -63,11 +63,12 @@ async function postIdeaEnrichment<T>(
 }
 
 function estimateVideoLength(idea: VideoIdea): string {
+  if (!idea.script?.trim()) return "Short idea card";
   const scriptWords =
     idea.script?.trim().split(/\s+/).filter(Boolean).length ?? 0;
-  if (scriptWords > 220) return "90-120 seconds";
-  if (scriptWords > 120) return "60-90 seconds";
-  return "30-60 seconds";
+  if (scriptWords > 120) return "60 seconds";
+  if (scriptWords > 70) return "45 seconds";
+  return "Quick script";
 }
 
 function estimateBestPostTime(ideaIndex: number): string {
@@ -91,10 +92,9 @@ function buildOutline(idea: VideoIdea): string[] {
     if (bullets.length >= 3) return bullets.slice(0, 4);
   }
   return [
-    `Open with: ${idea.hook || "a bold problem statement"}`,
-    `Teach one clear insight about ${idea.angle || "the trend"}`,
-    `Show a quick example viewers can copy today`,
-    "Close with a CTA to comment or save",
+    `Open with: ${idea.hook || "one honest line"}`,
+    "Show one quick example",
+    "End with a soft CTA",
   ];
 }
 
@@ -513,8 +513,8 @@ export function IdeaPanel({
           Select a trend card
         </p>
         <p className="max-w-xs text-xs text-muted-foreground dark:text-slate-400">
-          AI-generated video ideas, hooks, and scripts for that topic appear
-          here.
+          Short idea cards appear here. Generate hooks or a full script when
+          you need more.
         </p>
       </div>
     );
@@ -707,7 +707,7 @@ export function IdeaPanel({
                 {fullScriptByIndex[i] ? (
                   <div className="rounded-md border border-indigo-500/25 bg-indigo-50 p-3 font-sans dark:border-indigo-400/30 dark:bg-indigo-950/25">
                     <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-200">
-                      Full script (60-90 seconds)
+                      Full script (45-60 seconds)
                     </p>
                     {renderMarkdownLikeContent(fullScriptByIndex[i])}
                   </div>
@@ -715,7 +715,7 @@ export function IdeaPanel({
                 {idea.script ? (
                   <div className="rounded-md border border-border bg-muted/60 p-3 font-sans dark:border-white/10 dark:bg-slate-800/50">
                     <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-slate-400">
-                      Quick script (30-60s)
+                      Quick script
                     </p>
                     {renderMarkdownLikeContent(idea.script)}
                   </div>

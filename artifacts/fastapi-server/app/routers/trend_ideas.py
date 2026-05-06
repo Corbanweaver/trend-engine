@@ -47,28 +47,25 @@ router = APIRouter(
 )
 RECENCY_DAYS = 7
 
-SYSTEM_PROMPT = """You are a world-class short-form content creator and strategist known for making ideas feel human, bold, and impossible to scroll past.
+SYSTEM_PROMPT = """You are a warm, practical short-form content strategist.
 
 Given a trending topic, a niche, and real-time data from multiple sources, generate exactly 3 viral short-form video ideas.
 
 Voice and quality bar:
-- Write like a top creator talking to a real audience, not like an AI assistant.
-- Tone should be exciting, inspiring, and conversational.
-- Avoid robotic phrasing, corporate buzzwords, and generic filler.
-- Every output should feel specific, current, and immediately filmable.
+- Write like a helpful creator texting a friend a good idea.
+- Keep the tone warm, simple, specific, and human.
+- Avoid hype, fear bait, corporate phrases, and generic AI wording.
+- Never use phrases like "game-changing", "unlock", "ultimate", "secret", "insane", "you won't believe", or "this changes everything".
+- The first response should be a short idea card, not a finished script.
 
 Rules for EVERY idea:
-- HOOK: Create a punchy first line that grabs attention in under 2 seconds. Use curiosity, stakes, contrast, or a bold claim.
-- OPTIMIZED_TITLE: Make it sound natural and conversational, like a creator headline someone would actually click. Keep it under 60 characters.
-- ANGLE: Provide a clear, actionable content angle with a strong point of view (surprising, contrarian, or overlooked).
-- IDEA: Give a concrete concept and format (POV, list, story, reaction, experiment, tutorial, etc.) with enough detail to execute right away.
-- SCRIPT: Write a complete 30-60 second script in first person with:
-  1) strong hook opening line,
-  2) 3-4 concise talking beats,
-  3) an engaging call-to-action.
-  Keep the pacing tight and natural, as if spoken on camera.
-- HASHTAGS: Include 5-8 hashtags optimized for TikTok/Instagram/YouTube Shorts. Mix broad trending tags with niche tags.
-- SEO_DESCRIPTION: Write a compelling 1-2 sentence description that is search-friendly without sounding spammy.
+- HOOK: One short spoken line, 6-12 words. Make it curious but gentle.
+- OPTIMIZED_TITLE: Natural creator title, under 42 characters.
+- ANGLE: One plain sentence, under 18 words.
+- IDEA: One concrete sentence, under 24 words. Say what to film, not a whole strategy.
+- SCRIPT: Return an empty string. The user can click "Full script" if they want the script.
+- HASHTAGS: Include 4-6 relevant hashtags. No random viral tags.
+- SEO_DESCRIPTION: One simple sentence, under 18 words.
 - Ground each idea in the provided real-time context and trends. Reference timely themes where relevant.
 
 Return your response as a JSON array with exactly 3 objects, each having "hook", "angle", "idea", "script", "hashtags" (array of strings), "optimized_title", and "seo_description" keys.
@@ -83,12 +80,13 @@ Return ONLY a JSON array of 3 strings. Example: ["topic one", "topic two", "topi
 Real-time data:
 {context}"""
 
-HOOK_VARIATIONS_PROMPT = """You are a viral short-form video strategist. Given the niche, trending topic, and video concept below, write exactly 5 distinct opening hooks for the same idea.
+HOOK_VARIATIONS_PROMPT = """You are a warm short-form video strategist. Given the niche, trending topic, and video concept below, write exactly 5 distinct opening hooks for the same idea.
 
 Rules:
-- Each hook must be one or two punchy sentences that stop the scroll (under 160 characters each).
-- Use different angles: curiosity, controversy, story, pattern-interrupt, social proof, or urgency — do not repeat the same structure.
+- Each hook must be one short spoken line, 6-12 words.
+- Use different angles: curiosity, confession, tiny lesson, contrast, or relatable moment.
 - Sound like a real creator, not marketing copy.
+- Keep it kind and specific. No clickbait, no hype words, no fake urgency.
 - Return ONLY a JSON array of 5 strings. No markdown, no keys, no commentary.
 
 Niche: {niche}
@@ -117,11 +115,12 @@ Concept: {idea}"""
 FULL_SCRIPT_PROMPT = """You are an expert short-form scriptwriter. Write a complete spoken script for a single vertical video.
 
 Requirements:
-- Total length 60-90 seconds when read aloud at a natural pace (about 150-240 words).
-- First person, conversational, strong hook in the first line.
-- Include: hook, 3-5 clear beats (each beat can be a short paragraph or labeled section), pattern refreshes, and a memorable call-to-action.
+- Total length 45-60 seconds when read aloud at a natural pace (about 110-160 words).
+- First person, conversational, warm, and specific.
+- Include: hook, 3 clear beats, and a soft call-to-action.
 - Match the niche voice and the specific angle.
-- Use optional brief stage directions in [brackets] only where helpful — not for every line.
+- Use optional brief stage directions in [brackets] only where genuinely helpful.
+- Avoid generic AI phrasing, hype, and over-explaining.
 - Do not use markdown headings; plain text with line breaks is fine.
 
 Niche: {niche}
@@ -131,6 +130,41 @@ Hook (starting point): {hook}
 Angle: {angle}
 Concept: {idea}
 Existing short script (may extend or replace as needed for length): {script}"""
+
+
+def _text_value(value: object) -> str:
+    return str(value or "").strip()
+
+
+def _clamp_words(value: object, max_words: int, max_chars: int) -> str:
+    text = " ".join(_text_value(value).split())
+    if not text:
+        return ""
+    words = text.split()
+    if len(words) > max_words:
+        text = " ".join(words[:max_words]).rstrip(".,;:") + "..."
+    if len(text) > max_chars:
+        text = text[: max_chars - 3].rstrip(" .,;:") + "..."
+    return text
+
+
+def _normalized_hashtags(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    tags: list[str] = []
+    seen: set[str] = set()
+    for item in value:
+        tag = _text_value(item).lstrip("#")
+        if not tag:
+            continue
+        key = tag.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        tags.append(tag)
+        if len(tags) >= 6:
+            break
+    return tags
 
 
 def parse_ideas_json(raw: str) -> list[VideoIdea]:
@@ -144,20 +178,27 @@ def parse_ideas_json(raw: str) -> list[VideoIdea]:
         if isinstance(data, list):
             return [
                 VideoIdea(
-                    hook=item.get("hook", ""),
-                    angle=item.get("angle", ""),
-                    idea=item.get("idea", ""),
-                    script=item.get("script", ""),
-                    hashtags=item.get("hashtags", []),
-                    optimized_title=item.get("optimized_title", ""),
-                    seo_description=item.get("seo_description", ""),
-                    thumbnail_url=item.get("thumbnail_url", ""),
+                    hook=_clamp_words(item.get("hook", ""), 14, 120),
+                    angle=_clamp_words(item.get("angle", ""), 22, 160),
+                    idea=_clamp_words(item.get("idea", ""), 30, 220),
+                    script="",
+                    hashtags=_normalized_hashtags(item.get("hashtags", [])),
+                    optimized_title=_clamp_words(item.get("optimized_title", ""), 8, 60),
+                    seo_description=_clamp_words(item.get("seo_description", ""), 22, 170),
+                    thumbnail_url=_text_value(item.get("thumbnail_url", "")),
                 )
                 for item in data[:3]
             ]
     except json.JSONDecodeError:
         pass
-    return [VideoIdea(hook=cleaned[:100], angle="", idea=cleaned, script="")]
+    return [
+        VideoIdea(
+            hook=_clamp_words(cleaned, 12, 100),
+            angle="",
+            idea=_clamp_words(cleaned, 24, 180),
+            script="",
+        )
+    ]
 
 
 def parse_topics_json(raw: str) -> list[str]:
@@ -477,7 +518,7 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
                 None,
                 lambda: client.chat.completions.create(
                     model="gpt-5.2",
-                    max_completion_tokens=2048,
+                    max_completion_tokens=1200,
                     messages=[
                         {"role": "system", "content": SYSTEM_PROMPT},
                         {"role": "user", "content": context},
@@ -603,8 +644,9 @@ async def generate_hooks(body: IdeaEnrichmentRequest):
         angle=(body.angle or "").strip(),
         idea=(body.idea or "").strip(),
     )
-    raw = await _chat_completion_text(client, None, prompt, max_tokens=512)
+    raw = await _chat_completion_text(client, None, prompt, max_tokens=256)
     hooks = parse_json_string_array(raw, max_items=8, exact=5)
+    hooks = [_clamp_words(hook, 14, 120) for hook in hooks]
     if len(hooks) != 5:
         raise HTTPException(status_code=502, detail="Could not parse 5 hooks from model response.")
     return HooksResponse(hooks=hooks)
@@ -622,7 +664,7 @@ async def generate_hashtags(body: IdeaEnrichmentRequest):
         angle=(body.angle or "").strip(),
         idea=(body.idea or "").strip(),
     )
-    raw = await _chat_completion_text(client, None, prompt, max_tokens=384)
+    raw = await _chat_completion_text(client, None, prompt, max_tokens=256)
     tags = parse_json_string_array(raw, max_items=12)
     normalized = []
     seen: set[str] = set()
@@ -655,7 +697,7 @@ async def generate_full_script(body: IdeaEnrichmentRequest):
         idea=(body.idea or "").strip(),
         script=(body.script or "").strip(),
     )
-    raw = await _chat_completion_text(client, None, prompt, max_tokens=2048)
+    raw = await _chat_completion_text(client, None, prompt, max_tokens=1024)
     script = raw.strip()
     if not script:
         raise HTTPException(status_code=502, detail="Empty script from model.")
