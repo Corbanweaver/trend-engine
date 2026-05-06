@@ -165,7 +165,8 @@ async def tiktok_trending_search(
         except (TypeError, ValueError):
             pass
         recent_items.append(item)
-    results = [_map_apify_tiktok_item(item) for item in recent_items[:max_results]]
+    source_items = recent_items or raw_items
+    results = [_map_apify_tiktok_item(item) for item in source_items[:max_results]]
     # Preserve older behavior: if provider returns nothing, keep a soft fallback.
     results = [r for r in results if r.get("id") or r.get("url")]
 
