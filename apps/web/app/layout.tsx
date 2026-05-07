@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { FloatingAiAssistant } from "@/components/floating-ai-assistant";
+import { PwaRegistration } from "@/components/pwa-registration";
 
 import "./globals.css";
 
@@ -29,6 +30,14 @@ export const metadata: Metadata = {
   description:
     "Find live content trends, generate polished idea cards, and turn them into hooks, scripts, hashtags, and calendar-ready posts.",
   manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "TrendBoard",
+    statusBarStyle: "black-translucent",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: [
       {
@@ -39,8 +48,9 @@ export const metadata: Metadata = {
     shortcut: "/icon.svg",
     apple: [
       {
-        url: "/apple-icon.svg",
-        type: "image/svg+xml",
+        url: "/api/pwa-icon?size=180",
+        sizes: "180x180",
+        type: "image/png",
       },
     ],
   },
@@ -60,6 +70,13 @@ export const metadata: Metadata = {
     description:
       "Find live trends and turn them into AI-assisted content ideas.",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#07111f",
 };
 
 const organizationJsonLd = {
@@ -167,6 +184,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${geistSans.className}`}
       >
         {children}
+        <PwaRegistration />
         {showFloatingAssistant ? <FloatingAiAssistant /> : null}
       </body>
     </html>

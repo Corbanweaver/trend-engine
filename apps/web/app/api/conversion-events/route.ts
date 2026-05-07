@@ -16,6 +16,13 @@ function hasTrustedOrigin(request: Request) {
   if (!origin) return true;
 
   const requestOrigin = new URL(request.url).origin;
+  const originHost = new URL(origin).hostname;
+  const requestHost = new URL(requestOrigin).hostname;
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+  if (localHosts.has(originHost) && localHosts.has(requestHost)) {
+    return true;
+  }
+
   return origin === requestOrigin || (siteUrl ? origin === siteUrl : false);
 }
 

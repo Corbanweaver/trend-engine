@@ -2,13 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Bot,
+  Bookmark,
   CalendarDays,
   CreditCard,
   Layers,
   Link2,
   LineChart,
+  Play,
   Radio,
   RotateCcw,
+  Search,
   ShieldCheck,
   Sparkles,
   Star,
@@ -18,6 +21,7 @@ import {
 import { ConversionEventTracker } from "@/components/analytics/conversion-event-tracker";
 import { EmailWaitlistForm } from "@/components/email-waitlist-form";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
+import { MobileInstallButton } from "@/components/landing/mobile-install-button";
 import {
   keywordLandingPages,
   nicheLandingPages,
@@ -187,6 +191,67 @@ const homepageFaqJsonLd = {
   })),
 };
 
+function MobileHeroPreview() {
+  const previewCards = [
+    {
+      icon: Play,
+      label: "TikTok",
+      title: "3 short hooks for a rising trend",
+      accent: "from-fuchsia-400 to-rose-400",
+    },
+    {
+      icon: Bookmark,
+      label: "Saved",
+      title: "Move the best idea into your calendar",
+      accent: "from-cyan-300 to-blue-400",
+    },
+    {
+      icon: Search,
+      label: "Pinterest",
+      title: "Find a visual angle people will save",
+      accent: "from-emerald-300 to-cyan-300",
+    },
+  ] as const;
+
+  return (
+    <div className="mt-10 w-full max-w-sm sm:max-w-2xl">
+      <div className="mx-auto overflow-hidden rounded-[2rem] border border-border bg-card/90 p-3 text-left shadow-[0_24px_80px_rgba(15,23,42,0.16)] dark:border-white/10 dark:bg-slate-950/80 dark:shadow-[0_24px_90px_rgba(34,211,238,0.12)]">
+        <div className="flex items-center justify-between rounded-[1.35rem] border border-border bg-background px-4 py-3 dark:border-white/10 dark:bg-slate-900/80">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary dark:text-cyan-200">
+              Live scan
+            </p>
+            <p className="mt-1 text-sm font-bold">TrendBoard</p>
+          </div>
+          <span className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
+            Live
+          </span>
+        </div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          {previewCards.map((card) => (
+            <div
+              key={card.label}
+              className="min-h-32 rounded-[1.35rem] border border-border bg-muted/45 p-4 dark:border-white/10 dark:bg-white/[0.04]"
+            >
+              <div
+                className={`flex size-10 items-center justify-center rounded-2xl bg-gradient-to-br ${card.accent} text-slate-950 shadow-sm`}
+              >
+                <card.icon className="size-5" />
+              </div>
+              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                {card.label}
+              </p>
+              <p className="mt-2 text-sm font-semibold leading-5">
+                {card.title}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   return (
     <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
@@ -204,83 +269,99 @@ export default function Home() {
         <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 animate-pulse rounded-full bg-primary/5 blur-3xl dark:bg-indigo-500/20" />
       </div>
 
-      <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-7">
-        <Link
-          href="/"
-          className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
-        >
-          TrendBoard
-        </Link>
-        <nav className="flex items-center gap-6 text-sm">
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/88 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/82 sm:px-6 md:relative md:border-b-0 md:bg-transparent md:py-7 md:backdrop-blur-0">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
           <Link
-            href="#features"
-            className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
+            href="/"
+            className="fluid-transition flex min-w-0 items-center gap-2 text-sm font-semibold tracking-[0.08em] text-foreground hover:text-primary sm:tracking-[0.18em]"
           >
-            Features
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
+              T
+            </span>
+            <span className="truncate">TrendBoard</span>
           </Link>
-          <Link
-            href="#how-it-works"
-            className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-          >
-            How it works
-          </Link>
-          <Link
-            href="/trending"
-            className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-          >
-            Trending
-          </Link>
-          <Link
-            href="#faq"
-            className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-          >
-            FAQ
-          </Link>
-          <Link
-            href="/about"
-            className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-          >
-            About
-          </Link>
-          <Link
-            href="/pricing"
-            className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-          >
-            Pricing
-          </Link>
-        </nav>
+          <nav className="hidden items-center gap-6 text-sm md:flex">
+            <Link
+              href="#features"
+              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
+            >
+              Features
+            </Link>
+            <Link
+              href="#how-it-works"
+              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
+            >
+              How it works
+            </Link>
+            <Link
+              href="/trending"
+              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
+            >
+              Trending
+            </Link>
+            <Link
+              href="#faq"
+              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
+            >
+              FAQ
+            </Link>
+            <Link
+              href="/about"
+              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
+            >
+              About
+            </Link>
+            <Link
+              href="/pricing"
+              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
+            >
+              Pricing
+            </Link>
+          </nav>
+          <div className="flex shrink-0 items-center gap-2 md:hidden">
+            <MobileInstallButton />
+            <Link
+              href="/dashboard"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-3 text-sm font-bold text-primary-foreground shadow-sm dark:bg-cyan-400 dark:text-slate-950"
+            >
+              Open
+            </Link>
+          </div>
+        </div>
       </header>
 
-      <section className="relative mx-auto flex min-h-[calc(100svh-5.5rem)] w-full max-w-6xl flex-col items-center justify-center px-6 py-18 text-center">
-        <span className="glass-surface hairline-ring rounded-full border border-border bg-card px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-primary dark:text-cyan-200">
+      <section className="relative mx-auto flex min-h-[calc(100svh-4.25rem)] w-full max-w-6xl flex-col items-center justify-center px-4 pb-10 pt-8 text-center sm:px-6 sm:py-18">
+        <span className="glass-surface hairline-ring rounded-full border border-border bg-card px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary dark:text-cyan-200 sm:tracking-[0.24em]">
           TrendBoard
         </span>
 
-        <h1 className="mt-8 max-w-5xl text-balance bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-5xl font-extrabold leading-tight text-transparent sm:text-6xl lg:text-7xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
+        <h1 className="mt-6 max-w-5xl text-balance bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-4xl font-extrabold leading-[1.04] text-transparent sm:mt-8 sm:text-6xl lg:text-7xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
           AI Content Idea Generator for TikTok, Instagram, YouTube Shorts, and
           Pinterest
         </h1>
 
-        <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">
+        <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground sm:mt-6 sm:text-lg sm:leading-relaxed">
           Find live creator trends, draft short idea cards, generate warmer
           hooks and scripts, and move the winners into a simple content
           calendar.
         </p>
 
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
+        <div className="mt-8 flex w-full max-w-sm flex-col items-stretch justify-center gap-3 sm:mt-12 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
           <Link
             href="/dashboard"
-            className="fluid-transition inline-flex items-center justify-center rounded-2xl bg-primary px-10 py-4 text-base font-bold text-primary-foreground shadow-[0_12px_28px_rgba(54,95,125,0.2)] hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_36px_rgba(54,95,125,0.24)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
+            className="fluid-transition inline-flex min-h-12 items-center justify-center rounded-2xl bg-primary px-8 py-3 text-base font-bold text-primary-foreground shadow-[0_12px_28px_rgba(54,95,125,0.2)] hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_36px_rgba(54,95,125,0.24)] sm:px-10 sm:py-4 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
           >
             Start Finding Trends
           </Link>
           <Link
             href="/trending"
-            className="fluid-transition inline-flex items-center justify-center rounded-2xl border border-border bg-card px-8 py-4 text-base font-semibold text-foreground hover:bg-muted dark:border-white/15 dark:bg-slate-900/60 dark:hover:bg-slate-800"
+            className="fluid-transition inline-flex min-h-12 items-center justify-center rounded-2xl border border-border bg-card px-8 py-3 text-base font-semibold text-foreground hover:bg-muted sm:py-4 dark:border-white/15 dark:bg-slate-900/60 dark:hover:bg-slate-800"
           >
             See live trending
           </Link>
         </div>
+
+        <MobileHeroPreview />
       </section>
 
       <HowItWorksSection steps={howSteps} />
