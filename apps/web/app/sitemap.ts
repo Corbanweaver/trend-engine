@@ -12,10 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/about",
     "/trending",
     "/niches",
-    "/login",
-    "/signup",
     "/support",
-    "/status",
     "/privacy",
     "/terms",
   ];

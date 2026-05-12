@@ -10,6 +10,10 @@ import {
 export const metadata: Metadata = {
   title: "System Status",
   description: "Production health and support status for TrendBoard.",
+  robots: {
+    index: false,
+    follow: true,
+  },
 };
 
 export default function StatusPage() {
