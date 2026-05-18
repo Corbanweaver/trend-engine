@@ -388,28 +388,98 @@ function getPlatformBadges(trend: TrendIdea): string[] {
   return [...new Set(badges)].slice(0, 5);
 }
 
+const IMAGE_URL_KEYS = [
+  "thumbnail",
+  "thumbnail_url",
+  "thumbnailUrl",
+  "thumbnailUrlLarge",
+  "thumbnailLargeUrl",
+  "image_url",
+  "imageUrl",
+  "display_url",
+  "displayUrl",
+  "media_url",
+  "mediaUrl",
+  "cover",
+  "cover_url",
+  "coverUrl",
+  "preview_image_url",
+  "previewImageUrl",
+  "poster",
+  "poster_url",
+  "posterUrl",
+] as const;
+
+function isUsableImageUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (!/^https?:\/\//i.test(trimmed)) return false;
+  return !/\.(mp4|mov|m4v|webm)(\?|#|$)/i.test(trimmed);
+}
+
+function findImageUrl(value: unknown, depth = 0): string | null {
+  if (depth > 3 || value == null) return null;
+  if (isUsableImageUrl(value)) return value.trim();
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const nested = findImageUrl(item, depth + 1);
+      if (nested) return nested;
+    }
+    return null;
+  }
+  if (typeof value !== "object") return null;
+
+  const record = value as Record<string, unknown>;
+  if (depth > 0) {
+    for (const key of ["url", "src"] as const) {
+      const nested = findImageUrl(record[key], depth + 1);
+      if (nested) return nested;
+    }
+  }
+  for (const key of IMAGE_URL_KEYS) {
+    const nested = findImageUrl(record[key], depth + 1);
+    if (nested) return nested;
+  }
+  for (const key of [
+    "images",
+    "image",
+    "image_versions2",
+    "media",
+    "videoMeta",
+    "video",
+    "attachments",
+    "photos",
+  ]) {
+    const nested = findImageUrl(record[key], depth + 1);
+    if (nested) return nested;
+  }
+  if (depth > 0) {
+    for (const nestedValue of Object.values(record)) {
+      const nested = findImageUrl(nestedValue, depth + 1);
+      if (nested) return nested;
+    }
+  }
+  return null;
+}
+
+function firstImageUrl(...sources: unknown[][]) {
+  for (const source of sources) {
+    for (const item of source) {
+      const imageUrl = findImageUrl(item);
+      if (imageUrl) return imageUrl;
+    }
+  }
+  return null;
+}
+
 function getCardVisual(trend: TrendIdea) {
-  const youtubeThumb = trend.example_videos.find(
-    (v) => typeof v.thumbnail === "string" && v.thumbnail,
-  )?.thumbnail as string | undefined;
-  const pinterestImage = trend.pinterest_pins.find(
-    (p) => typeof p.image_url === "string" && p.image_url,
-  )?.image_url as string | undefined;
-  const instagramImage = trend.instagram_posts.find(
-    (p) =>
-      (typeof p.thumbnail_url === "string" && p.thumbnail_url) ||
-      (typeof p.media_url === "string" && p.media_url),
-  ) as Record<string, unknown> | undefined;
-  const tiktokCover = trend.tiktok_videos.find(
-    (v) => typeof v.cover === "string" && v.cover,
-  )?.cover as string | undefined;
-  return (
-    youtubeThumb ||
-    pinterestImage ||
-    (instagramImage?.thumbnail_url as string | undefined) ||
-    (instagramImage?.media_url as string | undefined) ||
-    tiktokCover ||
-    null
+  return firstImageUrl(
+    trend.example_videos,
+    trend.pinterest_pins,
+    trend.instagram_posts,
+    trend.tiktok_videos,
+    trend.x_posts ?? [],
+    trend.ideas,
   );
 }
 
