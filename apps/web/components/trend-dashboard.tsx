@@ -54,6 +54,7 @@ import type {
   TrendIdeasResponse,
   VideoIdea,
 } from "@/lib/trend-ideas-types";
+import { getSafeAvatarUrl } from "@/lib/user-avatar";
 import { computeEngagementRaw, engagementHeat } from "@/lib/trend-metrics";
 import { trackConversionEvent } from "@/lib/telemetry";
 import { cn } from "@/lib/utils";
@@ -1290,9 +1291,7 @@ export function TrendDashboard() {
     const supabase = getSupabaseClient();
     const setUserState = (user: User | null) => {
       setUserEmail(user?.email ?? "");
-      setUserAvatar(
-        (user?.user_metadata?.avatar_url as string | undefined) ?? "",
-      );
+      setUserAvatar(getSafeAvatarUrl(user?.user_metadata?.avatar_url));
     };
 
     const loadAdminStatus = async () => {
@@ -1755,6 +1754,7 @@ export function TrendDashboard() {
                   <img
                     src={userAvatar}
                     alt=""
+                    onError={() => setUserAvatar("")}
                     className="size-7 rounded-full object-cover"
                   />
                 ) : (
@@ -2005,6 +2005,7 @@ export function TrendDashboard() {
               <img
                 src={userAvatar}
                 alt=""
+                onError={() => setUserAvatar("")}
                 className="size-6 rounded-full object-cover"
               />
             ) : (

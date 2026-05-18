@@ -14,6 +14,7 @@ import {
   shouldResetMonthlyUsage,
 } from "@/lib/credits";
 import { getSupabaseClient } from "@/lib/supabase";
+import { getSafeAvatarUrl } from "@/lib/user-avatar";
 import { computeEarnedBadgeIds, readTotalAnalyses } from "@/lib/user-stats";
 
 type SubscriptionPlan = "free" | "creator" | "pro";
@@ -185,9 +186,7 @@ export default function ProfilePage() {
           return;
         }
         setEmail(user.email ?? null);
-        setAvatar(
-          (user.user_metadata?.avatar_url as string | undefined) ?? null,
-        );
+        setAvatar(getSafeAvatarUrl(user.user_metadata?.avatar_url) || null);
         try {
           const adminResponse = await fetch("/api/admin/status", {
             cache: "no-store",
@@ -312,6 +311,7 @@ export default function ProfilePage() {
             <img
               src={avatar}
               alt=""
+              onError={() => setAvatar(null)}
               className="size-20 shrink-0 rounded-full border border-border object-cover"
             />
           ) : (
