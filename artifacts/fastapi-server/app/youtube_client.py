@@ -7,14 +7,22 @@ YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
 logger = logging.getLogger(__name__)
 
 
-async def youtube_search(query: str, max_results: int = 5, days_back: int = 7) -> list[dict]:
+async def youtube_search(
+    query: str,
+    max_results: int = 5,
+    days_back: int = 7,
+    order: str = "viewCount",
+) -> list[dict]:
     api_key = YOUTUBE_API_KEY or os.environ.get("YOUTUBE_API_KEY", "")
     logger.info("YouTube API key found: %s", "yes" if bool(api_key) else "no")
     if not api_key:
         logger.warning("YouTube search skipped: YOUTUBE_API_KEY missing.")
         return []
 
-    published_after = (datetime.now(timezone.utc) - timedelta(days=max(days_back, 1))).isoformat()
+    published_after = (
+        datetime.now(timezone.utc) - timedelta(days=max(days_back, 1))
+    ).isoformat().replace("+00:00", "Z")
+    order = order if order in {"date", "relevance", "viewCount"} else "viewCount"
 
     async with httpx.AsyncClient(timeout=10.0) as client:
         resp = await client.get(
@@ -24,7 +32,7 @@ async def youtube_search(query: str, max_results: int = 5, days_back: int = 7) -
                 "q": query,
                 "type": "video",
                 "maxResults": max_results,
-                "order": "relevance",
+                "order": order,
                 "videoDuration": "short",
                 "publishedAfter": published_after,
                 "key": api_key,
@@ -44,11 +52,18 @@ async def youtube_search(query: str, max_results: int = 5, days_back: int = 7) -
             logger.error("YouTube API call failed (%s) for query '%s': %s", resp.status_code, query, resp.text)
         resp.raise_for_status()
         data = resp.json()
+        video_ids = [
+            item.get("id", {}).get("videoId", "")
+            for item in data.get("items", [])
+            if item.get("id", {}).get("videoId")
+        ]
+        stats_by_id = await _video_statistics(client, api_key, video_ids)
 
     results = []
     for item in data.get("items", []):
         snippet = item.get("snippet", {})
         video_id = item.get("id", {}).get("videoId", "")
+        stats = stats_by_id.get(video_id, {})
         results.append({
             "video_id": video_id,
             "title": snippet.get("title", ""),
@@ -57,10 +72,49 @@ async def youtube_search(query: str, max_results: int = 5, days_back: int = 7) -
             "published_at": snippet.get("publishedAt", ""),
             "url": f"https://www.youtube.com/watch?v={video_id}",
             "embed_url": f"https://www.youtube.com/embed/{video_id}",
+            "view_count": stats.get("viewCount", 0),
+            "like_count": stats.get("likeCount", 0),
+            "comment_count": stats.get("commentCount", 0),
+            "duration": stats.get("duration", ""),
         })
 
     logger.info("YouTube results for query '%s': %s", query, len(results))
     return results
+
+
+async def _video_statistics(client: httpx.AsyncClient, api_key: str, video_ids: list[str]) -> dict[str, dict]:
+    if not video_ids:
+        return {}
+    resp = await client.get(
+        "https://www.googleapis.com/youtube/v3/videos",
+        params={
+            "part": "statistics,contentDetails",
+            "id": ",".join(video_ids),
+            "key": api_key,
+        },
+    )
+    if resp.status_code >= 400:
+        logger.warning("YouTube statistics lookup failed (%s): %s", resp.status_code, resp.text[:200])
+        return {}
+    out: dict[str, dict] = {}
+    for item in resp.json().get("items", []):
+        video_id = item.get("id", "")
+        stats = item.get("statistics", {}) or {}
+        details = item.get("contentDetails", {}) or {}
+        out[video_id] = {
+            "viewCount": _to_int(stats.get("viewCount")),
+            "likeCount": _to_int(stats.get("likeCount")),
+            "commentCount": _to_int(stats.get("commentCount")),
+            "duration": details.get("duration", ""),
+        }
+    return out
+
+
+def _to_int(value: object) -> int:
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return 0
 
 
 def _quota_exceeded_placeholder(query: str) -> list[dict]:

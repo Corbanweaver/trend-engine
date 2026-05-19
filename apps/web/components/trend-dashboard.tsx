@@ -69,7 +69,7 @@ const CALENDAR_PLAN_STORAGE_KEY = "calendar:plans";
 const ANALYSIS_PROGRESS_STEPS = [
   "Starting live trend scan...",
   "Checking TikTok, X, Instagram, Pinterest, and YouTube...",
-  "Reading social, news, and search momentum...",
+  "Ranking recent views, velocity, and cross-platform momentum...",
   "Drafting short, human idea cards...",
   "Attaching organic source thumbnails...",
   "Packaging your trend cards...",
@@ -582,8 +582,12 @@ function TrendCard({
   onSelect: () => void;
 }) {
   const raw = computeEngagementRaw(trend);
-  const heat = engagementHeat(raw);
-  const momentumLabel =
+  const backendScore =
+    typeof trend.trend_score === "number" && trend.trend_score > 0
+      ? Math.max(0, Math.min(100, Math.round(trend.trend_score)))
+      : null;
+  const heat = backendScore ?? engagementHeat(raw);
+  const fallbackMomentumLabel =
     heat >= 85
       ? "Very strong"
       : heat >= 70
@@ -593,6 +597,8 @@ function TrendCard({
           : heat > 0
             ? "Early signal"
             : "No clear signal";
+  const momentumLabel = trend.trend_stage || fallbackMomentumLabel;
+  const trendEvidence = (trend.trend_evidence ?? []).filter(Boolean).slice(0, 3);
   const signalCount =
     trend.tiktok_videos.length +
     trend.instagram_posts.length +
@@ -612,6 +618,11 @@ function TrendCard({
   const pinterestUrl = getPinterestUrl(trend);
   const xUrl = getXUrl(trend);
   const trendLabel = getTrendDetectedLabel(trend);
+  const trendReason =
+    trend.trend_reason ||
+    (signalCount > 0
+      ? `Based on ${signalCount} social, search, and creator-platform signal${signalCount === 1 ? "" : "s"}. Higher means more people are already reacting or searching.`
+      : "Waiting on enough live social and search signals to score this trend.");
   const [imageFailed, setImageFailed] = useState(false);
   const showVisual = Boolean(visual && !imageFailed);
 
@@ -683,7 +694,7 @@ function TrendCard({
               {trend.trend}
             </p>
             <p className="mt-1 text-xs font-medium text-white/80">
-              {trendLabel}
+              {momentumLabel} - {trendLabel}
             </p>
           </div>
         </div>
@@ -718,10 +729,20 @@ function TrendCard({
                 </span>
               </p>
               <p className="mt-2 text-xs leading-snug text-muted-foreground dark:text-slate-400">
-                {signalCount > 0
-                  ? `Based on ${signalCount} social, search, and creator-platform signal${signalCount === 1 ? "" : "s"}. Higher means more people are already reacting or searching.`
-                  : "Waiting on enough live social and search signals to score this trend."}
+                {trendReason}
               </p>
+              {trendEvidence.length > 0 ? (
+                <div className="mt-2 space-y-1">
+                  {trendEvidence.map((item) => (
+                    <p
+                      key={`${trend.trend}-${item}`}
+                      className="line-clamp-1 text-[11px] leading-snug text-muted-foreground dark:text-slate-400"
+                    >
+                      {item}
+                    </p>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
           <CardTitle className="sr-only">{trend.trend}</CardTitle>

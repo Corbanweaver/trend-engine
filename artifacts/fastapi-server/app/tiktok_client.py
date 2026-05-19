@@ -1,5 +1,6 @@
 from urllib.parse import quote
 from datetime import datetime, timedelta, timezone
+import os
 
 import httpx
 
@@ -67,12 +68,25 @@ def build_tiktok_actor_input(query: str, max_results: int, days_back: int = 7) -
     since_iso = since.isoformat()
     since_unix = int(since.timestamp())
 
-    return {
+    date_filter = "PAST_WEEK"
+    if days_back <= 1:
+        date_filter = "PAST_24_HOURS"
+    elif days_back <= 30:
+        date_filter = "PAST_MONTH" if days_back > 7 else "PAST_WEEK"
+    min_likes = os.environ.get("TIKTOK_MIN_LIKES", "100").strip()
+    try:
+        least_diggs = max(int(min_likes), 0)
+    except ValueError:
+        least_diggs = 100
+
+    actor_input = {
         **common_search_input(query, max_results),
         "hashtags": _candidate_hashtags(query),
         "searchQueries": [query],
         "searchSection": "/video",
         "searchSorting": "0",
+        "videoSearchSorting": "MOST_LIKED",
+        "videoSearchDateFilter": date_filter,
         "searchDatePosted": "0",
         "startDate": since_iso,
         "publishedAfter": since_iso,
@@ -81,6 +95,9 @@ def build_tiktok_actor_input(query: str, max_results: int, days_back: int = 7) -
         "shouldDownloadCovers": True,
         "shouldDownloadVideos": False,
     }
+    if least_diggs > 0:
+        actor_input["leastDiggs"] = least_diggs
+    return actor_input
 
 
 def _to_int(value: object) -> int:
@@ -126,6 +143,7 @@ def _map_apify_tiktok_item(item: dict) -> dict:
         "description": description,
         "author": str(author),
         "author_nickname": str(author_obj.get("nickName") or item.get("authorNickname") or ""),
+        "created_at": item.get("createTime") or item.get("createTimestamp") or item.get("createdAt") or "",
         "play_count": _to_int(
             item.get("playCount")
             or item.get("views")

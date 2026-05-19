@@ -24,6 +24,11 @@ export interface InstagramPost extends Record<string, unknown> {
 export interface TrendIdea {
   trend: string;
   ideas: VideoIdea[];
+  trend_score?: number;
+  trend_stage?: string;
+  trend_reason?: string;
+  trend_evidence?: string[];
+  trend_metrics?: Record<string, unknown>;
   example_videos: Record<string, unknown>[];
   instagram_posts: InstagramPost[];
   tiktok_videos: Record<string, unknown>[];

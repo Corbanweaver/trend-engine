@@ -98,9 +98,10 @@ async def fetch_platform_signals(
             niche,
             query,
             max_results=max_results,
-            fetch=lambda: youtube_search(query, max_results=max_results, days_back=days_back),
+            fetch=lambda: youtube_search(query, max_results=max_results, days_back=days_back, order="viewCount"),
             source="youtube-api",
             force_refresh=force_refresh,
+            min_cached=min(3, max_results),
         )
     if platform == "tiktok":
         return await cached_or_fetch(
@@ -116,6 +117,7 @@ async def fetch_platform_signals(
             ),
             source="apify-tiktok",
             force_refresh=force_refresh,
+            min_cached=min(3, max_results),
         )
     if platform == "instagram":
         return await cached_or_fetch(
@@ -130,6 +132,7 @@ async def fetch_platform_signals(
             ),
             source="apify-instagram",
             force_refresh=force_refresh,
+            min_cached=min(3, max_results),
         )
     if platform == "pinterest":
         return await cached_or_fetch(
@@ -144,6 +147,7 @@ async def fetch_platform_signals(
             ),
             source="apify-pinterest",
             force_refresh=force_refresh,
+            min_cached=min(3, max_results),
         )
     if platform == "x":
         return await cached_or_fetch(
@@ -158,6 +162,7 @@ async def fetch_platform_signals(
             ),
             source="apify-x",
             force_refresh=force_refresh,
+            min_cached=min(3, max_results),
         )
     if platform == "reddit":
         return await cached_or_fetch(
@@ -168,6 +173,7 @@ async def fetch_platform_signals(
             fetch=lambda: multi_reddit_ingest(query, max_per_sub=max_results, days_back=days_back),
             source="reddit-rss",
             force_refresh=force_refresh,
+            min_cached=min(3, max_results),
         )
     return []
 

@@ -51,6 +51,11 @@ class TrendsResponse(BaseModel):
 class TrendIdea(BaseModel):
     trend: str
     ideas: list[VideoIdea]
+    trend_score: int = 0
+    trend_stage: str = "Watchlist"
+    trend_reason: str = ""
+    trend_evidence: list[str] = []
+    trend_metrics: dict = {}
     example_videos: list[dict] = []
     instagram_posts: list[dict] = []
     tiktok_videos: list[dict] = []

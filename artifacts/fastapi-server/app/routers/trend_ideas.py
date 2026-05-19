@@ -36,6 +36,11 @@ from app.medium_client import medium_search
 from app.x_client import search_x
 from app.apify_client import apify_timeout_seconds
 from app.social_signal_fetcher import cached_or_fetch, fetch_platform_signals
+from app.trend_quality import (
+    discovery_signal_context,
+    rank_topic_media,
+    score_topic,
+)
 
 router = APIRouter(
     prefix="/trend-ideas",
@@ -74,6 +79,12 @@ Return ONLY the JSON array, no markdown, no commentary, and no extra text."""
 TOPIC_DISCOVERY_PROMPT = """You are a trend analyst. Given the following real-time data about the "{niche}" niche, identify the TOP 3 most viral-worthy trending topics right now.
 
 For each topic, return a short 2-5 word topic name that a content creator could make a video about.
+
+Priority order:
+- Choose topics with strong recent engagement, fast velocity, or cross-platform evidence.
+- Prefer trends from the last 24 hours, this week, or clear current cultural/news/search momentum.
+- Avoid evergreen topics, stale ideas, generic advice, and one-off tiny videos with no proof.
+- If something is "upcoming", it must have early momentum from multiple sources or a strong fresh source.
 
 Return ONLY a JSON array of 3 strings. Example: ["topic one", "topic two", "topic three"]
 
@@ -377,6 +388,9 @@ async def discover_trends(niche: str) -> tuple[list[str], dict]:
         "pinterest": pins,
         "x": x_posts,
     }
+    ranked_context = discovery_signal_context(raw_sources)
+    if ranked_context:
+        context_parts.insert(0, ranked_context)
 
     return context_parts, raw_sources
 
@@ -393,8 +407,9 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
             niche,
             search_query,
             max_results=5,
-            fetch=lambda: youtube_search(search_query, max_results=5, days_back=RECENCY_DAYS),
+            fetch=lambda: youtube_search(search_query, max_results=5, days_back=RECENCY_DAYS, order="viewCount"),
             source="youtube-api",
+            min_cached=3,
         ), []),
         _safe_fetch(cached_or_fetch(
             "instagram",
@@ -407,6 +422,7 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
                 timeout_seconds=timeout_seconds,
             ),
             source="apify-instagram",
+            min_cached=3,
         ), []),
         _safe_fetch(cached_or_fetch(
             "tiktok",
@@ -420,6 +436,7 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
                 timeout_seconds=timeout_seconds,
             ),
             source="apify-tiktok",
+            min_cached=3,
         ), []),
         _safe_fetch(cached_or_fetch(
             "x",
@@ -432,6 +449,7 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
                 timeout_seconds=timeout_seconds,
             ),
             source="apify-x",
+            min_cached=3,
         ), []),
         _safe_fetch(google_news_search(search_query, max_results=4), []),
         _safe_fetch(web_search(f"{search_query} trending", max_results=4), []),
@@ -446,6 +464,7 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
                 timeout_seconds=timeout_seconds,
             ),
             source="apify-pinterest",
+            min_cached=3,
         ), []),
         _safe_fetch(medium_search(search_query, max_results=4), []),
     ]
@@ -468,8 +487,24 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
     }
 
 
-def build_context_prompt(niche: str, topic: str, discovery_context: list[str], topic_media: dict) -> str:
+def build_context_prompt(
+    niche: str,
+    topic: str,
+    discovery_context: list[str],
+    topic_media: dict,
+    quality: dict | None = None,
+) -> str:
     parts = [f"Niche: {niche}\nTrending topic: {topic}\n"]
+    if quality:
+        evidence = quality.get("evidence", [])
+        evidence_lines = "\n".join(f"- {item}" for item in evidence if item)
+        parts.append(
+            "Momentum verdict:\n"
+            f"- Stage: {quality.get('stage', 'Watchlist')}\n"
+            f"- Score: {quality.get('score', 0)}/100\n"
+            f"- Why it matters: {quality.get('reason', '')}\n"
+            f"{evidence_lines}"
+        )
     parts.extend(discovery_context)
 
     yt = topic_media.get("youtube", [])
@@ -509,8 +544,9 @@ def build_context_prompt(niche: str, topic: str, discovery_context: list[str], t
 
 async def _process_topic(client, niche: str, topic: str, discovery_context: list[str]) -> TrendIdea:
     try:
-        media = await gather_topic_media(niche, topic)
-        context = build_context_prompt(niche, topic, discovery_context, media)
+        media = rank_topic_media(await gather_topic_media(niche, topic))
+        quality = score_topic(niche, topic, media)
+        context = build_context_prompt(niche, topic, discovery_context, media, quality)
 
         async with _ai_semaphore:
             loop = asyncio.get_event_loop()
@@ -532,6 +568,18 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
         return TrendIdea(
             trend=topic,
             ideas=ideas,
+            trend_score=quality.get("score", 0),
+            trend_stage=quality.get("stage", "Watchlist"),
+            trend_reason=quality.get("reason", ""),
+            trend_evidence=quality.get("evidence", []),
+            trend_metrics={
+                "total_engagement": quality.get("total_engagement", 0),
+                "max_engagement": quality.get("max_engagement", 0),
+                "max_velocity": quality.get("max_velocity", 0),
+                "platform_count": quality.get("platform_count", 0),
+                "fresh_signal_count": quality.get("fresh_signal_count", 0),
+                "growth_percent": quality.get("growth_percent", 0),
+            },
             example_videos=media.get("youtube", [])[:4],
             instagram_posts=media.get("instagram", [])[:4],
             tiktok_videos=media.get("tiktok", [])[:4],
@@ -578,7 +626,14 @@ async def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest()):
             messages=[{"role": "user", "content": prompt}],
         ),
     )
-    topics = parse_topics_json(topic_response.choices[0].message.content or "")
+    topics = []
+    seen_topics: set[str] = set()
+    for topic in parse_topics_json(topic_response.choices[0].message.content or ""):
+        cleaned = " ".join(str(topic).split())[:80]
+        key = cleaned.lower()
+        if cleaned and key not in seen_topics:
+            seen_topics.add(key)
+            topics.append(cleaned)
 
     topic_coros = [_process_topic(client, niche, t, discovery_context) for t in topics]
     results = await asyncio.gather(*topic_coros)
@@ -594,7 +649,12 @@ async def get_trend_ideas(body: TrendIdeasRequest = TrendIdeasRequest()):
             elif src_key == "google_trends_data" and not res.google_trends_data:
                 res.google_trends_data = r if isinstance(r, dict) else {}
 
-    return TrendIdeasResponse(niche=niche, trend_ideas=list(results))
+    ranked_results = sorted(
+        list(results),
+        key=lambda item: (item.trend_score, len(item.trend_evidence)),
+        reverse=True,
+    )
+    return TrendIdeasResponse(niche=niche, trend_ideas=ranked_results[:3])
 
 
 @router.post("/digest-topics", response_model=TrendDigestTopicsResponse)

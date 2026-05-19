@@ -92,9 +92,23 @@ def init_db() -> None:
             fetched_at {created_at_type} NOT NULL
         )
     """
+    trend_topic_snapshots_ddl = f"""
+        CREATE TABLE IF NOT EXISTS trend_topic_snapshots (
+            id TEXT PRIMARY KEY,
+            niche TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            score INTEGER NOT NULL DEFAULT 0,
+            total_engagement INTEGER NOT NULL DEFAULT 0,
+            platform_count INTEGER NOT NULL DEFAULT 0,
+            stage TEXT NOT NULL DEFAULT '',
+            evidence_json {json_type} NOT NULL,
+            created_at {created_at_type} NOT NULL
+        )
+    """
     with engine.begin() as conn:
         conn.execute(text(ddl))
         conn.execute(text(trend_signals_ddl))
+        conn.execute(text(trend_topic_snapshots_ddl))
         conn.execute(text(
             "CREATE INDEX IF NOT EXISTS idx_trend_signals_lookup "
             "ON trend_signals (platform, niche, query, fetched_at)"
@@ -102,6 +116,10 @@ def init_db() -> None:
         conn.execute(text(
             "CREATE INDEX IF NOT EXISTS idx_trend_signals_platform_fetched "
             "ON trend_signals (platform, fetched_at)"
+        ))
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_trend_topic_snapshots_lookup "
+            "ON trend_topic_snapshots (niche, topic, created_at)"
         ))
         if _is_sqlite:
             _ensure_title_column_sqlite(conn)

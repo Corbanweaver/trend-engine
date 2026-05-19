@@ -532,6 +532,43 @@ export function IdeaPanel({
         </p>
       </div>
 
+      {trend.trend_stage || trend.trend_reason ? (
+        <div className="rounded-2xl border border-border bg-background p-3 dark:border-white/10 dark:bg-slate-900/60">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-slate-300">
+                Trend signal
+              </p>
+              <p className="mt-1 text-sm font-semibold text-foreground dark:text-slate-100">
+                {trend.trend_stage ?? "Watchlist"}
+              </p>
+            </div>
+            {typeof trend.trend_score === "number" && trend.trend_score > 0 ? (
+              <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-primary dark:border-cyan-300/30 dark:bg-cyan-500/10 dark:text-cyan-100">
+                {Math.round(trend.trend_score)}/100
+              </span>
+            ) : null}
+          </div>
+          {trend.trend_reason ? (
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground dark:text-slate-400">
+              {trend.trend_reason}
+            </p>
+          ) : null}
+          {trend.trend_evidence?.length ? (
+            <div className="mt-2 space-y-1">
+              {trend.trend_evidence.slice(0, 4).map((item) => (
+                <p
+                  key={`${trend.trend}-${item}`}
+                  className="text-xs leading-snug text-muted-foreground dark:text-slate-400"
+                >
+                  {item}
+                </p>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       {relatedTrends.length > 0 ? (
         <div className="rounded-2xl border border-border bg-background p-3 dark:border-white/10 dark:bg-slate-900/60">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-slate-300">
