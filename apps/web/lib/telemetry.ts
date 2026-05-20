@@ -25,10 +25,32 @@ type ConversionEvent = {
   context?: Record<string, unknown>;
 };
 
+declare global {
+  interface Window {
+    dataLayer?: unknown[];
+    gtag?: (
+      command: "event",
+      eventName: "conversion",
+      params: Record<string, unknown>,
+    ) => void;
+  }
+}
+
 const sensitiveKeyPattern =
   /email|password|token|secret|key|cookie|authorization|card|customer/i;
 
 const attributionStorageKey = "trendboard:ad_attribution";
+const defaultGoogleAdsSignupSendTo = "AW-18175424255/vbasCLON2LAcEP_t29pD";
+const defaultGoogleAdsSubscribeSendTo = "AW-18175424255/vi8WCLaN2LAcEP_t29pD";
+const googleAdsConversionSendTo: Partial<Record<ConversionEventName, string>> =
+  {
+    signup_completed:
+      process.env.NEXT_PUBLIC_GOOGLE_ADS_SIGNUP_CONVERSION_LABEL?.trim() ||
+      defaultGoogleAdsSignupSendTo,
+    checkout_completed:
+      process.env.NEXT_PUBLIC_GOOGLE_ADS_SUBSCRIBE_CONVERSION_LABEL?.trim() ||
+      defaultGoogleAdsSubscribeSendTo,
+  };
 const adAttributionKeys = [
   "utm_source",
   "utm_medium",
@@ -115,6 +137,33 @@ function captureAttribution(): Record<string, unknown> {
   return next;
 }
 
+function sendGoogleAdsConversion(event: ConversionEvent): void {
+  const sendTo = googleAdsConversionSendTo[event.event];
+  if (!sendTo) return;
+
+  const value =
+    typeof event.context?.value === "number" && Number.isFinite(event.context.value)
+      ? event.context.value
+      : 1;
+  const currency =
+    typeof event.context?.currency === "string" && event.context.currency
+      ? event.context.currency
+      : "USD";
+
+  const gtag =
+    window.gtag ??
+    ((...args: unknown[]) => {
+      window.dataLayer = window.dataLayer ?? [];
+      window.dataLayer.push(args);
+    });
+
+  gtag("event", "conversion", {
+    send_to: sendTo,
+    value,
+    currency,
+  });
+}
+
 /**
  * Lightweight client-side breadcrumb logger.
  * Keeps output local (console) and intentionally avoids sensitive payloads.
@@ -147,6 +196,7 @@ export function trackUiEvent(event: TelemetryEvent): void {
 export function trackConversionEvent(event: ConversionEvent): void {
   if (typeof window === "undefined") return;
   const attribution = captureAttribution();
+  sendGoogleAdsConversion(event);
 
   const payload = JSON.stringify({
     event: event.event,

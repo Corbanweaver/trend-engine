@@ -1069,6 +1069,26 @@ export function TrendDashboard() {
   }, []);
 
   useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("success") !== "true") return;
+
+    const trackingKey = `trend_dashboard:checkout_completed:${url.search}`;
+    try {
+      if (window.sessionStorage.getItem(trackingKey)) return;
+      window.sessionStorage.setItem(trackingKey, "1");
+    } catch {
+      /* sessionStorage should not block conversion tracking */
+    }
+
+    trackConversionEvent({
+      event: "checkout_completed",
+      context: { source: "stripe_success_redirect" },
+    });
+    url.searchParams.delete("success");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+  }, []);
+
+  useEffect(() => {
     try {
       window.localStorage.setItem("theme", "dark");
       document.documentElement.classList.add("dark");
