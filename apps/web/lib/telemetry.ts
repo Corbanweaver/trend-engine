@@ -28,6 +28,24 @@ type ConversionEvent = {
 const sensitiveKeyPattern =
   /email|password|token|secret|key|cookie|authorization|card|customer/i;
 
+const attributionStorageKey = "trendboard:ad_attribution";
+const adAttributionKeys = [
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+  "utm_id",
+  "utm_source_platform",
+  "gclid",
+  "gbraid",
+  "wbraid",
+  "fbclid",
+  "ttclid",
+  "rdt_cid",
+  "msclkid",
+] as const;
+
 function sanitizeValue(value: unknown, depth = 0): unknown {
   if (value === null || value === undefined) return value;
   if (typeof value === "string") return value.slice(0, 180);
@@ -52,6 +70,49 @@ function sanitizeContext(
       .slice(0, 20)
       .map(([key, value]) => [key, sanitizeValue(value, depth)]),
   );
+}
+
+function readStoredAttribution(): Record<string, unknown> {
+  try {
+    const raw = window.localStorage.getItem(attributionStorageKey);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function captureAttribution(): Record<string, unknown> {
+  const params = new URLSearchParams(window.location.search);
+  const current = Object.fromEntries(
+    adAttributionKeys
+      .map((key) => [key, params.get(key)?.trim()] as const)
+      .filter(([, value]) => Boolean(value)),
+  );
+
+  const stored = readStoredAttribution();
+  if (!Object.keys(current).length) return stored;
+
+  const now = new Date().toISOString();
+  const next = {
+    ...stored,
+    first_touch:
+      stored.first_touch && typeof stored.first_touch === "object"
+        ? stored.first_touch
+        : { ...current, captured_at: now },
+    last_touch: { ...current, captured_at: now },
+  };
+
+  try {
+    window.localStorage.setItem(attributionStorageKey, JSON.stringify(next));
+  } catch {
+    /* local attribution should not block the UI */
+  }
+
+  return next;
 }
 
 /**
@@ -85,11 +146,15 @@ export function trackUiEvent(event: TelemetryEvent): void {
  */
 export function trackConversionEvent(event: ConversionEvent): void {
   if (typeof window === "undefined") return;
+  const attribution = captureAttribution();
 
   const payload = JSON.stringify({
     event: event.event,
     path: event.path ?? window.location.pathname,
-    context: sanitizeContext(event.context),
+    context: sanitizeContext({
+      ...event.context,
+      attribution,
+    }),
     ts: new Date().toISOString(),
   });
 
