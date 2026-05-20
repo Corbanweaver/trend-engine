@@ -2236,12 +2236,27 @@ export function TrendDashboard() {
       ) : null}
 
       {analysisCreditBlocked ? (
-        <div className="mx-4 mt-4 rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary dark:border-fuchsia-400/40 dark:bg-fuchsia-500/10 dark:text-fuchsia-100">
-          You need {CREDIT_COSTS.analysis} credits for another full trend
-          analysis. Upgrade to Creator or Pro for higher monthly credits.
-          <Link href="/pricing" className="ml-2 underline underline-offset-2">
-            View pricing
-          </Link>
+        <div className="mx-4 mt-4 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-4 text-sm text-primary dark:border-fuchsia-400/40 dark:bg-fuchsia-500/10 dark:text-fuchsia-100">
+          <div className="mx-auto flex max-w-[1500px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold text-foreground dark:text-white">
+                {plan === "free"
+                  ? "Free credits used for this month"
+                  : "Monthly credits used for this month"}
+              </p>
+              <p className="mt-1 text-muted-foreground dark:text-fuchsia-100/80">
+                {plan === "free"
+                  ? "Upgrade when you want more live trend scans, hook variations, scripts, and calendar-ready briefs."
+                  : "Your monthly credits reset automatically. Contact support if you need a higher-volume plan."}
+              </p>
+            </div>
+            <Link
+              href={plan === "free" ? "/pricing" : "/support"}
+              className="inline-flex shrink-0 items-center justify-center rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 dark:bg-fuchsia-200 dark:text-slate-950 dark:hover:bg-white"
+            >
+              {plan === "free" ? "View Creator plan" : "Contact support"}
+            </Link>
+          </div>
         </div>
       ) : null}
 
@@ -2319,6 +2334,10 @@ export function TrendDashboard() {
             trend={selectedTrend}
             trendIdeas={data?.trend_ideas ?? []}
             niche={effectiveNiche}
+            plan={plan}
+            creditsRemaining={creditsRemaining}
+            isAdmin={isAdmin}
+            onCreditsUpdate={applyCreditSnapshot}
             onSaveIdea={saveIdea}
           />
         </SheetContent>

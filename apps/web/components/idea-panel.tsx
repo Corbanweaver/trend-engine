@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -19,10 +20,20 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { CREDIT_COSTS, type SubscriptionPlan } from "@/lib/credits";
 import { trackUiEvent } from "@/lib/telemetry";
 import { getVideoIdeaThumbnailUrls } from "@/lib/trend-ideas-types";
 import type { TrendIdea, VideoIdea } from "@/lib/trend-ideas-types";
 import { cn } from "@/lib/utils";
+
+type CreditSnapshot = {
+  plan: SubscriptionPlan;
+  creditsUsed: number;
+  creditsLimit: number;
+  creditsRemaining: number;
+  analysesUsedThisMonth: number;
+  isAdmin?: boolean;
+};
 
 function tiktokTagSearchUrl(tag: string): string {
   const clean = tag.replace(/^#/, "").trim();
@@ -33,7 +44,7 @@ function tiktokTagSearchUrl(tag: string): string {
 async function postIdeaEnrichment<T>(
   path: "generate-hooks" | "generate-hashtags" | "generate-full-script",
   body: Record<string, string>,
-): Promise<T> {
+): Promise<{ data: T; credits?: CreditSnapshot }> {
   const res = await fetch("/api/trend-ideas/enrich", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -58,8 +69,11 @@ async function postIdeaEnrichment<T>(
     }
     throw new Error(detail || `Request failed (${res.status})`);
   }
-  const json = (await res.json()) as { data?: T } & T;
-  return (json.data ?? json) as T;
+  const json = (await res.json()) as {
+    data?: T;
+    credits?: CreditSnapshot;
+  } & T;
+  return { data: (json.data ?? json) as T, credits: json.credits };
 }
 
 function estimateVideoLength(idea: VideoIdea): string {
@@ -182,10 +196,18 @@ export function IdeaPanel({
   trendIdeas,
   niche,
   onSaveIdea,
+  plan = "free",
+  creditsRemaining,
+  isAdmin = false,
+  onCreditsUpdate,
 }: {
   trend: TrendIdea | null;
   trendIdeas?: TrendIdea[];
   niche: string;
+  plan?: SubscriptionPlan;
+  creditsRemaining?: number;
+  isAdmin?: boolean;
+  onCreditsUpdate?: (snapshot: CreditSnapshot) => void;
   onSaveIdea?: (payload: {
     trend: string;
     idea: VideoIdea;
@@ -263,53 +285,79 @@ export function IdeaPanel({
     setFullScriptErrorByIndex({});
   }, [trend?.trend]);
 
-  useEffect(() => {
-    if (!trend?.ideas?.length) return;
+  const hasToolCredits = (cost: number) =>
+    isAdmin || creditsRemaining === undefined || creditsRemaining >= cost;
 
-    const nicheLabel = (niche || "fitness").trim() || "fitness";
+  const blockedCreditMessage = (cost: number) =>
+    plan === "free"
+      ? `You need ${cost} credits for this. Upgrade when you want more hooks, hashtags, and scripts.`
+      : `You need ${cost} credits for this tool. Your monthly credits may be used up.`;
 
-    trend.ideas.forEach((idea, index) => {
-      setTagsLoadingByIndex((prev) => ({ ...prev, [index]: true }));
-      setTagsErrorByIndex((prev) => ({ ...prev, [index]: "" }));
+  const applyReturnedCredits = (snapshot: CreditSnapshot | undefined) => {
+    if (snapshot) onCreditsUpdate?.(snapshot);
+  };
 
-      void (async () => {
-        try {
-          const json = await postIdeaEnrichment<{ hashtags: string[] }>(
-            "generate-hashtags",
-            {
-              niche: nicheLabel,
-              trend: trend.trend,
-              hook: idea.hook ?? "",
-              angle: idea.angle ?? "",
-              idea: idea.idea ?? "",
-              optimized_title: idea.optimized_title ?? "",
-            },
-          );
-          setTrendingTagsByIndex((prev) => ({
-            ...prev,
-            [index]: json.hashtags,
-          }));
-        } catch (err) {
-          setTagsErrorByIndex((prev) => ({
-            ...prev,
-            [index]:
-              err instanceof Error
-                ? err.message
-                : "Could not load trending hashtags.",
-          }));
-        } finally {
-          setTagsLoadingByIndex((prev) => ({ ...prev, [index]: false }));
-        }
-      })();
-    });
-  }, [trend, niche]);
+  const loadHashtags = async (idea: VideoIdea, index: number) => {
+    if (!trend) return;
+    const cost = CREDIT_COSTS.hashtags;
+    if (!hasToolCredits(cost)) {
+      setTagsErrorByIndex((prev) => ({
+        ...prev,
+        [index]: blockedCreditMessage(cost),
+      }));
+      return;
+    }
+    setTagsErrorByIndex((prev) => ({ ...prev, [index]: "" }));
+    setTagsLoadingByIndex((prev) => ({ ...prev, [index]: true }));
+    try {
+      const result = await postIdeaEnrichment<{ hashtags: string[] }>(
+        "generate-hashtags",
+        {
+          niche: (niche || "fitness").trim() || "fitness",
+          trend: trend.trend,
+          hook: idea.hook ?? "",
+          angle: idea.angle ?? "",
+          idea: idea.idea ?? "",
+          optimized_title: idea.optimized_title ?? "",
+        },
+      );
+      setTrendingTagsByIndex((prev) => ({
+        ...prev,
+        [index]: result.data.hashtags,
+      }));
+      applyReturnedCredits(result.credits);
+      trackUiEvent({
+        area: "idea_panel",
+        action: "generate_hashtags_success",
+        context: { trend: trend.trend },
+      });
+    } catch (err) {
+      setTagsErrorByIndex((prev) => ({
+        ...prev,
+        [index]:
+          err instanceof Error
+            ? err.message
+            : "Could not load trending hashtags.",
+      }));
+    } finally {
+      setTagsLoadingByIndex((prev) => ({ ...prev, [index]: false }));
+    }
+  };
 
   const loadHooks = async (idea: VideoIdea, index: number) => {
     if (!trend) return;
+    const cost = CREDIT_COSTS.hooks;
+    if (!hasToolCredits(cost)) {
+      setHooksErrorByIndex((prev) => ({
+        ...prev,
+        [index]: blockedCreditMessage(cost),
+      }));
+      return;
+    }
     setHooksErrorByIndex((prev) => ({ ...prev, [index]: "" }));
     setHooksLoadingByIndex((prev) => ({ ...prev, [index]: true }));
     try {
-      const json = await postIdeaEnrichment<{ hooks: string[] }>(
+      const result = await postIdeaEnrichment<{ hooks: string[] }>(
         "generate-hooks",
         {
           niche: (niche || "fitness").trim() || "fitness",
@@ -320,7 +368,11 @@ export function IdeaPanel({
           optimized_title: idea.optimized_title ?? "",
         },
       );
-      setHookListsByIndex((prev) => ({ ...prev, [index]: json.hooks }));
+      setHookListsByIndex((prev) => ({
+        ...prev,
+        [index]: result.data.hooks,
+      }));
+      applyReturnedCredits(result.credits);
       trackUiEvent({
         area: "idea_panel",
         action: "generate_hooks_success",
@@ -338,10 +390,18 @@ export function IdeaPanel({
 
   const loadFullScript = async (idea: VideoIdea, index: number) => {
     if (!trend) return;
+    const cost = CREDIT_COSTS.fullScript;
+    if (!hasToolCredits(cost)) {
+      setFullScriptErrorByIndex((prev) => ({
+        ...prev,
+        [index]: blockedCreditMessage(cost),
+      }));
+      return;
+    }
     setFullScriptErrorByIndex((prev) => ({ ...prev, [index]: "" }));
     setFullScriptLoadingByIndex((prev) => ({ ...prev, [index]: true }));
     try {
-      const json = await postIdeaEnrichment<{ script: string }>(
+      const result = await postIdeaEnrichment<{ script: string }>(
         "generate-full-script",
         {
           niche: (niche || "fitness").trim() || "fitness",
@@ -353,7 +413,11 @@ export function IdeaPanel({
           script: idea.script ?? "",
         },
       );
-      setFullScriptByIndex((prev) => ({ ...prev, [index]: json.script }));
+      setFullScriptByIndex((prev) => ({
+        ...prev,
+        [index]: result.data.script,
+      }));
+      applyReturnedCredits(result.credits);
       trackUiEvent({
         area: "idea_panel",
         action: "generate_full_script_success",
@@ -587,11 +651,31 @@ export function IdeaPanel({
         </div>
       ) : null}
 
+      <div className="rounded-2xl border border-border bg-muted/45 p-3 dark:border-white/10 dark:bg-white/[0.04]">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-slate-300">
+          Credit tip
+        </p>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground dark:text-slate-400">
+          Save ideas for free. Hooks cost {CREDIT_COSTS.hooks} credits,
+          hashtags cost {CREDIT_COSTS.hashtags}, and full scripts cost{" "}
+          {CREDIT_COSTS.fullScript}.{" "}
+          {isAdmin
+            ? "Admin accounts have unlimited testing credits."
+            : creditsRemaining !== undefined
+              ? `${creditsRemaining} credits remaining.`
+              : "Credits update on your account after each tool."}
+        </p>
+      </div>
+
       <div className="space-y-4">
         {trend.ideas.map((idea, i) => {
           const thumbnailUrls = getVideoIdeaThumbnailUrls(idea);
           const isSavingThisIdea =
             savingIdeaIndex === i || savingCalendarIndex === i;
+          const generatedTags = trendingTagsByIndex[i] ?? [];
+          const baseTags = idea.hashtags ?? [];
+          const visibleTags = generatedTags.length ? generatedTags : baseTags;
+          const canGenerateTags = hasToolCredits(CREDIT_COSTS.hashtags);
 
           return (
             <Card
@@ -767,10 +851,22 @@ export function IdeaPanel({
                     ))}
                   </ul>
                 </div>
-                <div className="space-y-1.5 pt-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-slate-300">
-                    Trending hashtags
-                  </p>
+                <div className="space-y-2 pt-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-slate-300">
+                      Trending hashtags
+                    </p>
+                    <button
+                      type="button"
+                      disabled={tagsLoadingByIndex[i] || !canGenerateTags}
+                      onClick={() => void loadHashtags(idea, i)}
+                      className="inline-flex items-center rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-55 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+                      title={`Generate fresh hashtags (${CREDIT_COSTS.hashtags} credits)`}
+                    >
+                      {tagsLoadingByIndex[i] ? "Refreshing" : "Refresh"} (
+                      {CREDIT_COSTS.hashtags})
+                    </button>
+                  </div>
                   {tagsLoadingByIndex[i] ? (
                     <div className="flex flex-wrap gap-1.5">
                       {Array.from({ length: 10 }).map((_, hi) => (
@@ -780,9 +876,9 @@ export function IdeaPanel({
                         />
                       ))}
                     </div>
-                  ) : trendingTagsByIndex[i]?.length ? (
+                  ) : visibleTags.length ? (
                     <div className="flex flex-wrap gap-1.5">
-                      {trendingTagsByIndex[i].map((tag, hi) => (
+                      {visibleTags.slice(0, 10).map((tag, hi) => (
                         <a
                           key={`${tag}-${hi}`}
                           href={tiktokTagSearchUrl(tag)}
@@ -794,34 +890,37 @@ export function IdeaPanel({
                         </a>
                       ))}
                     </div>
-                  ) : tagsErrorByIndex[i] &&
-                    idea.hashtags &&
-                    idea.hashtags.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {idea.hashtags.slice(0, 10).map((tag, hi) => (
-                        <a
-                          key={`fallback-${tag}-${hi}`}
-                          href={tiktokTagSearchUrl(tag)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center rounded-full border border-border bg-muted/70 px-2.5 py-1 text-xs font-normal text-muted-foreground hover:border-cyan-500/40 dark:border-slate-500/40 dark:bg-slate-800/60 dark:text-slate-200 dark:hover:border-cyan-400/40"
-                        >
-                          {tag.startsWith("#") ? tag : `#${tag}`}
-                        </a>
-                      ))}
-                    </div>
                   ) : tagsErrorByIndex[i] ? (
                     <p className="text-xs text-amber-700 dark:text-amber-200/90">
                       {tagsErrorByIndex[i]}
                     </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground dark:text-slate-400">
+                      Generate fresh hashtags when this idea is worth expanding.
+                    </p>
+                  )}
+                  {tagsErrorByIndex[i] && visibleTags.length ? (
+                    <p className="text-xs text-amber-700 dark:text-amber-200/90">
+                      {tagsErrorByIndex[i]}
+                    </p>
+                  ) : null}
+                  {!canGenerateTags ? (
+                    <p className="text-xs text-muted-foreground dark:text-slate-400">
+                      Need more credits for fresh hashtags.{" "}
+                      <Link
+                        href="/pricing"
+                        className="font-semibold text-primary underline underline-offset-2 dark:text-cyan-200"
+                      >
+                        View plans
+                      </Link>
+                    </p>
                   ) : null}
                   {!tagsLoadingByIndex[i] &&
-                  trendingTagsByIndex[i]?.length &&
-                  idea.hashtags &&
-                  idea.hashtags.length > 0 ? (
+                  generatedTags.length > 0 &&
+                  baseTags.length > 0 ? (
                     <p className="text-[11px] text-muted-foreground dark:text-slate-500">
                       Ideas pack also suggested:{" "}
-                      {idea.hashtags
+                      {baseTags
                         .map((t) => (t.startsWith("#") ? t : `#${t}`))
                         .join(", ")}
                     </p>

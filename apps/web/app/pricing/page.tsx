@@ -1,8 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  Check,
+  CreditCard,
+  LineChart,
+  LockKeyhole,
+  Sparkles,
+  Timer,
+  Zap,
+} from "lucide-react";
 
-import { CREDIT_LIMITS } from "@/lib/credits";
+import { CREDIT_COSTS, CREDIT_LIMITS } from "@/lib/credits";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -16,6 +26,8 @@ const plans = [
     price: "$0",
     period: "/mo",
     description: "Try the essentials and explore trends.",
+    bestFor: "Testing the workflow",
+    outcome: "1 live trend scan to see whether the ideas fit your niche.",
     featured: false,
     features: [
       `${CREDIT_LIMITS.free} monthly credits`,
@@ -25,6 +37,7 @@ const plans = [
     ],
     ctaHref: "/signup",
     planKey: "free",
+    ctaLabel: "Try for free",
     ctaVariant: "outline" as const,
   },
   {
@@ -32,6 +45,9 @@ const plans = [
     price: "$19.99",
     period: "/mo",
     description: "Everything you need to ship ideas consistently.",
+    bestFor: "Solo creators posting weekly",
+    outcome:
+      "Roughly 20 full scans each month, plus room for hooks, scripts, and hashtags.",
     featured: true,
     popularLabel: "Most Popular",
     features: [
@@ -43,6 +59,7 @@ const plans = [
     ],
     ctaHref: "/api/stripe/checkout",
     planKey: "creator",
+    ctaLabel: "Start Creator",
     ctaVariant: "primary" as const,
   },
   {
@@ -50,6 +67,9 @@ const plans = [
     price: "$49.99",
     period: "/mo",
     description: "Maximum throughput for teams and power creators.",
+    bestFor: "Agencies, teams, and daily creators",
+    outcome:
+      "Roughly 60 full scans each month for testing more niches and angles.",
     featured: false,
     features: [
       `${CREDIT_LIMITS.pro.toLocaleString()} monthly credits`,
@@ -62,9 +82,53 @@ const plans = [
     ],
     ctaHref: "/api/stripe/checkout",
     planKey: "pro",
+    ctaLabel: "Start Pro",
     ctaVariant: "outline" as const,
   },
 ];
+
+const buyerSignals = [
+  {
+    icon: LineChart,
+    title: "Pay for better decisions",
+    body: "Each scan ranks live momentum so creators can spend less time guessing what to film next.",
+  },
+  {
+    icon: Sparkles,
+    title: "Expand only the winners",
+    body: "Idea cards stay short first. Hooks, hashtags, and scripts only use credits when you ask for them.",
+  },
+  {
+    icon: Timer,
+    title: "Move faster every week",
+    body: "Save source links, hashtags, hooks, and calendar notes together so research does not disappear.",
+  },
+] as const;
+
+const creditExamples = [
+  {
+    label: "Full trend scan",
+    cost: CREDIT_COSTS.analysis,
+    note: "Finds current topics and creates idea cards for one niche.",
+  },
+  {
+    label: "Hook variations",
+    cost: CREDIT_COSTS.hooks,
+    note: "Adds extra openings only for the ideas worth testing.",
+  },
+  {
+    label: "Full script",
+    cost: CREDIT_COSTS.fullScript,
+    note: "Turns one chosen idea into a fuller spoken outline.",
+  },
+] as const;
+
+const trustChecks = [
+  { icon: CreditCard, label: "Secure Stripe checkout" },
+  { icon: BadgeCheck, label: "Cancel through billing anytime" },
+  { icon: LockKeyhole, label: "Credits prevent overuse and keep costs fair" },
+  { icon: Zap, label: "Built around fast creator workflows" },
+] as const;
 
 const pricingFaqItems = [
   {
@@ -209,6 +273,17 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
             Pick the tier that matches your workflow. Credits reset monthly and
             keep heavier trend scans fair for everyone.
           </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            {trustChecks.map((item) => (
+              <span
+                key={item.label}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
+              >
+                <item.icon className="size-3.5 text-primary dark:text-cyan-300" />
+                {item.label}
+              </span>
+            ))}
+          </div>
         </div>
 
         {isCheckoutSuccess ? (
@@ -272,6 +347,17 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                 <p className="mt-2 min-h-[3rem] text-sm leading-relaxed text-muted-foreground dark:text-slate-400">
                   {plan.description}
                 </p>
+                <div className="mt-4 rounded-2xl border border-border bg-muted/45 p-3 text-sm dark:border-white/10 dark:bg-white/[0.04]">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-slate-400">
+                    Best for
+                  </p>
+                  <p className="mt-1 font-semibold text-foreground dark:text-white">
+                    {plan.bestFor}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground dark:text-slate-400">
+                    {plan.outcome}
+                  </p>
+                </div>
                 <div className="mt-6 flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold tracking-tight text-foreground dark:text-white">
                     {plan.price}
@@ -298,11 +384,12 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                   href={plan.ctaHref}
                   className={
                     plan.ctaVariant === "primary"
-                      ? "inline-flex w-full items-center justify-center rounded-2xl bg-primary px-6 py-3.5 text-center text-base font-bold text-primary-foreground shadow-[0_12px_24px_rgba(54,95,125,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_32px_rgba(54,95,125,0.24)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_32px_rgba(56,189,248,0.4)] dark:hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
-                      : "inline-flex w-full items-center justify-center rounded-2xl border border-border bg-card px-6 py-3.5 text-center text-base font-semibold text-foreground transition-all duration-200 hover:border-primary/25 hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:border-white/35 dark:hover:bg-white/10"
+                      ? "inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-center text-base font-bold text-primary-foreground shadow-[0_12px_24px_rgba(54,95,125,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_32px_rgba(54,95,125,0.24)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_32px_rgba(56,189,248,0.4)] dark:hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
+                      : "inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-6 py-3.5 text-center text-base font-semibold text-foreground transition-all duration-200 hover:border-primary/25 hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:border-white/35 dark:hover:bg-white/10"
                   }
                 >
-                  Get Started
+                  {plan.ctaLabel}
+                  <ArrowRight className="size-4" />
                 </Link>
               ) : (
                 <form action={plan.ctaHref} method="POST">
@@ -311,11 +398,12 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                     type="submit"
                     className={
                       plan.ctaVariant === "primary"
-                        ? "inline-flex w-full cursor-pointer items-center justify-center rounded-2xl bg-primary px-6 py-3.5 text-center text-base font-bold text-primary-foreground shadow-[0_12px_24px_rgba(54,95,125,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_32px_rgba(54,95,125,0.24)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_32px_rgba(56,189,248,0.4)] dark:hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
-                        : "inline-flex w-full cursor-pointer items-center justify-center rounded-2xl border border-border bg-card px-6 py-3.5 text-center text-base font-semibold text-foreground transition-all duration-200 hover:border-primary/25 hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:border-white/35 dark:hover:bg-white/10"
+                        ? "inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-center text-base font-bold text-primary-foreground shadow-[0_12px_24px_rgba(54,95,125,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_32px_rgba(54,95,125,0.24)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_32px_rgba(56,189,248,0.4)] dark:hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
+                        : "inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-card px-6 py-3.5 text-center text-base font-semibold text-foreground transition-all duration-200 hover:border-primary/25 hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:border-white/35 dark:hover:bg-white/10"
                     }
                   >
-                    Get Started
+                    {plan.ctaLabel}
+                    <ArrowRight className="size-4" />
                   </button>
                 </form>
               )}
@@ -323,10 +411,62 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           ))}
         </div>
 
-        <p className="mt-10 text-center text-sm text-muted-foreground">
-          Full trend analyses cost 30 credits. Smaller AI tools such as hooks,
-          hashtags, and scripts use fewer credits.
-        </p>
+        <section className="mx-auto mt-12 grid max-w-5xl gap-4 lg:grid-cols-3">
+          {buyerSignals.map((item) => (
+            <div
+              key={item.title}
+              className="rounded-3xl border border-border bg-card/85 p-5 shadow-sm dark:border-white/10 dark:bg-slate-950/55"
+            >
+              <div className="flex size-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 dark:border-cyan-300/25 dark:bg-cyan-400/10">
+                <item.icon className="size-5 text-primary dark:text-cyan-300" />
+              </div>
+              <h2 className="mt-4 text-base font-bold text-foreground dark:text-white">
+                {item.title}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground dark:text-slate-400">
+                {item.body}
+              </p>
+            </div>
+          ))}
+        </section>
+
+        <section className="mx-auto mt-10 max-w-5xl rounded-3xl border border-border bg-card/90 p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/70 sm:p-8">
+          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary dark:text-cyan-200">
+                How credits work
+              </p>
+              <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-foreground dark:text-white">
+                Predictable for customers, safer for your costs
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground dark:text-slate-400">
+                Trend scans are the expensive part. Credits let creators buy a
+                clear monthly workflow while keeping the app protected from
+                runaway usage.
+              </p>
+            </div>
+            <div className="grid gap-3">
+              {creditExamples.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-start justify-between gap-4 rounded-2xl border border-border bg-background p-4 dark:border-white/10 dark:bg-slate-900/70"
+                >
+                  <div>
+                    <p className="font-semibold text-foreground dark:text-white">
+                      {item.label}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground dark:text-slate-400">
+                      {item.note}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-bold text-primary dark:border-cyan-300/30 dark:bg-cyan-400/10 dark:text-cyan-100">
+                    {item.cost} credits
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         <section className="mx-auto mt-14 max-w-3xl">
           <div className="text-center">
