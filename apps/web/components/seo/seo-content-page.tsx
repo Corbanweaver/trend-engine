@@ -16,9 +16,12 @@ import {
 } from "lucide-react";
 
 import { ConversionEventTracker } from "@/components/analytics/conversion-event-tracker";
+import { ConversionLink } from "@/components/seo/conversion-link";
 import { FreeResourceWidget } from "@/components/seo/free-resource-widget";
 import type { SeoPage } from "@/lib/seo-content";
 import { allSeoPages, seoPageUrl } from "@/lib/seo-content";
+
+type ResourceKind = NonNullable<SeoPage["resourceKind"]>;
 
 function JsonLd({ data }: { data: Record<string, unknown> }) {
   return (
@@ -187,6 +190,17 @@ function getSampleAngles(page: SeoPage) {
     "Add one personal or niche-specific take",
     "Close with a soft prompt people can answer",
   ];
+}
+
+function getFreePreviewKind(page: SeoPage): ResourceKind {
+  if (page.resourceKind) return page.resourceKind;
+  if (page.path.includes("calendar") || page.path.includes("planner")) {
+    return "calendar";
+  }
+  if (page.path.includes("trend")) {
+    return "trend-checklist";
+  }
+  return "hooks";
 }
 
 function HeroProductPreview({ page }: { page: SeoPage }) {
@@ -484,6 +498,13 @@ function DemoValueSection() {
 export function SeoContentPage({ page }: { page: SeoPage }) {
   const breadcrumbs = breadcrumbItems(page);
   const isAdLandingPage = adLandingPaths.has(page.path);
+  const freePreviewKind = isAdLandingPage
+    ? getFreePreviewKind(page)
+    : page.resourceKind;
+  const primaryCtaHref = isAdLandingPage ? "#free-preview" : "/dashboard";
+  const primaryCtaLabel = isAdLandingPage
+    ? "Generate Free Ideas"
+    : "Try TrendBoard";
 
   return (
     <main className="min-h-svh bg-background pb-20 text-foreground sm:pb-0">
@@ -587,19 +608,35 @@ export function SeoContentPage({ page }: { page: SeoPage }) {
             </div>
           ) : null}
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/dashboard"
+            <ConversionLink
+              href={primaryCtaHref}
+              event="landing_cta_clicked"
+              eventContext={{
+                page: page.path,
+                destination: primaryCtaHref,
+                placement: "hero_primary",
+              }}
               className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
             >
-              {isAdLandingPage ? "Try a Free Trend Scan" : "Try TrendBoard"}
+              {primaryCtaLabel}
               <ArrowRight className="size-4" />
-            </Link>
-            <Link
-              href="/trending"
+            </ConversionLink>
+            <ConversionLink
+              href={
+                isAdLandingPage ? "/signup?from=hero-secondary" : "/trending"
+              }
+              event="landing_cta_clicked"
+              eventContext={{
+                page: page.path,
+                destination: isAdLandingPage
+                  ? "/signup?from=hero-secondary"
+                  : "/trending",
+                placement: "hero_secondary",
+              }}
               className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted dark:border-white/10 dark:bg-slate-900 dark:hover:bg-slate-800"
             >
-              See live trends
-            </Link>
+              {isAdLandingPage ? "Create free account" : "See live trends"}
+            </ConversionLink>
           </div>
         </div>
 
@@ -673,14 +710,14 @@ export function SeoContentPage({ page }: { page: SeoPage }) {
       ) : null}
 
       <section className="mx-auto max-w-6xl px-6 py-14">
-        {page.resourceKind ? (
+        {freePreviewKind ? (
           <FreeResourceWidget
-            kind={page.resourceKind}
+            kind={freePreviewKind}
             defaultTopic={page.primaryKeyword.replace(/^free\s+/i, "")}
           />
         ) : null}
 
-        <div className={page.resourceKind ? "mt-14" : ""}>
+        <div className={freePreviewKind ? "mt-14" : ""}>
           <div className="flex items-center gap-3">
             <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:bg-cyan-400/10 dark:text-cyan-200">
               <ClipboardList className="size-5" />
@@ -756,13 +793,19 @@ export function SeoContentPage({ page }: { page: SeoPage }) {
                 planning in one place.
               </p>
             </div>
-            <Link
-              href="/dashboard"
+            <ConversionLink
+              href={isAdLandingPage ? "#free-preview" : "/dashboard"}
+              event="landing_cta_clicked"
+              eventContext={{
+                page: page.path,
+                destination: isAdLandingPage ? "#free-preview" : "/dashboard",
+                placement: "bottom_cta",
+              }}
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
             >
-              Open the app
+              {isAdLandingPage ? "Generate a free preview" : "Open the app"}
               <ArrowRight className="size-4" />
-            </Link>
+            </ConversionLink>
           </div>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -781,13 +824,19 @@ export function SeoContentPage({ page }: { page: SeoPage }) {
 
       {isAdLandingPage ? (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/94 px-4 py-3 shadow-[0_-12px_32px_rgba(15,23,42,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-950/94 sm:hidden">
-          <Link
-            href="/dashboard"
+          <ConversionLink
+            href="#free-preview"
+            event="landing_cta_clicked"
+            eventContext={{
+              page: page.path,
+              destination: "#free-preview",
+              placement: "mobile_sticky",
+            }}
             className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-primary-foreground dark:bg-cyan-400 dark:text-slate-950"
           >
-            Try a Free Trend Scan
+            Generate Free Ideas
             <ArrowRight className="size-4" />
-          </Link>
+          </ConversionLink>
         </div>
       ) : null}
     </main>

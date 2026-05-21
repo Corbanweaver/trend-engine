@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import {
+  ArrowRight,
   CalendarDays,
   CheckCircle2,
   GitCompare,
@@ -133,8 +135,13 @@ export function FreeResourceWidget({
   defaultTopic: string;
 }) {
   const [topic, setTopic] = useState(defaultTopic);
+  const [submittedTopic, setSubmittedTopic] = useState(defaultTopic);
+  const [hasGenerated, setHasGenerated] = useState(false);
   const trackedUseRef = useRef(false);
   const cleanTopic = normalizeTopic(topic, defaultTopic);
+  const outputTopic = hasGenerated
+    ? normalizeTopic(submittedTopic, defaultTopic)
+    : cleanTopic;
 
   const Icon =
     kind === "calendar"
@@ -149,30 +156,50 @@ export function FreeResourceWidget({
 
   const title =
     kind === "calendar"
-      ? "Build a quick 7-day calendar"
+      ? "Generate a quick 7-day calendar"
       : kind === "trend-checklist"
         ? "Check if a trend is worth filming"
         : kind === "comparison"
           ? "Adapt one idea by platform"
           : kind === "fitness-ideas"
-            ? "Scan the free idea list"
-            : "Draft hooks from a topic";
+            ? "Generate free fitness ideas"
+            : "Generate free hooks from a topic";
 
   const description =
     kind === "fitness-ideas"
-      ? "Use these starting points when you need momentum before running a live scan."
-      : "This free preview does not use credits. The full app adds live trend context, source links, and save-ready cards.";
+      ? "Get a useful sample before you create an account. The full app adds live trend context, source links, and save-ready cards."
+      : "Get a useful sample before you create an account. No credits or card needed for this preview.";
 
   const rows = useMemo(() => {
-    if (kind === "calendar") return calendarRows(cleanTopic);
-    if (kind === "trend-checklist") return trendChecklist(cleanTopic);
-    if (kind === "comparison") return comparisonRows(cleanTopic);
+    if (kind === "calendar") return calendarRows(outputTopic);
+    if (kind === "trend-checklist") return trendChecklist(outputTopic);
+    if (kind === "comparison") return comparisonRows(outputTopic);
     if (kind === "fitness-ideas") return fitnessIdeas;
-    return hookIdeas(cleanTopic);
-  }, [cleanTopic, kind]);
+    return hookIdeas(outputTopic);
+  }, [outputTopic, kind]);
+
+  const visibleRows = hasGenerated
+    ? rows
+    : rows.slice(0, kind === "fitness-ideas" ? 6 : 2);
+
+  const handleGenerate = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmittedTopic(cleanTopic);
+    setHasGenerated(true);
+    trackConversionEvent({
+      event: "free_tool_generated",
+      context: {
+        resourceKind: kind,
+        topicLength: cleanTopic.length,
+      },
+    });
+  };
 
   return (
-    <section className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/70 sm:p-8">
+    <section
+      id="free-preview"
+      className="scroll-mt-8 rounded-3xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/70 sm:p-8"
+    >
       <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
         <div className="max-w-2xl">
           <div className="flex items-center gap-3">
@@ -190,30 +217,52 @@ export function FreeResourceWidget({
             {description}
           </p>
         </div>
-        {kind !== "fitness-ideas" ? (
-          <label className="w-full md:max-w-sm">
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Topic or niche
-            </span>
-            <input
-              value={topic}
-              onChange={(event) => {
-                const value = event.target.value;
-                setTopic(value);
-                if (!trackedUseRef.current && value.trim().length >= 3) {
-                  trackedUseRef.current = true;
-                  trackConversionEvent({
-                    event: "free_tool_used",
-                    context: { resourceKind: kind },
-                  });
-                }
-              }}
-              className="mt-2 h-12 w-full rounded-2xl border border-border bg-background px-4 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/50 dark:border-white/10 dark:bg-slate-900 dark:focus:ring-cyan-300/60"
-              placeholder="fitness, real estate, skincare..."
-            />
-          </label>
-        ) : null}
+        <form
+          className="w-full rounded-3xl border border-border bg-background p-3 dark:border-white/10 dark:bg-slate-900/70 md:max-w-md"
+          onSubmit={handleGenerate}
+        >
+          {kind !== "fitness-ideas" ? (
+            <label className="block">
+              <span className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Topic or niche
+              </span>
+              <input
+                value={topic}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setTopic(value);
+                  if (!trackedUseRef.current && value.trim().length >= 3) {
+                    trackedUseRef.current = true;
+                    trackConversionEvent({
+                      event: "free_tool_used",
+                      context: { resourceKind: kind },
+                    });
+                  }
+                }}
+                className="mt-2 h-12 w-full rounded-2xl border border-border bg-card px-4 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/50 dark:border-white/10 dark:bg-slate-950 dark:focus:ring-cyan-300/60"
+                placeholder="fitness, real estate, skincare..."
+              />
+            </label>
+          ) : null}
+          <button
+            type="submit"
+            className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+          >
+            {hasGenerated ? "Refresh free preview" : "Generate free ideas"}
+            <Sparkles className="size-4" />
+          </button>
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            No credit card. No signup until you want to save or scan deeper.
+          </p>
+        </form>
       </div>
+
+      {!hasGenerated ? (
+        <div className="mt-7 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-4 text-sm leading-6 text-muted-foreground dark:border-cyan-300/25 dark:bg-cyan-400/5">
+          Enter a niche and generate a small preview first. The full app adds
+          live trend signals, source links, saved cards, and deeper analysis.
+        </div>
+      ) : null}
 
       <div
         className={cn(
@@ -223,7 +272,7 @@ export function FreeResourceWidget({
             : "lg:grid-cols-2",
         )}
       >
-        {rows.map((row, index) => {
+        {visibleRows.map((row, index) => {
           if (Array.isArray(row)) {
             const [label, format, idea] = row;
             return (
@@ -255,6 +304,35 @@ export function FreeResourceWidget({
           );
         })}
       </div>
+
+      {hasGenerated ? (
+        <div className="mt-7 rounded-3xl border border-primary/20 bg-primary/5 p-5 dark:border-cyan-300/25 dark:bg-cyan-400/5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold text-foreground">
+                Want the live trend version?
+              </p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                Create a free account to run real scans, save source links, and
+                turn the best ideas into calendar-ready cards.
+              </p>
+            </div>
+            <Link
+              href={`/signup?from=free-preview&resource=${kind}`}
+              onClick={() => {
+                trackConversionEvent({
+                  event: "signup_prompt_clicked",
+                  context: { resourceKind: kind },
+                });
+              }}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+            >
+              Save and scan deeper
+              <ArrowRight className="size-4" />
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

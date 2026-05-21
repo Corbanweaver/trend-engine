@@ -7,7 +7,10 @@ import type { ConversionEventName } from "@/lib/telemetry";
 
 const allowedConversionEvents = new Set<ConversionEventName>([
   "landing_page_viewed",
+  "landing_cta_clicked",
   "free_tool_used",
+  "free_tool_generated",
+  "signup_prompt_clicked",
   "signup_clicked",
   "signup_completed",
   "signup_google_clicked",

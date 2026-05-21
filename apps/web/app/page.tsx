@@ -27,6 +27,8 @@ import {
   nicheLandingPages,
   resourcePages,
 } from "@/lib/seo-content";
+import { ConversionLink } from "@/components/seo/conversion-link";
+import { FreeResourceWidget } from "@/components/seo/free-resource-widget";
 
 export const metadata: Metadata = {
   title:
@@ -347,21 +349,37 @@ export default function Home() {
         </p>
 
         <div className="mt-8 flex w-full max-w-sm flex-col items-stretch justify-center gap-3 sm:mt-12 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-          <Link
-            href="/dashboard"
+          <ConversionLink
+            href="#free-preview"
+            event="landing_cta_clicked"
+            eventContext={{
+              page: "home",
+              destination: "#free-preview",
+              placement: "hero_primary",
+            }}
             className="fluid-transition inline-flex min-h-12 items-center justify-center rounded-2xl bg-primary px-8 py-3 text-base font-bold text-primary-foreground shadow-[0_12px_28px_rgba(54,95,125,0.2)] hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_36px_rgba(54,95,125,0.24)] sm:px-10 sm:py-4 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
           >
-            Start Finding Trends
-          </Link>
-          <Link
+            Generate Free Ideas
+          </ConversionLink>
+          <ConversionLink
             href="/trending"
+            event="landing_cta_clicked"
+            eventContext={{
+              page: "home",
+              destination: "/trending",
+              placement: "hero_secondary",
+            }}
             className="fluid-transition inline-flex min-h-12 items-center justify-center rounded-2xl border border-border bg-card px-8 py-3 text-base font-semibold text-foreground hover:bg-muted sm:py-4 dark:border-white/15 dark:bg-slate-900/60 dark:hover:bg-slate-800"
           >
             See live trending
-          </Link>
+          </ConversionLink>
         </div>
 
         <MobileHeroPreview />
+      </section>
+
+      <section className="relative z-20 mx-auto w-full max-w-6xl px-6 py-12">
+        <FreeResourceWidget kind="hooks" defaultTopic="fitness creators" />
       </section>
 
       <HowItWorksSection steps={howSteps} />
@@ -381,12 +399,18 @@ export default function Home() {
               links, saved ideas, and full workflow tools.
             </p>
           </div>
-          <Link
+          <ConversionLink
             href="/free-tiktok-hook-ideas"
+            event="landing_cta_clicked"
+            eventContext={{
+              page: "home",
+              destination: "/free-tiktok-hook-ideas",
+              placement: "free_resources",
+            }}
             className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted dark:border-white/10 dark:bg-slate-900 dark:hover:bg-slate-800"
           >
             Try a free tool
-          </Link>
+          </ConversionLink>
         </div>
         <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {freeResourceLinks.map((resource) => (

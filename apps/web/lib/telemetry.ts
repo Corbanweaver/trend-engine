@@ -10,7 +10,10 @@ type TelemetryEvent = {
 
 export type ConversionEventName =
   | "landing_page_viewed"
+  | "landing_cta_clicked"
   | "free_tool_used"
+  | "free_tool_generated"
+  | "signup_prompt_clicked"
   | "signup_clicked"
   | "signup_completed"
   | "signup_google_clicked"
@@ -142,7 +145,8 @@ function sendGoogleAdsConversion(event: ConversionEvent): void {
   if (!sendTo) return;
 
   const value =
-    typeof event.context?.value === "number" && Number.isFinite(event.context.value)
+    typeof event.context?.value === "number" &&
+    Number.isFinite(event.context.value)
       ? event.context.value
       : 1;
   const currency =
