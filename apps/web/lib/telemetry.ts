@@ -45,8 +45,12 @@ const sensitiveKeyPattern =
 const attributionStorageKey = "trendboard:ad_attribution";
 const defaultGoogleAdsSignupSendTo = "AW-18175424255/vbasCLON2LAcEP_t29pD";
 const defaultGoogleAdsSubscribeSendTo = "AW-18175424255/vi8WCLaN2LAcEP_t29pD";
+const defaultGoogleAdsFreeToolSendTo = "AW-18175424255/H4X0CNLJ07EcEP_t29pD";
 const googleAdsConversionSendTo: Partial<Record<ConversionEventName, string>> =
   {
+    free_tool_generated:
+      process.env.NEXT_PUBLIC_GOOGLE_ADS_FREE_TOOL_CONVERSION_LABEL?.trim() ||
+      defaultGoogleAdsFreeToolSendTo,
     signup_completed:
       process.env.NEXT_PUBLIC_GOOGLE_ADS_SIGNUP_CONVERSION_LABEL?.trim() ||
       defaultGoogleAdsSignupSendTo,
