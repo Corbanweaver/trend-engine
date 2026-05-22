@@ -30,6 +30,7 @@ type OperationalEventRow = {
   source: string;
   message: string;
   user_id: string | null;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 };
 
@@ -67,6 +68,36 @@ function planLabel(plan: SubscriptionRow["plan"]) {
   if (plan === "creator") return "Creator";
   if (plan === "pro") return "Pro";
   return "Free";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function affiliateCodeFromMetadata(metadata: Record<string, unknown> | null) {
+  if (!metadata) return null;
+
+  const directRef =
+    typeof metadata.affiliate_ref === "string" ? metadata.affiliate_ref : null;
+  if (directRef) return directRef;
+
+  const affiliate = metadata.affiliate;
+  if (isRecord(affiliate) && typeof affiliate.code === "string") {
+    return affiliate.code;
+  }
+
+  const attribution = metadata.attribution;
+  if (isRecord(attribution)) {
+    const attributionAffiliate = attribution.affiliate;
+    if (
+      isRecord(attributionAffiliate) &&
+      typeof attributionAffiliate.code === "string"
+    ) {
+      return attributionAffiliate.code;
+    }
+  }
+
+  return null;
 }
 
 async function getCurrentUserEmail() {
@@ -150,6 +181,7 @@ export default async function AdminPage() {
     rateLimitsResult,
     openAiSpendResult,
     eventsResult,
+    affiliateEventsResult,
   ] = await Promise.all([
     admin
       .from("user_subscriptions")
@@ -180,9 +212,16 @@ export default async function AdminPage() {
       .limit(10),
     admin
       .from("operational_events")
-      .select("id, level, source, message, user_id, created_at")
+      .select("id, level, source, message, user_id, metadata, created_at")
       .order("created_at", { ascending: false })
       .limit(12),
+    admin
+      .from("operational_events")
+      .select("id, level, source, message, user_id, metadata, created_at")
+      .eq("source", "conversion")
+      .in("message", ["signup_completed", "checkout_completed"])
+      .order("created_at", { ascending: false })
+      .limit(500),
   ]);
 
   const subscriptions = (
@@ -268,6 +307,44 @@ export default async function AdminPage() {
       )
     : "No active window";
 
+  const affiliateStats = new Map<
+    string,
+    { signups: number; checkouts: number; lastSeen: string; users: Set<string> }
+  >();
+  for (const event of (affiliateEventsResult.data ??
+    []) as OperationalEventRow[]) {
+    const code = affiliateCodeFromMetadata(event.metadata);
+    if (!code) continue;
+    if (event.message === "signup_completed" && !event.user_id) continue;
+
+    const current =
+      affiliateStats.get(code) ??
+      {
+        signups: 0,
+        checkouts: 0,
+        lastSeen: event.created_at,
+        users: new Set<string>(),
+      };
+    if (event.message === "signup_completed") current.signups += 1;
+    if (event.message === "checkout_completed") current.checkouts += 1;
+    if (event.user_id) current.users.add(event.user_id);
+    if (Date.parse(event.created_at) > Date.parse(current.lastSeen)) {
+      current.lastSeen = event.created_at;
+    }
+    affiliateStats.set(code, current);
+  }
+
+  const affiliateRows = [...affiliateStats.entries()]
+    .map(([code, stats]) => ({ code, ...stats, users: stats.users.size }))
+    .sort((a, b) => {
+      if (b.checkouts !== a.checkouts) return b.checkouts - a.checkouts;
+      return b.signups - a.signups;
+    });
+  const affiliateSignupCount = affiliateRows.reduce(
+    (sum, row) => sum + row.signups,
+    0,
+  );
+
   type MetricCard = {
     label: string;
     value: number | string;
@@ -315,6 +392,11 @@ export default async function AdminPage() {
         openAiCostBudget.limit > 0
           ? `Window ${openAiBudgetUsagePercent}% used, resets ${openAiWindowResetsAt}`
           : "Set OPENAI_COST_BUDGET to enable.",
+    },
+    {
+      label: "Affiliate signups",
+      value: affiliateSignupCount,
+      helper: `${affiliateRows.length} creator codes`,
     },
   ];
   const events = (eventsResult.data ?? []) as OperationalEventRow[];
@@ -468,6 +550,56 @@ export default async function AdminPage() {
                 </p>
               )}
             </div>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-border bg-card p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold">Affiliate referrals</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Give creators links like{" "}
+                <span className="font-mono">
+                  https://www.contentideamaker.com/?ref=creator-code
+                </span>
+                . Codes are stored on signup and tracked in conversion events.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[560px] text-left text-sm">
+              <thead className="text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="py-2 pr-4">Creator code</th>
+                  <th className="py-2 pr-4">Signups</th>
+                  <th className="py-2 pr-4">Checkouts</th>
+                  <th className="py-2 pr-4">Users</th>
+                  <th className="py-2">Last seen</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {affiliateRows.slice(0, 20).map((row) => (
+                  <tr key={row.code}>
+                    <td className="py-2 pr-4 font-mono text-xs">
+                      {row.code}
+                    </td>
+                    <td className="py-2 pr-4 tabular-nums">{row.signups}</td>
+                    <td className="py-2 pr-4 tabular-nums">
+                      {row.checkouts}
+                    </td>
+                    <td className="py-2 pr-4 tabular-nums">{row.users}</td>
+                    <td className="py-2 text-muted-foreground">
+                      {formatDateTime(row.lastSeen)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {affiliateRows.length === 0 ? (
+              <p className="mt-3 rounded-xl border border-border bg-muted/30 px-3 py-4 text-sm text-muted-foreground">
+                No affiliate signups tracked yet.
+              </p>
+            ) : null}
           </div>
         </section>
 

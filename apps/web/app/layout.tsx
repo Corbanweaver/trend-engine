@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { FloatingAiAssistant } from "@/components/floating-ai-assistant";
+import { AffiliateAttributionCapture } from "@/components/analytics/affiliate-attribution-capture";
 import { GoogleAdsTag } from "@/components/analytics/google-ads-tag";
 import { PwaRegistration } from "@/components/pwa-registration";
 
@@ -185,6 +186,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${geistSans.className}`}
       >
         {children}
+        <AffiliateAttributionCapture />
         <GoogleAdsTag />
         <PwaRegistration />
         {showFloatingAssistant ? <FloatingAiAssistant /> : null}

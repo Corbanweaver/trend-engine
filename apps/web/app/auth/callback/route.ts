@@ -3,6 +3,12 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 
+import {
+  affiliateToSignupMetadata,
+  getAffiliateFromSearchParams,
+} from "@/lib/affiliate-attribution";
+import { recordConversionEvent } from "@/lib/conversion-events";
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -23,6 +29,13 @@ function getOtpType(value: string | null): EmailOtpType {
     return value;
   }
   return "signup";
+}
+
+function isLikelyNewAffiliateSignup(createdAt: string | undefined, type: string | null) {
+  if (type === "signup" || type === "invite") return true;
+  const createdTime = createdAt ? Date.parse(createdAt) : Number.NaN;
+  if (Number.isNaN(createdTime)) return false;
+  return Date.now() - createdTime < 30 * 60 * 1000;
 }
 
 function fragmentFallbackHtml(next: string) {
@@ -85,6 +98,10 @@ export async function GET(request: Request) {
   const requestedNext = safeNext(requestUrl.searchParams.get("next"));
   const isRecoveryLink = type === "recovery" || requestedNext === "/reset-password";
   const next = isRecoveryLink ? "/reset-password" : requestedNext;
+  const affiliate = getAffiliateFromSearchParams(
+    requestUrl.searchParams,
+    requestedNext,
+  );
   const response = NextResponse.redirect(new URL(next, requestUrl.origin));
 
   if (!code && !tokenHash) {
@@ -113,16 +130,46 @@ export async function GET(request: Request) {
 
   try {
     if (code) {
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) throw error;
+      if (
+        affiliate &&
+        data.user &&
+        isLikelyNewAffiliateSignup(data.user.created_at, type)
+      ) {
+        await recordConversionEvent({
+          event: "signup_completed",
+          userId: data.user.id,
+          metadata: {
+            method: "auth_callback",
+            affiliate,
+            ...affiliateToSignupMetadata(affiliate),
+          },
+        });
+      }
       return response;
     }
 
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash ?? "",
       type: getOtpType(type ?? (isRecoveryLink ? "recovery" : null)),
     });
     if (error) throw error;
+    if (
+      affiliate &&
+      data.user &&
+      isLikelyNewAffiliateSignup(data.user.created_at, type)
+    ) {
+      await recordConversionEvent({
+        event: "signup_completed",
+        userId: data.user.id,
+        metadata: {
+          method: type ?? "email_confirmation",
+          affiliate,
+          ...affiliateToSignupMetadata(affiliate),
+        },
+      });
+    }
     return response;
   } catch (error) {
     console.error("Supabase auth callback failed:", error);

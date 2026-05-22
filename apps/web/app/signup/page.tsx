@@ -7,6 +7,11 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 
+import {
+  affiliateToSignupMetadata,
+  appendAffiliateToUrl,
+  captureAffiliateAttribution,
+} from "@/lib/affiliate-attribution";
 import { getPasswordStrength } from "@/lib/password-strength";
 import { getSupabaseClient } from "@/lib/supabase";
 import { trackConversionEvent } from "@/lib/telemetry";
@@ -38,16 +43,22 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
+      const affiliate = captureAffiliateAttribution();
       trackConversionEvent({
         event: "signup_clicked",
-        context: { method: "email" },
+        context: { method: "email", affiliate },
       });
       const supabase = getSupabaseClient();
+      const callbackUrl = appendAffiliateToUrl(
+        `${window.location.origin}/auth/callback?next=/dashboard`,
+        affiliate,
+      );
       const { error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          emailRedirectTo: callbackUrl,
+          data: affiliateToSignupMetadata(affiliate),
         },
       });
       if (authError) {
@@ -60,7 +71,7 @@ export default function SignupPage() {
       );
       trackConversionEvent({
         event: "signup_completed",
-        context: { method: "email" },
+        context: { method: "email", affiliate },
       });
       window.setTimeout(() => {
         router.push("/login?verify=1");
@@ -77,15 +88,20 @@ export default function SignupPage() {
     setSuccess(null);
     setLoading(true);
     try {
+      const affiliate = captureAffiliateAttribution();
       trackConversionEvent({
         event: "signup_google_clicked",
-        context: { method: "google" },
+        context: { method: "google", affiliate },
       });
       const supabase = getSupabaseClient();
+      const callbackUrl = appendAffiliateToUrl(
+        `${window.location.origin}/auth/callback?next=/dashboard`,
+        affiliate,
+      );
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          redirectTo: callbackUrl,
         },
       });
       if (oauthError) setError(oauthError.message);

@@ -348,7 +348,7 @@ export function FloatingAiAssistant() {
       </button>
 
       {open ? (
-        <section className="fixed bottom-24 right-5 z-[80] flex h-[540px] w-[min(95vw,380px)] flex-col overflow-hidden rounded-2xl border border-border bg-card text-foreground shadow-2xl dark:border-white/15 dark:bg-slate-950 dark:text-slate-100">
+        <section className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+5rem)] top-14 z-[80] flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-foreground shadow-2xl dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 sm:inset-x-auto sm:bottom-24 sm:right-5 sm:top-auto sm:h-[540px] sm:w-[min(95vw,380px)]">
           <header className="flex items-center justify-between border-b border-border px-4 py-3 dark:border-white/10">
             <div className="flex items-center gap-2">
               <Bot className="size-4 text-primary dark:text-cyan-300" />
@@ -359,6 +359,14 @@ export function FloatingAiAssistant() {
                 </p>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="inline-flex size-9 items-center justify-center rounded-full border border-border bg-muted/60 text-muted-foreground transition hover:bg-muted hover:text-foreground dark:border-white/15 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+              aria-label="Close AI Assistant"
+            >
+              <X className="size-4" />
+            </button>
           </header>
 
           <div className="flex-1 space-y-3 overflow-y-auto px-3 py-3">

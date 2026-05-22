@@ -1,3 +1,5 @@
+import { captureAffiliateAttribution } from "@/lib/affiliate-attribution";
+
 type TelemetryLevel = "info" | "warn" | "error";
 
 type TelemetryEvent = {
@@ -204,6 +206,7 @@ export function trackUiEvent(event: TelemetryEvent): void {
 export function trackConversionEvent(event: ConversionEvent): void {
   if (typeof window === "undefined") return;
   const attribution = captureAttribution();
+  const affiliate = captureAffiliateAttribution();
   sendGoogleAdsConversion(event);
 
   const payload = JSON.stringify({
@@ -212,6 +215,7 @@ export function trackConversionEvent(event: ConversionEvent): void {
     context: sanitizeContext({
       ...event.context,
       attribution,
+      affiliate,
     }),
     ts: new Date().toISOString(),
   });
