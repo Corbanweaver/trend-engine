@@ -28,9 +28,10 @@ const planToPriceId: Record<string, string | undefined> = {
 };
 
 const creatorAffiliateCouponIds: Record<string, string> = {
-  cougar: "RpDuZLhx",
-  connor: "GcaoerYs",
-  adam: "X6WjjfOk",
+  boulder: "XFR7uOI2",
+  "mr-evil": "MSsjegia",
+  mrevil: "MSsjegia",
+  slushy: "xh6bxk07",
 };
 
 type UserSubscriptionRow = {

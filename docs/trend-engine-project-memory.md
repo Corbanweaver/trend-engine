@@ -60,9 +60,9 @@ Creator links do not need to be pre-created in the app. The tracking code is the
 
 Examples:
 
-- Cougar: `https://www.contentideamaker.com/?ref=cougar`
-- Connor: `https://www.contentideamaker.com/?ref=connor`
-- Adam: `https://www.contentideamaker.com/?ref=adam`
+- Slushy: `https://www.contentideamaker.com/?ref=slushy`
+- Mr.Evil: `https://www.contentideamaker.com/?ref=mr-evil`
+- Boulder: `https://www.contentideamaker.com/?ref=boulder`
 
 Supported query parameters:
 
@@ -77,9 +77,9 @@ The code is captured in browser localStorage, sent with conversion events, and a
 
 Creator discounts were added through Stripe coupons and app-side auto-apply logic:
 
-- `?ref=cougar` applies coupon `RpDuZLhx`, named `COUGAR20`
-- `?ref=connor` applies coupon `GcaoerYs`, named `CONNOR20`
-- `?ref=adam` applies coupon `X6WjjfOk`, named `BOULDER20`
+- `?ref=slushy` applies coupon `xh6bxk07`, named `SLUSHY`
+- `?ref=mr-evil` applies coupon `MSsjegia`, named `MREVIL`
+- `?ref=boulder` applies coupon `XFR7uOI2`, named `BOULDER`
 
 These are coupons auto-applied by the creator link. If customers need to type a code manually in Stripe Checkout, create Stripe Promotion Codes on top of those coupons in the Stripe dashboard.
 
@@ -263,7 +263,7 @@ pnpm run monitor:production
    - Signup conversions
    - Checkout conversions
 7. If ad clicks are not producing signups, improve the landing page/signup bridge before increasing ad spend.
-8. Start low-cost affiliate outreach with Cougar, Connor, Adam, and 5-10 niche creators.
+8. Start low-cost affiliate outreach with Slushy, Mr.Evil, Boulder, and 5-10 niche creators.
 
 ## How To Continue In A New Chat
 

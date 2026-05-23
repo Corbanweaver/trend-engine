@@ -27,15 +27,15 @@ Do not bury disclosure at the end of a long caption, hide it only on a separate 
 
 ## Outreach Shortlist
 
-- Cougar: `https://www.contentideamaker.com/?ref=cougar`
-- Connor: `https://www.contentideamaker.com/?ref=connor`
-- Adam: `https://www.contentideamaker.com/?ref=adam`
+- Slushy: `https://www.contentideamaker.com/?ref=slushy`
+- Mr.Evil: `https://www.contentideamaker.com/?ref=mr-evil`
+- Boulder: `https://www.contentideamaker.com/?ref=boulder`
 
 Stripe coupon IDs currently wired for auto-discount checkout:
 
-- Cougar / COUGAR20 coupon: `RpDuZLhx`
-- Connor / CONNOR20 coupon: `GcaoerYs`
-- Adam / BOULDER20 coupon: `X6WjjfOk`
+- Slushy / SLUSHY coupon: `xh6bxk07`
+- Mr.Evil / MREVIL coupon: `MSsjegia`
+- Boulder / BOULDER coupon: `XFR7uOI2`
 
 Add only 5-10 more creators at first. Prefer people who already teach creator workflow, content calendars, trend research, hooks, short-form video, or niche-specific content strategy.
 
