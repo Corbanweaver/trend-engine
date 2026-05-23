@@ -9,6 +9,7 @@ Start with a small manual program before adding a public affiliate portal. Use c
 ## Starter Offer
 
 - Payout: $10 per first paid customer, or 25% of the first month if negotiated.
+- Customer discount: 20% off the first month is auto-applied when checkout starts from an approved creator link.
 - Eligible event: first paid subscription attributed to the creator code.
 - Not eligible: free signups, self-referrals, refunds, chargebacks, duplicate accounts, spam, coupon abuse, or paid search on TrendBoard/contentideamaker branded terms.
 - Review window: wait 30 days after payment before payout.
@@ -30,6 +31,12 @@ Do not bury disclosure at the end of a long caption, hide it only on a separate 
 - Connor: `https://www.contentideamaker.com/?ref=connor`
 - Adam: `https://www.contentideamaker.com/?ref=adam`
 
+Stripe coupon IDs currently wired for auto-discount checkout:
+
+- Cougar / COUGAR20 coupon: `RpDuZLhx`
+- Connor / CONNOR20 coupon: `GcaoerYs`
+- Adam / ADAM20 coupon: `dJ1jroE2`
+
 Add only 5-10 more creators at first. Prefer people who already teach creator workflow, content calendars, trend research, hooks, short-form video, or niche-specific content strategy.
 
 ## DM Template
@@ -41,6 +48,8 @@ Your link would be:
 `https://www.contentideamaker.com/?ref=[code]`
 
 The starter payout is $10 for each first paid customer after the refund window. Free signups are useful for testing, but payouts are for paid customers only. If you share it, please disclose the referral clearly near the link, for example: "I may earn a commission if you subscribe."
+
+People who start checkout through your link should get 20% off their first month automatically.
 
 Want me to set you up with a code and a quick product walkthrough?
 

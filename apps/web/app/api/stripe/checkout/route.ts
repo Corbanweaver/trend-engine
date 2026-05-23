@@ -27,6 +27,12 @@ const planToPriceId: Record<string, string | undefined> = {
   pro: proPriceId,
 };
 
+const creatorAffiliateCouponIds: Record<string, string> = {
+  cougar: "RpDuZLhx",
+  connor: "GcaoerYs",
+  adam: "dJ1jroE2",
+};
+
 type UserSubscriptionRow = {
   stripe_customer_id: string | null;
 };
@@ -151,6 +157,9 @@ export async function POST(request: Request) {
     const affiliate =
       checkoutAffiliate ?? getAffiliateFromMetadata(user.user_metadata);
     const affiliateMetadata = affiliateToStripeMetadata(affiliate);
+    const affiliateCouponId = affiliate
+      ? creatorAffiliateCouponIds[affiliate.code]
+      : undefined;
 
     const { data: subscription } = await supabase
       .from("user_subscriptions")
@@ -171,7 +180,9 @@ export async function POST(request: Request) {
         selectedPlan,
       )}&checkout_session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/pricing?checkout=cancelled`,
-      allow_promotion_codes: true,
+      ...(affiliateCouponId
+        ? { discounts: [{ coupon: affiliateCouponId }] }
+        : { allow_promotion_codes: true }),
       ...checkoutCustomer,
       client_reference_id: user.id,
       subscription_data: {
@@ -202,6 +213,7 @@ export async function POST(request: Request) {
         plan: selectedPlan,
         sessionId: session.id,
         reusedStripeRecord: Boolean(subscription?.stripe_customer_id),
+        affiliateCouponId,
         affiliate,
         ...affiliateMetadata,
       },
