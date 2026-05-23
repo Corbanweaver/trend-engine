@@ -12,6 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 
+import { AffiliateCheckoutFields } from "@/components/affiliate-checkout-fields";
 import { CREDIT_COSTS, CREDIT_LIMITS } from "@/lib/credits";
 
 export const metadata: Metadata = {
@@ -394,6 +395,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
               ) : (
                 <form action={plan.ctaHref} method="POST">
                   <input type="hidden" name="plan" value={plan.planKey} />
+                  <AffiliateCheckoutFields />
                   <button
                     type="submit"
                     className={

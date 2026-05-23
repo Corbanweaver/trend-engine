@@ -18,6 +18,14 @@ export type AffiliateAttribution = {
   capturedAt: string;
 };
 
+type AffiliateMetadata = {
+  affiliate_ref?: unknown;
+  affiliate_param?: unknown;
+  affiliate_landing_path?: unknown;
+  affiliate_captured_at?: unknown;
+  affiliate?: unknown;
+};
+
 function isAffiliateParamKey(value: string): value is AffiliateParamKey {
   return (affiliateParamKeys as readonly string[]).includes(value);
 }
@@ -62,6 +70,25 @@ function normalizeAttribution(value: unknown): AffiliateAttribution | null {
   };
 }
 
+function normalizeParam(value: unknown): AffiliateParamKey {
+  return typeof value === "string" && isAffiliateParamKey(value)
+    ? value
+    : "ref";
+}
+
+function normalizeLandingPath(value: unknown): string {
+  if (typeof value !== "string") return "/";
+  return value.startsWith("/") && !value.startsWith("//")
+    ? value.slice(0, 180)
+    : "/";
+}
+
+function normalizeCapturedAt(value: unknown): string {
+  if (typeof value !== "string") return new Date().toISOString();
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? new Date().toISOString() : value;
+}
+
 export function readAffiliateAttribution(): AffiliateAttribution | null {
   if (typeof window === "undefined") return null;
 
@@ -93,6 +120,46 @@ export function getAffiliateFromSearchParams(
   }
 
   return null;
+}
+
+export function getAffiliateFromMetadata(
+  metadata: AffiliateMetadata | null | undefined,
+): AffiliateAttribution | null {
+  if (!metadata) return null;
+
+  const directCode = normalizeAffiliateCode(
+    typeof metadata.affiliate_ref === "string"
+      ? metadata.affiliate_ref
+      : undefined,
+  );
+  if (directCode) {
+    return {
+      code: directCode,
+      param: normalizeParam(metadata.affiliate_param),
+      landingPath: normalizeLandingPath(metadata.affiliate_landing_path),
+      capturedAt: normalizeCapturedAt(metadata.affiliate_captured_at),
+    };
+  }
+
+  return normalizeAttribution(metadata.affiliate);
+}
+
+export function getAffiliateFromFormData(
+  formData: FormData,
+): AffiliateAttribution | null {
+  const code = normalizeAffiliateCode(
+    typeof formData.get("affiliate_ref") === "string"
+      ? String(formData.get("affiliate_ref"))
+      : undefined,
+  );
+  if (!code) return null;
+
+  return {
+    code,
+    param: normalizeParam(formData.get("affiliate_param")),
+    landingPath: normalizeLandingPath(formData.get("affiliate_landing_path")),
+    capturedAt: normalizeCapturedAt(formData.get("affiliate_captured_at")),
+  };
 }
 
 export function captureAffiliateAttribution(): AffiliateAttribution | null {
@@ -131,6 +198,18 @@ export function affiliateToSignupMetadata(
   affiliate: AffiliateAttribution | null,
 ) {
   if (!affiliate) return undefined;
+  return {
+    affiliate_ref: affiliate.code,
+    affiliate_param: affiliate.param,
+    affiliate_landing_path: affiliate.landingPath,
+    affiliate_captured_at: affiliate.capturedAt,
+  };
+}
+
+export function affiliateToStripeMetadata(
+  affiliate: AffiliateAttribution | null,
+): Record<string, string> {
+  if (!affiliate) return {};
   return {
     affiliate_ref: affiliate.code,
     affiliate_param: affiliate.param,

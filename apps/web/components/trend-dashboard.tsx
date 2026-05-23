@@ -111,6 +111,11 @@ type TrendIdeasApiResponse = TrendIdeasResponse & {
   error?: string;
 };
 
+const checkoutConversionValues: Record<string, number> = {
+  creator: 19.99,
+  pro: 49.99,
+};
+
 function formatPlanLabel(plan: SubscriptionPlan): "Free" | "Creator" | "Pro" {
   if (plan === "creator") return "Creator";
   if (plan === "pro") return "Pro";
@@ -1071,6 +1076,10 @@ export function TrendDashboard() {
   useEffect(() => {
     const url = new URL(window.location.href);
     if (url.searchParams.get("success") !== "true") return;
+    const checkoutPlan = (url.searchParams.get("plan") ?? "").toLowerCase();
+    const checkoutSessionId = (
+      url.searchParams.get("checkout_session_id") ?? ""
+    ).trim();
 
     const trackingKey = `trend_dashboard:checkout_completed:${url.search}`;
     try {
@@ -1082,9 +1091,21 @@ export function TrendDashboard() {
 
     trackConversionEvent({
       event: "checkout_completed",
-      context: { source: "stripe_success_redirect" },
+      context: {
+        source: "stripe_success_redirect",
+        currency: "USD",
+        ...(checkoutPlan in checkoutConversionValues
+          ? {
+              plan: checkoutPlan,
+              value: checkoutConversionValues[checkoutPlan],
+            }
+          : {}),
+        ...(checkoutSessionId ? { transactionId: checkoutSessionId } : {}),
+      },
     });
     url.searchParams.delete("success");
+    url.searchParams.delete("plan");
+    url.searchParams.delete("checkout_session_id");
     window.history.replaceState({}, "", `${url.pathname}${url.search}`);
   }, []);
 

@@ -48,6 +48,17 @@ export default function TermsPage() {
             depend on usage, timing, and payment processor status.
           </p>
           <p>
+            Creator referrals and affiliate payouts are governed by the{" "}
+            <Link
+              href="/affiliate-terms"
+              className="font-medium text-primary hover:underline"
+            >
+              Affiliate Terms
+            </Link>
+            . Participants must use honest endorsements and clear disclosures
+            when sharing TrendBoard links or codes.
+          </p>
+          <p>
             TrendBoard may change features, pricing, credits, or these terms as
             the product evolves. Continued use means you accept the current
             terms.

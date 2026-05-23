@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
+import {
+  affiliateToStripeMetadata,
+  getAffiliateFromMetadata,
+} from "@/lib/affiliate-attribution";
 import { recordConversionEvent } from "@/lib/conversion-events";
 import { recordOperationalEvent } from "@/lib/server-events";
 
@@ -341,6 +345,7 @@ export async function POST(request: Request) {
       let currentPeriodEnd: string | null = null;
       const subscriptionId =
         typeof session.subscription === "string" ? session.subscription : null;
+      let affiliate = getAffiliateFromMetadata(session.metadata);
       if (subscriptionId) {
         const subscription =
           await stripe.subscriptions.retrieve(subscriptionId);
@@ -351,7 +356,10 @@ export async function POST(request: Request) {
         if (subscriptionPlan !== "free") {
           pricePlan = subscriptionPlan;
         }
+        affiliate =
+          affiliate ?? getAffiliateFromMetadata(subscription.metadata);
       }
+      const affiliateMetadata = affiliateToStripeMetadata(affiliate);
 
       const result = await upsertUserSubscription({
         userId,
@@ -374,6 +382,8 @@ export async function POST(request: Request) {
           sessionId: session.id,
           subscriptionId,
           status,
+          affiliate,
+          ...affiliateMetadata,
         },
       });
     }

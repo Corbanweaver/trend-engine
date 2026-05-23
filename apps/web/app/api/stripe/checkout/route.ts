@@ -3,6 +3,11 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import {
+  affiliateToStripeMetadata,
+  getAffiliateFromFormData,
+  getAffiliateFromMetadata,
+} from "@/lib/affiliate-attribution";
 import { recordConversionEvent } from "@/lib/conversion-events";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -105,6 +110,7 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const selectedPlan = String(formData.get("plan") ?? "").toLowerCase();
+  const checkoutAffiliate = getAffiliateFromFormData(formData);
   const priceId = planToPriceId[selectedPlan];
 
   if (!priceId) {
@@ -142,6 +148,9 @@ export async function POST(request: Request) {
         303,
       );
     }
+    const affiliate =
+      checkoutAffiliate ?? getAffiliateFromMetadata(user.user_metadata);
+    const affiliateMetadata = affiliateToStripeMetadata(affiliate);
 
     const { data: subscription } = await supabase
       .from("user_subscriptions")
@@ -158,7 +167,9 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${siteUrl}/dashboard?success=true`,
+      success_url: `${siteUrl}/dashboard?success=true&plan=${encodeURIComponent(
+        selectedPlan,
+      )}&checkout_session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/pricing?checkout=cancelled`,
       allow_promotion_codes: true,
       ...checkoutCustomer,
@@ -167,11 +178,13 @@ export async function POST(request: Request) {
         metadata: {
           user_id: user.id,
           plan: selectedPlan,
+          ...affiliateMetadata,
         },
       },
       metadata: {
         user_id: user.id,
         plan: selectedPlan,
+        ...affiliateMetadata,
       },
     });
 
@@ -189,6 +202,8 @@ export async function POST(request: Request) {
         plan: selectedPlan,
         sessionId: session.id,
         reusedStripeRecord: Boolean(subscription?.stripe_customer_id),
+        affiliate,
+        ...affiliateMetadata,
       },
     });
 
