@@ -79,7 +79,7 @@ Creator discounts were added through Stripe coupons and app-side auto-apply logi
 
 - `?ref=cougar` applies coupon `RpDuZLhx`, named `COUGAR20`
 - `?ref=connor` applies coupon `GcaoerYs`, named `CONNOR20`
-- `?ref=adam` applies coupon `dJ1jroE2`, named `ADAM20`
+- `?ref=adam` applies coupon `X6WjjfOk`, named `BOULDER20`
 
 These are coupons auto-applied by the creator link. If customers need to type a code manually in Stripe Checkout, create Stripe Promotion Codes on top of those coupons in the Stripe dashboard.
 

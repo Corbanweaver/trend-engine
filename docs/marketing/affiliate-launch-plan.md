@@ -35,7 +35,7 @@ Stripe coupon IDs currently wired for auto-discount checkout:
 
 - Cougar / COUGAR20 coupon: `RpDuZLhx`
 - Connor / CONNOR20 coupon: `GcaoerYs`
-- Adam / ADAM20 coupon: `dJ1jroE2`
+- Adam / BOULDER20 coupon: `X6WjjfOk`
 
 Add only 5-10 more creators at first. Prefer people who already teach creator workflow, content calendars, trend research, hooks, short-form video, or niche-specific content strategy.
 
