@@ -39,6 +39,11 @@ const publicCacheHeader = {
   value: "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400",
 };
 
+const privateNoStoreHeader = {
+  key: "Cache-Control",
+  value: "private, no-cache, no-store, max-age=0, must-revalidate",
+};
+
 const publicPageSources = [
   "/",
   "/about",
@@ -71,6 +76,30 @@ const publicPageSources = [
   "/youtube-shorts-ideas",
 ];
 
+const privatePageSources = [
+  "/admin",
+  "/admin/:path*",
+  "/alerts",
+  "/alerts/:path*",
+  "/analytics",
+  "/analytics/:path*",
+  "/api/:path*",
+  "/auth/:path*",
+  "/calendar",
+  "/calendar/:path*",
+  "/dashboard",
+  "/dashboard/:path*",
+  "/forgot-password",
+  "/login",
+  "/pricing",
+  "/profile",
+  "/profile/:path*",
+  "/reset-password",
+  "/saved",
+  "/saved/:path*",
+  "/signup",
+];
+
 /**
  * Monorepo: trace files from the repository root so serverless bundles resolve
  * correctly when the Vercel "Root Directory" is `apps/web`.
@@ -87,6 +116,10 @@ const nextConfig: NextConfig = {
       ...publicPageSources.map((source) => ({
         source,
         headers: [publicCacheHeader],
+      })),
+      ...privatePageSources.map((source) => ({
+        source,
+        headers: [privateNoStoreHeader],
       })),
     ];
   },
