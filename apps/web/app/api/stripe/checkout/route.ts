@@ -28,7 +28,9 @@ const planToPriceId: Record<string, string | undefined> = {
 };
 
 const creatorAffiliateCouponIds: Record<string, string> = {
+  billy: "5ONfpz7t",
   boulder: "XFR7uOI2",
+  mason: "HNsUzQwm",
   "mr-evil": "MSsjegia",
   mrevil: "MSsjegia",
   slushy: "xh6bxk07",

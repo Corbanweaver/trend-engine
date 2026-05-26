@@ -30,12 +30,16 @@ Do not bury disclosure at the end of a long caption, hide it only on a separate 
 - Slushy: `https://www.contentideamaker.com/?ref=slushy`
 - Mr.Evil: `https://www.contentideamaker.com/?ref=mr-evil`
 - Boulder: `https://www.contentideamaker.com/?ref=boulder`
+- Billy: `https://www.contentideamaker.com/?ref=billy`
+- Mason: `https://www.contentideamaker.com/?ref=mason`
 
 Stripe coupon IDs currently wired for auto-discount checkout:
 
 - Slushy / SLUSHY coupon: `xh6bxk07`
 - Mr.Evil / MREVIL coupon: `MSsjegia`
 - Boulder / BOULDER coupon: `XFR7uOI2`
+- Billy / BILLY coupon: `5ONfpz7t`
+- Mason / MASON coupon: `HNsUzQwm`
 
 Add only 5-10 more creators at first. Prefer people who already teach creator workflow, content calendars, trend research, hooks, short-form video, or niche-specific content strategy.
 
