@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { FloatingAiAssistant } from "@/components/floating-ai-assistant";
 import { TrendDashboard } from "@/components/trend-dashboard";
 
 export const metadata: Metadata = {
@@ -11,5 +12,10 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default function DashboardPage() {
-  return <TrendDashboard />;
+  return (
+    <>
+      <TrendDashboard />
+      <FloatingAiAssistant />
+    </>
+  );
 }

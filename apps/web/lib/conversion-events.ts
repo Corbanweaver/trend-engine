@@ -86,14 +86,16 @@ export async function recordConversionEvent({
       userId: userId ?? null,
       ...safeMetadata,
     });
-    return;
+    return { recorded: false, storage: "console" as const };
   }
 
-  await recordOperationalEvent(admin, {
+  const recorded = await recordOperationalEvent(admin, {
     level: "info",
     source: "conversion",
     message: event,
     userId: userId ?? null,
     metadata: safeMetadata,
   });
+
+  return { recorded, storage: "supabase" as const };
 }

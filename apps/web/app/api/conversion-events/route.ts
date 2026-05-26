@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid event" }, { status: 400 });
   }
 
-  await recordConversionEvent({
+  const result = await recordConversionEvent({
     event: payload.event,
     metadata: sanitizeMetadata({
       path: typeof payload.path === "string" ? payload.path : undefined,
@@ -65,5 +65,5 @@ export async function POST(request: Request) {
     }),
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, ...result });
 }

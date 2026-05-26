@@ -33,5 +33,8 @@ export async function recordOperationalEvent(
 
   if (error) {
     console.error("Failed to record operational event:", error);
+    return false;
   }
+
+  return true;
 }

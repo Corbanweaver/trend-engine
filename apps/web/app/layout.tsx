@@ -1,8 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import { FloatingAiAssistant } from "@/components/floating-ai-assistant";
 import { AffiliateAttributionCapture } from "@/components/analytics/affiliate-attribution-capture";
 import { GoogleAdsTag } from "@/components/analytics/google-ads-tag";
 import { PwaRegistration } from "@/components/pwa-registration";
@@ -120,40 +117,11 @@ const softwareJsonLd = {
   ],
 };
 
-async function hasAuthenticatedUser() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return false;
-  }
-
-  const cookieStore = await cookies();
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
-      },
-      setAll() {
-        // Root layout only needs to read auth state for conditional UI.
-      },
-    },
-  });
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  return Boolean(user);
-}
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const showFloatingAssistant = await hasAuthenticatedUser();
-
   return (
     <html lang="en" className="dark">
       <head>
@@ -189,7 +157,6 @@ export default async function RootLayout({
         <AffiliateAttributionCapture />
         <GoogleAdsTag />
         <PwaRegistration />
-        {showFloatingAssistant ? <FloatingAiAssistant /> : null}
       </body>
     </html>
   );
