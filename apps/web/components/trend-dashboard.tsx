@@ -14,6 +14,7 @@ import {
   Search,
   Sparkles,
   Star,
+  AtSign,
   Instagram,
   Calendar,
   Bookmark,
@@ -21,6 +22,7 @@ import {
   UserRound,
   Bell,
   ShieldCheck,
+  Lock,
   type LucideIcon,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
@@ -109,6 +111,19 @@ type TrendIdeasApiResponse = TrendIdeasResponse & {
   credits?: CreditSnapshot;
   requiredCredits?: number;
   error?: string;
+};
+
+type HandleNicheApiResponse = {
+  handle?: string;
+  platform?: string | null;
+  niche?: string;
+  nicheLabel?: string;
+  confidence?: "high" | "medium" | "low";
+  signals?: string[];
+  reasoning?: string;
+  sourceCount?: number;
+  error?: string;
+  upgradeUrl?: string;
 };
 
 const checkoutConversionValues: Record<string, number> = {
@@ -226,6 +241,21 @@ async function fetchTrendIdeas(niche: string): Promise<TrendIdeasApiResponse> {
   }
 
   return res.json() as Promise<TrendIdeasApiResponse>;
+}
+
+async function fetchNicheFromHandle(
+  handle: string,
+): Promise<HandleNicheApiResponse> {
+  const res = await fetch("/api/niche-from-handle", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ handle }),
+  });
+  const body = (await res.json().catch(() => ({}))) as HandleNicheApiResponse;
+  if (!res.ok) {
+    throw new Error(body.error || `Request failed (${res.status})`);
+  }
+  return body;
 }
 
 function formatShortDate(value: string | null | undefined) {
@@ -1055,6 +1085,13 @@ export function TrendDashboard() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackSent, setFeedbackSent] = useState(false);
+  const [creatorHandle, setCreatorHandle] = useState("");
+  const [handleLookupLoading, setHandleLookupLoading] = useState(false);
+  const [handleLookupMessage, setHandleLookupMessage] = useState<string | null>(
+    null,
+  );
+  const [handleLookupResult, setHandleLookupResult] =
+    useState<HandleNicheApiResponse | null>(null);
   const saveIdeaLocksRef = useRef<Set<string>>(new Set());
 
   const applyCreditSnapshot = useCallback((snapshot: CreditSnapshot) => {
@@ -1196,6 +1233,69 @@ export function TrendDashboard() {
     const match = findNicheOption(value);
     setNicheKey(match?.value ?? "custom");
   }, []);
+
+  const runHandleNicheLookup = useCallback(async () => {
+    const handle = creatorHandle.trim();
+    setHandleLookupResult(null);
+
+    if (!handle) {
+      setHandleLookupMessage("Paste your public handle or profile URL first.");
+      return;
+    }
+
+    trackConversionEvent({
+      event: "handle_niche_lookup_clicked",
+      context: {
+        plan,
+        isAdmin,
+        locked: !isAdmin && plan === "free",
+      },
+    });
+
+    if (subscriptionLoading) {
+      setHandleLookupMessage("Checking your plan. Try again in a second.");
+      return;
+    }
+
+    if (!isAdmin && plan === "free") {
+      setHandleLookupMessage(
+        "Handle niche finder is included with Creator and Pro. Upgrade to unlock it.",
+      );
+      return;
+    }
+
+    setHandleLookupLoading(true);
+    setHandleLookupMessage(null);
+    try {
+      const result = await fetchNicheFromHandle(handle);
+      const niche = (result.niche ?? "").trim();
+      if (!niche) {
+        throw new Error("No niche came back for that handle.");
+      }
+      chooseNiche(niche);
+      setHandleLookupResult(result);
+      setHandleLookupMessage(
+        `Detected ${result.nicheLabel ?? getNicheDisplayLabel(niche)}. It is loaded as your scan niche.`,
+      );
+      trackConversionEvent({
+        event: "handle_niche_lookup_completed",
+        context: {
+          niche,
+          confidence: result.confidence,
+          platform: result.platform ?? undefined,
+          sourceCount: result.sourceCount ?? 0,
+        },
+      });
+    } catch (lookupError) {
+      setHandleLookupMessage(
+        lookupError instanceof Error
+          ? lookupError.message
+          : "Could not read that handle yet.",
+      );
+    } finally {
+      setHandleLookupLoading(false);
+    }
+  }, [chooseNiche, creatorHandle, isAdmin, plan, subscriptionLoading]);
 
   const selectedTrend =
     data && selectedIndex !== null
@@ -1496,6 +1596,9 @@ export function TrendDashboard() {
 
   const analysisCreditBlocked =
     !isAdmin && creditsRemaining < CREDIT_COSTS.analysis;
+  const handleFinderLocked = !isAdmin && plan === "free";
+  const handleLookupDisabled =
+    handleLookupLoading || subscriptionLoading || !creatorHandle.trim();
   const favoriteOptions = favoriteNiches
     .filter((value) => Boolean(getNicheStorageValue(value)))
     .map((value) => ({
@@ -1964,6 +2067,142 @@ export function TrendDashboard() {
               </Button>
             </div>
           </div>
+
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void runHandleNicheLookup();
+            }}
+            className="creator-studio-panel relative overflow-hidden rounded-[1.75rem] border border-border p-3 sm:p-4"
+          >
+            <div
+              className="pointer-events-none absolute right-6 top-4 hidden size-20 rounded-full bg-[#f3bd48]/30 blur-2xl sm:block"
+              aria-hidden="true"
+            />
+            <div className="relative flex flex-col gap-3 xl:flex-row xl:items-center">
+              <div className="flex min-w-0 flex-1 items-start gap-3">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-[1.1rem] bg-white text-primary shadow-sm">
+                  <AtSign className="size-5" />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-base font-bold text-foreground">
+                      Find your niche from your handle
+                    </h2>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold",
+                        handleFinderLocked
+                          ? "border-[#e45d7d]/25 bg-[#e45d7d]/10 text-[#9d2d4c]"
+                          : "border-[#1f7a8c]/25 bg-[#1f7a8c]/10 text-primary",
+                      )}
+                    >
+                      {handleFinderLocked ? (
+                        <Lock className="size-3" />
+                      ) : (
+                        <Sparkles className="size-3" />
+                      )}
+                      Creator/Pro
+                    </span>
+                  </div>
+                  <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                    Paste a public TikTok, Instagram, YouTube, or X handle and
+                    we&apos;ll suggest the niche to scan first.
+                  </p>
+                  {handleLookupResult?.niche ? (
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span className="rounded-full bg-white/80 px-2.5 py-1 font-semibold text-foreground">
+                        {handleLookupResult.nicheLabel ??
+                          getNicheDisplayLabel(handleLookupResult.niche)}
+                      </span>
+                      {handleLookupResult.platform ? (
+                        <span className="rounded-full bg-white/70 px-2.5 py-1">
+                          {handleLookupResult.platform}
+                        </span>
+                      ) : null}
+                      {handleLookupResult.confidence ? (
+                        <span className="rounded-full bg-white/70 px-2.5 py-1 capitalize">
+                          {handleLookupResult.confidence} confidence
+                        </span>
+                      ) : null}
+                      {(handleLookupResult.signals ?? []).slice(0, 3).map((s) => (
+                        <span
+                          key={s}
+                          className="rounded-full bg-white/60 px-2.5 py-1"
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="flex w-full flex-col gap-2 sm:flex-row xl:max-w-xl">
+                <label className="sr-only" htmlFor="creator-handle-search">
+                  Public creator handle
+                </label>
+                <div className="relative flex-1">
+                  <AtSign className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    id="creator-handle-search"
+                    type="text"
+                    value={creatorHandle}
+                    onChange={(event) => {
+                      setCreatorHandle(event.target.value);
+                      setHandleLookupMessage(null);
+                      setHandleLookupResult(null);
+                    }}
+                    placeholder="@yourhandle or profile URL"
+                    disabled={handleLookupLoading}
+                    className="h-12 w-full rounded-[1.15rem] border border-border bg-white/90 py-0 pl-11 pr-4 text-sm font-semibold text-foreground outline-none placeholder:font-medium placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/35"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={handleLookupDisabled}
+                  className={cn(
+                    "h-12 shrink-0 rounded-[1.15rem] px-5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60",
+                    handleFinderLocked
+                      ? "creator-outline-cta border text-primary hover:bg-white"
+                      : "creator-cta text-primary-foreground",
+                  )}
+                >
+                  {handleLookupLoading ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Reading
+                    </>
+                  ) : handleFinderLocked ? (
+                    <>
+                      <Lock className="size-4" />
+                      Unlock finder
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="size-4" />
+                      Find niche
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {handleLookupMessage ? (
+              <div className="relative mt-3 flex flex-col gap-2 rounded-[1rem] border border-border bg-white/75 px-3 py-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                <span>{handleLookupMessage}</span>
+                {handleFinderLocked ? (
+                  <Link
+                    href="/pricing"
+                    className="inline-flex shrink-0 items-center gap-1 font-bold text-primary hover:text-primary/80"
+                  >
+                    View Creator plan
+                    <ChevronRight className="size-4" />
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
+          </form>
 
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 flex-wrap items-center gap-2">

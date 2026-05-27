@@ -21,6 +21,8 @@ export type ConversionEventName =
   | "signup_google_clicked"
   | "analyze_clicked"
   | "analyze_completed"
+  | "handle_niche_lookup_clicked"
+  | "handle_niche_lookup_completed"
   | "checkout_started"
   | "checkout_completed";
 
