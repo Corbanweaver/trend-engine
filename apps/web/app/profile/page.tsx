@@ -280,7 +280,7 @@ export default function ProfilePage() {
   }, []);
 
   return (
-    <main className="min-h-svh bg-background px-4 py-8 pb-24 text-foreground lg:pb-8">
+    <main className="creator-app-page min-h-svh px-4 py-8 pb-24 text-foreground lg:pb-8">
       <div className="mx-auto max-w-2xl space-y-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <h1 className="text-2xl font-semibold tracking-tight">Profile</h1>

@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowRight, CheckCircle2, HelpCircle, Mail } from "lucide-react";
+
+import {
+  MarketingFooter,
+  MarketingHeader,
+} from "@/components/marketing/marketing-shell";
 
 export const metadata: Metadata = {
   title: "Support",
@@ -45,70 +51,85 @@ export default function SupportPage() {
   )}`;
 
   return (
-    <main className="min-h-svh bg-background px-4 py-10 text-foreground">
-      <div className="mx-auto max-w-3xl space-y-8">
-        <Link
-          href="/"
-          className="text-sm font-medium text-primary hover:underline"
-        >
-          TrendBoard
-        </Link>
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Support</h1>
-          <p className="mt-3 text-muted-foreground">
+    <main className="creator-page min-h-svh text-foreground">
+      <MarketingHeader currentPath="/support" />
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[0.85fr_1.15fr]">
+        <section className="creator-studio-panel rounded-xl border border-border p-8 shadow-sm">
+          <HelpCircle className="size-8 text-primary" />
+          <h1 className="mt-5 text-4xl font-semibold tracking-tight">
+            Support that keeps creator work moving
+          </h1>
+          <p className="mt-4 text-base leading-7 text-muted-foreground">
             Need help with your account, billing, credits, or generated ideas?
             Send a support request and include the email you use to sign in.
           </p>
-        </div>
-
-        <section className="rounded-2xl border border-border bg-card p-5">
-          <h2 className="text-sm font-semibold text-foreground">
-            Common requests
-          </h2>
-          <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-            {topics.map((topic) => (
-              <li key={topic} className="flex gap-2">
-                <span className="mt-2 size-1.5 rounded-full bg-primary" />
-                <span>{topic}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="rounded-2xl border border-border bg-card p-5">
-          <h2 className="text-sm font-semibold text-foreground">Contact</h2>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Use the feedback button inside the dashboard for product issues, or
-            email{" "}
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <a
               href={supportHref}
-              className="font-medium text-primary hover:underline"
+              className="creator-cta inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-bold text-primary-foreground"
             >
-              {supportEmail}
-            </a>{" "}
-            from the address connected to your TrendBoard account. Include
-            screenshots and the niche you analyzed when a generated result looks
-            wrong.
-          </p>
-          <p className="mt-4 text-sm text-muted-foreground">
-            Prefer a pre-filled request? Use one of these links:
-          </p>
-          <ul className="mt-2 space-y-2 text-sm">
-            {quickSupportLinks.map((item) => (
-              <li key={item.label}>
+              Email support
+              <ArrowRight className="size-4" />
+            </a>
+            <Link
+              href="/status"
+              className="creator-outline-cta inline-flex items-center justify-center gap-2 rounded-lg border px-5 py-3 text-sm font-semibold text-foreground"
+            >
+              View status
+            </Link>
+          </div>
+        </section>
+
+        <div className="grid gap-4">
+          <section className="creator-card rounded-xl border border-border bg-card p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-foreground">
+              Common requests
+            </h2>
+            <ul className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground">
+              {topics.map((topic) => (
+                <li key={topic} className="flex gap-2">
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <span>{topic}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="creator-card rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Mail className="size-5 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Contact</h2>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              Use the feedback button inside the dashboard for product issues, or
+              email{" "}
+              <a
+                href={supportHref}
+                className="font-medium text-primary hover:underline"
+              >
+                {supportEmail}
+              </a>{" "}
+              from the address connected to your TrendBoard account. Include
+              screenshots and the niche you analyzed when a generated result looks
+              wrong.
+            </p>
+            <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+              {quickSupportLinks.map((item) => (
                 <a
+                  key={item.label}
                   href={`${supportEmailHref}?subject=${encodeURIComponent(
                     item.subject,
                   )}`}
-                  className="font-medium text-primary hover:underline"
+                  className="rounded-lg border border-border bg-background px-3 py-2 font-medium text-primary hover:bg-muted"
                 >
                   {item.label}
                 </a>
-              </li>
-            ))}
-          </ul>
-        </section>
+              ))}
+            </div>
+          </section>
+        </div>
       </div>
+      <MarketingFooter />
     </main>
   );
 }

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
+import { MarketingLogo } from "@/components/marketing/marketing-shell";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export default function ResetPasswordPage() {
@@ -39,15 +40,23 @@ export default function ResetPasswordPage() {
       }
 
       if (!access_token && !refresh_token && !code && !tokenHash) {
-        const supabase = getSupabaseClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        try {
+          const supabase = getSupabaseClient();
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
 
-        if (active && !session) {
-          setError(
-            "This reset link is missing its secure token. Please request a fresh password reset email.",
-          );
+          if (active && !session) {
+            setError(
+              "This reset link is missing its secure token. Please request a fresh password reset email.",
+            );
+          }
+        } catch {
+          if (active) {
+            setError(
+              "Account features are not configured in this preview. Request a reset from the live site.",
+            );
+          }
         }
         return;
       }
@@ -128,7 +137,7 @@ export default function ResetPasswordPage() {
       }
       setMessage("Password updated. Redirecting to your dashboard...");
       window.setTimeout(() => {
-        router.replace("/dashboard");
+        router.replace("/analyze");
         router.refresh();
       }, 700);
     } catch (err) {
@@ -141,15 +150,18 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
-      <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
+    <main className="creator-page flex min-h-svh items-center justify-center px-4 py-8 text-foreground">
+      <div className="creator-studio-panel w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="mb-6">
+          <MarketingLogo />
+        </div>
         <h1 className="text-2xl font-semibold">Choose a new password</h1>
-        <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Enter a new password for your TrendBoard account.
         </p>
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+        <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
           <label className="block text-sm">
-            <span className="mb-1 block text-muted-foreground dark:text-slate-300">
+            <span className="mb-1 block text-muted-foreground">
               New password
             </span>
             <div className="relative">
@@ -160,36 +172,36 @@ export default function ResetPasswordPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete="new-password"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 pr-11 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 pr-11 text-foreground outline-none ring-primary/40 focus:ring-2"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((visible) => !visible)}
-                className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 dark:focus:ring-cyan-300/60"
+                className="absolute right-2 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4" aria-hidden="true" />
+                  <EyeOff className="size-4" aria-hidden="true" />
                 ) : (
-                  <Eye className="h-4 w-4" aria-hidden="true" />
+                  <Eye className="size-4" aria-hidden="true" />
                 )}
               </button>
             </div>
           </label>
           {error ? (
-            <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
+            <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
               {error}
             </p>
           ) : null}
           {message ? (
-            <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+            <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
               {message}
             </p>
           ) : null}
           <button
             type="submit"
             disabled={loading || verifyingLink}
-            className="w-full rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950"
+            className="creator-cta w-full rounded-md px-4 py-2 font-semibold text-primary-foreground transition disabled:cursor-not-allowed disabled:opacity-60"
           >
             {verifyingLink
               ? "Verifying..."
@@ -198,11 +210,11 @@ export default function ResetPasswordPage() {
                 : "Update password"}
           </button>
         </form>
-        <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
+        <p className="mt-4 text-sm text-muted-foreground">
           Need a new reset link?{" "}
           <Link
             href="/forgot-password"
-            className="text-primary hover:underline dark:text-cyan-300"
+            className="text-primary hover:underline"
           >
             Start over
           </Link>

@@ -1,68 +1,74 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Compass, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Compass,
+  FileText,
+  Link2,
+  ShieldCheck,
+} from "lucide-react";
+
+import {
+  MarketingFooter,
+  MarketingHeader,
+} from "@/components/marketing/marketing-shell";
 
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn how TrendBoard helps creators turn live trend signals into scripts, hooks, hashtags, and idea cards.",
+    "Learn how TrendBoard helps creators use Trend Radar signals to find rising waves, verify source context, and build organic video ideas.",
 };
 
 const principles = [
-  "Creator workflows should be fast enough to use before a trend cools off.",
-  "AI output should include useful context, not just generic content ideas.",
-  "Saved ideas should keep source links, scripts, hashtags, and calendar context together.",
+  "Creator research should be fast enough to use before a trend window closes.",
+  "Every useful idea should keep its source context close.",
+  "Saved ideas should carry the organic video hook, shot list, caption, hashtag, and calendar note together.",
 ];
+
+const productNotes = [
+  {
+    icon: Compass,
+    title: "Trend Radar first",
+    body: "TrendBoard starts with live public signals across search, social, communities, news, and video sources when they are available.",
+  },
+  {
+    icon: Link2,
+    title: "Source context attached",
+    body: "The workflow is designed to keep source links and original context with the content idea, so the output is easier to verify.",
+  },
+  {
+    icon: FileText,
+    title: "Organic video packs for real publishing",
+    body: "A saved idea can include the angle, hook, shot list, hashtags, thumbnails, and planning notes needed to act on it.",
+  },
+] as const;
 
 export default function AboutPage() {
   return (
-    <main className="min-h-svh bg-background px-4 py-10 text-foreground">
-      <div className="mx-auto max-w-5xl space-y-10">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
-          >
-            TrendBoard
-          </Link>
-          <nav className="flex items-center gap-4 text-sm text-muted-foreground">
-            <Link href="/pricing" className="hover:text-foreground">
-              Pricing
-            </Link>
-            <Link href="/support" className="hover:text-foreground">
-              Support
-            </Link>
-            <Link href="/dashboard" className="hover:text-foreground">
-              Open app
-            </Link>
-          </nav>
-        </header>
-
-        <section className="rounded-3xl border border-border bg-card p-8 shadow-sm dark:border-white/10 dark:bg-slate-950/60 sm:p-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary dark:text-cyan-200">
-            About
-          </p>
-          <h1 className="mt-4 max-w-3xl text-balance text-4xl font-extrabold tracking-tight sm:text-5xl">
-            Built for creators who need sharper ideas while the topic is still
-            moving.
+    <main className="creator-page min-h-svh text-foreground">
+      <MarketingHeader currentPath="/about" />
+      <div className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-10 sm:px-6">
+        <section className="creator-studio-panel rounded-xl border border-border p-8 shadow-sm sm:p-10">
+          <h1 className="max-w-3xl text-balance text-4xl font-semibold leading-tight sm:text-5xl">
+            Built for creators who need sharper ideas while the wave is still moving.
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">
-            TrendBoard gathers live momentum signals, turns them into short-form
-            video angles, and keeps the full creative brief together so you can
-            move from research to publishing without rebuilding the context from
-            scratch.
+            TrendBoard gathers momentum signals, turns promising waves into
+            organic video ideas, and keeps the creative context together so research
+            does not disappear after the first idea sprint.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:bg-primary/90"
+              href="/analyze"
+              className="creator-cta inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-bold text-primary-foreground"
             >
               Start an analysis
               <ArrowRight className="size-4" />
             </Link>
             <Link
               href="/status"
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+              className="creator-outline-cta inline-flex items-center gap-2 rounded-lg border px-5 py-3 text-sm font-semibold text-foreground"
             >
               View system status
             </Link>
@@ -70,48 +76,43 @@ export default function AboutPage() {
         </section>
 
         <section className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/45">
-            <Compass className="size-6 text-primary dark:text-cyan-300" />
-            <h2 className="mt-4 text-base font-semibold">
-              Live signal research
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              The app combines public trend signals across search, social,
-              communities, news, and video sources when they are available.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/45">
-            <Sparkles className="size-6 text-primary dark:text-cyan-300" />
-            <h2 className="mt-4 text-base font-semibold">AI creative briefs</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Each analysis can produce hooks, scripts, hashtags, organic source
-              thumbnails, source links, and polished idea cards.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/45">
-            <CheckCircle2 className="size-6 text-primary dark:text-cyan-300" />
-            <h2 className="mt-4 text-base font-semibold">
-              Built for launch discipline
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Credits, billing, alerts, saved ideas, and calendar planning are
-              designed around real creator workflows.
-            </p>
-          </div>
+          {productNotes.map((item) => (
+            <div key={item.title} className="creator-card rounded-lg border border-border bg-card p-5 shadow-sm">
+              <item.icon className="size-6 text-primary" />
+              <h2 className="mt-4 text-base font-semibold">{item.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {item.body}
+              </p>
+            </div>
+          ))}
         </section>
 
-        <section className="rounded-2xl border border-border bg-muted/45 p-6 dark:border-white/10 dark:bg-white/[0.04]">
+        <section className="grid gap-4 rounded-lg border border-border bg-card p-6 shadow-sm md:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <ShieldCheck className="size-7 text-primary" />
+            <h2 className="mt-4 text-xl font-bold">Company note</h2>
+          </div>
+          <p className="text-sm leading-6 text-muted-foreground">
+            TrendBoard is an early product built around a simple promise: help
+            creators find useful trend context faster and turn it into work they
+            can actually publish. The product will keep moving toward clearer
+            sources, better organic video ideas, and more practical planning tools.
+          </p>
+        </section>
+
+        <section className="rounded-lg border border-border bg-card/80 p-6">
           <h2 className="text-lg font-semibold">Product principles</h2>
-          <ul className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
+          <ul className="mt-4 flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
             {principles.map((item) => (
               <li key={item} className="flex gap-3">
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary dark:text-cyan-300" />
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
                 <span>{item}</span>
               </li>
             ))}
           </ul>
         </section>
       </div>
+      <MarketingFooter />
     </main>
   );
 }

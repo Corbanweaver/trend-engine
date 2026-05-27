@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "TrendBoard - AI content ideas from live trend signals";
+export const alt = "TrendBoard - Organic video idea maker for creators";
 export const size = {
   width: 1200,
   height: 630,
@@ -14,7 +14,7 @@ export default function Image() {
       style={{
         alignItems: "stretch",
         background:
-          "linear-gradient(135deg, #0f172a 0%, #1e3a8a 52%, #7c3aed 100%)",
+          "linear-gradient(135deg, #17364a 0%, #1f7a8c 52%, #e45d7d 100%)",
         color: "#f8fafc",
         display: "flex",
         flexDirection: "column",
@@ -46,12 +46,12 @@ export default function Image() {
               width: 86,
             }}
           >
-            C
+            T
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ fontSize: 30, fontWeight: 800 }}>TrendBoard</div>
             <div style={{ color: "#bae6fd", fontSize: 22 }}>
-              Trend intelligence for creators
+              Organic video idea maker
             </div>
           </div>
         </div>
@@ -67,7 +67,7 @@ export default function Image() {
             padding: "12px 22px",
           }}
         >
-          Live signals + AI briefs
+          Live signals + video ideas
         </div>
       </div>
 
@@ -81,7 +81,7 @@ export default function Image() {
             maxWidth: 900,
           }}
         >
-          Turn live trends into content you can publish.
+          Find your next organic video idea.
         </div>
         <div
           style={{
@@ -92,8 +92,8 @@ export default function Image() {
             maxWidth: 880,
           }}
         >
-          Generate hooks, scripts, hashtags, source links, and polished idea
-          cards from one creator workflow.
+          Find rising waves, verify source context, and turn the best windows
+          into hooks, shot lists, captions, and calendar-ready posts.
         </div>
       </div>
 

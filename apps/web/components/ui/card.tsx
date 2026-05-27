@@ -10,8 +10,7 @@ function Card({
     <div
       data-slot="card"
       className={cn(
-        "fluid-transition glass-surface hairline-ring rounded-2xl border border-border bg-card/80 text-card-foreground shadow-[0_8px_24px_rgba(34,39,47,0.07)] dark:border-white/10 dark:shadow-[0_8px_28px_rgba(0,0,0,0.16)]",
-        "hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_14px_32px_rgba(34,39,47,0.1)] dark:hover:shadow-[0_14px_34px_rgba(0,0,0,0.22)]",
+        "rounded-xl border border-border bg-card text-card-foreground shadow-sm",
         className,
       )}
       {...props}
@@ -26,7 +25,20 @@ function CardHeader({
   return (
     <div
       data-slot="card-header"
-      className={cn("flex flex-col space-y-1.5 p-4", className)}
+      className={cn("flex flex-col gap-1.5 p-4", className)}
+      {...props}
+    />
+  );
+}
+
+function CardAction({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      data-slot="card-action"
+      className={cn("col-start-2 row-span-2 row-start-1 self-start justify-self-end", className)}
       {...props}
     />
   );
@@ -80,4 +92,12 @@ function CardFooter({
   );
 }
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+};

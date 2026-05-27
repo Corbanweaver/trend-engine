@@ -10,9 +10,7 @@ function getSupabaseConfig() {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !anonKey) {
-    throw new Error(
-      "Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY",
-    );
+    throw new Error("Account features are not configured in this preview.");
   }
 
   return { url, anonKey };

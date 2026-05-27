@@ -7,9 +7,8 @@ import {
   CalendarDays,
   CheckCircle2,
   GitCompare,
+  Lightbulb,
   ListChecks,
-  Sparkles,
-  WandSparkles,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -152,7 +151,7 @@ export function FreeResourceWidget({
           ? GitCompare
           : kind === "fitness-ideas"
             ? CheckCircle2
-            : WandSparkles;
+            : Lightbulb;
 
   const title =
     kind === "calendar"
@@ -163,12 +162,12 @@ export function FreeResourceWidget({
           ? "Adapt one idea by platform"
           : kind === "fitness-ideas"
             ? "Generate free fitness ideas"
-            : "Generate free hooks from a topic";
+          : "Generate free organic video hooks";
 
   const description =
     kind === "fitness-ideas"
-      ? "Get a useful sample before you create an account. The full app adds live trend context, source links, and save-ready cards."
-      : "Get a useful sample before you create an account. No credits or card needed for this preview.";
+      ? "Get a useful sample before you create an account. Trend Radar adds live context, source links, and save-ready organic video ideas."
+      : "Get a useful organic video sample before you create an account. No credits or card needed for this preview.";
 
   const rows = useMemo(() => {
     if (kind === "calendar") return calendarRows(outputTopic);
@@ -198,16 +197,16 @@ export function FreeResourceWidget({
   return (
     <section
       id="free-preview"
-      className="scroll-mt-8 rounded-3xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/70 sm:p-8"
+      className="creator-studio-panel scroll-mt-8 rounded-xl border border-border p-6 shadow-sm sm:p-8"
     >
       <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
         <div className="max-w-2xl">
           <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:bg-cyan-400/10 dark:text-cyan-200">
+            <span className="flex size-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Icon className="size-5" />
             </span>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary dark:text-cyan-200">
+              <p className="text-xs font-semibold uppercase text-primary">
                 Free preview
               </p>
               <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
@@ -218,12 +217,12 @@ export function FreeResourceWidget({
           </p>
         </div>
         <form
-          className="w-full rounded-3xl border border-border bg-background p-3 dark:border-white/10 dark:bg-slate-900/70 md:max-w-md"
+          className="w-full rounded-lg border border-border bg-white/70 p-3 md:max-w-md"
           onSubmit={handleGenerate}
         >
           {kind !== "fitness-ideas" ? (
             <label className="block">
-              <span className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="px-2 text-xs font-semibold uppercase text-muted-foreground">
                 Topic or niche
               </span>
               <input
@@ -239,17 +238,17 @@ export function FreeResourceWidget({
                     });
                   }
                 }}
-                className="mt-2 h-12 w-full rounded-2xl border border-border bg-card px-4 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/50 dark:border-white/10 dark:bg-slate-950 dark:focus:ring-cyan-300/60"
+                className="mt-2 h-12 w-full rounded-lg border border-border bg-card px-4 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/40"
                 placeholder="fitness, real estate, skincare..."
               />
             </label>
           ) : null}
           <button
             type="submit"
-            className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+            className="creator-cta mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold text-primary-foreground"
           >
-            {hasGenerated ? "Refresh free preview" : "Generate free ideas"}
-            <Sparkles className="size-4" />
+            {hasGenerated ? "Refresh free preview" : "Find my next video idea"}
+            <ArrowRight className="size-4" />
           </button>
           <p className="mt-2 text-center text-xs text-muted-foreground">
             No credit card. No signup until you want to save or scan deeper.
@@ -258,9 +257,9 @@ export function FreeResourceWidget({
       </div>
 
       {!hasGenerated ? (
-        <div className="mt-7 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-4 text-sm leading-6 text-muted-foreground dark:border-cyan-300/25 dark:bg-cyan-400/5">
+        <div className="mt-7 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-4 text-sm leading-6 text-muted-foreground">
           Enter a niche and generate a small preview first. The full app adds
-          live trend signals, source links, saved cards, and deeper analysis.
+          Trend Radar signals, source links, saved video ideas, and deeper analysis.
         </div>
       ) : null}
 
@@ -278,9 +277,9 @@ export function FreeResourceWidget({
             return (
               <div
                 key={`${label}-${format}`}
-                className="rounded-2xl border border-border bg-muted/35 p-4 dark:border-white/10 dark:bg-white/[0.04]"
+                className="rounded-lg border border-border bg-white/65 p-4"
               >
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary dark:text-cyan-200">
+                <p className="text-xs font-bold uppercase text-primary">
                   {label}
                 </p>
                 <h3 className="mt-2 text-sm font-semibold">{format}</h3>
@@ -293,9 +292,9 @@ export function FreeResourceWidget({
           return (
             <div
               key={row}
-              className="flex gap-3 rounded-2xl border border-border bg-muted/35 p-4 text-sm leading-6 dark:border-white/10 dark:bg-white/[0.04]"
+              className="flex gap-3 rounded-lg border border-border bg-white/65 p-4 text-sm leading-6"
             >
-              <Sparkles className="mt-0.5 size-4 shrink-0 text-primary dark:text-cyan-300" />
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
               <span>
                 {kind === "fitness-ideas" ? `${index + 1}. ` : null}
                 {row}
@@ -306,15 +305,15 @@ export function FreeResourceWidget({
       </div>
 
       {hasGenerated ? (
-        <div className="mt-7 rounded-3xl border border-primary/20 bg-primary/5 p-5 dark:border-cyan-300/25 dark:bg-cyan-400/5">
+        <div className="mt-7 rounded-lg border border-primary/20 bg-white/70 p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-bold text-foreground">
-                Want the live trend version?
+                Want the full organic video idea maker?
               </p>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Create a free account to run real scans, save source links, and
-                turn the best ideas into calendar-ready cards.
+                Create a free account to run Trend Radar scans, save source
+                links, and turn the best ideas into calendar-ready video packs.
               </p>
             </div>
             <Link
@@ -325,7 +324,7 @@ export function FreeResourceWidget({
                   context: { resourceKind: kind },
                 });
               }}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+              className="creator-cta inline-flex shrink-0 items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-bold text-primary-foreground"
             >
               Save and scan deeper
               <ArrowRight className="size-4" />

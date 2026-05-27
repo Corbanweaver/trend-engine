@@ -52,12 +52,12 @@ export function EmailWaitlistForm() {
           placeholder="Enter your email"
           autoComplete="email"
           required
-          className="h-12 flex-1 rounded-xl border border-cyan-300/25 bg-slate-900/70 px-4 text-sm text-slate-100 placeholder:text-slate-400 outline-none ring-cyan-300/40 transition focus:ring-2"
+          className="h-12 flex-1 rounded-lg border border-border bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground outline-none ring-primary/30 transition focus:ring-2"
         />
         <button
           type="submit"
           disabled={status === "loading"}
-          className="h-12 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[0_12px_24px_rgba(54,95,125,0.2)] transition hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_32px_rgba(54,95,125,0.24)] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_24px_rgba(56,189,248,0.35)] dark:hover:shadow-[0_0_36px_rgba(99,102,241,0.45)]"
+          className="creator-cta h-12 rounded-lg px-6 text-sm font-semibold text-primary-foreground transition disabled:cursor-not-allowed disabled:opacity-60"
         >
           {status === "loading" ? "Submitting..." : "Get Early Access"}
         </button>
@@ -65,7 +65,7 @@ export function EmailWaitlistForm() {
       {message ? (
         <p
           className={`mt-3 text-sm ${
-            status === "success" ? "text-emerald-300" : "text-rose-300"
+            status === "success" ? "text-emerald-700" : "text-rose-700"
           }`}
         >
           {message}

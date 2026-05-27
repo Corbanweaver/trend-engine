@@ -21,13 +21,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default:
-      "TrendBoard - AI Content Idea Generator for TikTok, Instagram, YouTube Shorts, and Pinterest",
+    default: "TrendBoard - Organic video idea maker for creators",
     template: "%s | TrendBoard",
   },
   applicationName: "TrendBoard",
   description:
-    "Find live content trends, generate polished idea cards, and turn them into hooks, scripts, hashtags, and calendar-ready posts.",
+    "Find rising organic video ideas, verify source context, and turn trend windows into hooks, shot lists, captions, and calendar-ready posts.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
@@ -54,20 +53,17 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title:
-      "TrendBoard - AI Content Idea Generator for TikTok, Instagram, YouTube Shorts, and Pinterest",
+    title: "TrendBoard - Organic video idea maker for creators",
     description:
-      "Analyze trend signals across creator platforms and generate AI-powered content ideas with source-backed thumbnails.",
+      "Analyze creator trend signals and turn promising windows into source-backed organic video ideas.",
     url: SITE_URL,
     siteName: "TrendBoard",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title:
-      "TrendBoard - AI Content Idea Generator for TikTok, Instagram, YouTube Shorts, and Pinterest",
-    description:
-      "Find live trends and turn them into AI-assisted content ideas.",
+    title: "TrendBoard - Organic video idea maker for creators",
+    description: "Find rising waves and turn them into source-backed organic video ideas.",
   },
 };
 
@@ -75,7 +71,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#07111f",
+  themeColor: "#f7f8f5",
 };
 
 const organizationJsonLd = {
@@ -94,7 +90,7 @@ const softwareJsonLd = {
   operatingSystem: "Web",
   url: SITE_URL,
   description:
-    "AI content idea generator for TikTok, Instagram, YouTube Shorts, Pinterest, and creator content calendars.",
+    "Organic video idea maker and Trend Radar for TikTok, Instagram, YouTube Shorts, Pinterest, and creator content calendars.",
   offers: [
     {
       "@type": "Offer",
@@ -123,7 +119,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <script
           type="application/ld+json"
@@ -135,18 +131,6 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(softwareJsonLd),
-          }}
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-(() => {
-  try {
-    localStorage.setItem("theme", "dark");
-    document.documentElement.classList.add("dark");
-  } catch {}
-})();
-`,
           }}
         />
       </head>

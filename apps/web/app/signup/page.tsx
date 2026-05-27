@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 
+import { MarketingLogo } from "@/components/marketing/marketing-shell";
 import {
   affiliateToSignupMetadata,
   appendAffiliateToUrl,
@@ -50,7 +51,7 @@ export default function SignupPage() {
       });
       const supabase = getSupabaseClient();
       const callbackUrl = appendAffiliateToUrl(
-        `${window.location.origin}/auth/callback?next=/dashboard`,
+        `${window.location.origin}/auth/callback?next=/analyze`,
         affiliate,
       );
       const { error: authError } = await supabase.auth.signUp({
@@ -67,7 +68,7 @@ export default function SignupPage() {
       }
 
       setSuccess(
-        "Account created. Check your email to confirm your account, then you will be sent to the dashboard.",
+        "Account created. Check your email to confirm your account, then you will be sent to trend analysis.",
       );
       trackConversionEvent({
         event: "signup_completed",
@@ -95,7 +96,7 @@ export default function SignupPage() {
       });
       const supabase = getSupabaseClient();
       const callbackUrl = appendAffiliateToUrl(
-        `${window.location.origin}/auth/callback?next=/dashboard`,
+        `${window.location.origin}/auth/callback?next=/analyze`,
         affiliate,
       );
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -113,29 +114,26 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-background px-4 py-8 text-foreground">
-      <div className="grid w-full max-w-4xl overflow-hidden rounded-2xl border border-border bg-card shadow-sm dark:border-white/10 dark:bg-slate-900 md:grid-cols-[0.9fr_1.1fr]">
-        <aside className="border-b border-border bg-muted/40 p-6 dark:border-white/10 dark:bg-white/[0.04] md:border-b-0 md:border-r">
-          <Link
-            href="/"
-            className="mb-8 block text-xs font-semibold uppercase tracking-[0.2em] text-primary dark:text-cyan-300"
-          >
-            TrendBoard
-          </Link>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary dark:text-cyan-300">
+    <main className="creator-page flex min-h-svh items-center justify-center px-4 py-8 text-foreground">
+      <div className="creator-dashboard-shell grid w-full max-w-4xl overflow-hidden rounded-xl border border-border bg-card shadow-sm md:grid-cols-[0.9fr_1.1fr]">
+        <aside className="creator-studio-panel border-b border-border p-6 md:border-b-0 md:border-r">
+          <div className="mb-8">
+            <MarketingLogo />
+          </div>
+          <p className="text-xs font-semibold uppercase text-primary">
             Free account
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight">
             Save the ideas worth filming.
           </h1>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground dark:text-slate-400">
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
             Create an account when you want live trend scans, saved source
             links, hooks, scripts, hashtags, and calendar-ready idea cards.
           </p>
-          <ul className="mt-6 space-y-3 text-sm text-foreground">
+          <ul className="mt-6 flex flex-col gap-3 text-sm text-foreground">
             {signupBenefits.map((benefit) => (
               <li key={benefit} className="flex gap-2">
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary dark:text-cyan-300" />
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
                 <span>{benefit}</span>
               </li>
             ))}
@@ -145,18 +143,18 @@ export default function SignupPage() {
         <section className="p-6">
           <Link
             href="/"
-            className="mb-6 block text-xs font-semibold uppercase tracking-[0.2em] text-primary dark:text-cyan-300 md:hidden"
+            className="mb-6 block text-xs font-semibold uppercase text-primary md:hidden"
           >
             TrendBoard
           </Link>
           <h2 className="text-2xl font-semibold">Create your account</h2>
-          <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Confirm your email, then run your first trend analysis.
           </p>
 
-          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
             <label className="block text-sm">
-              <span className="mb-1 block text-muted-foreground dark:text-slate-300">
+              <span className="mb-1 block text-muted-foreground">
                 Email
               </span>
               <input
@@ -164,12 +162,12 @@ export default function SignupPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none ring-primary/40 focus:ring-2"
               />
             </label>
 
             <label className="block text-sm">
-              <span className="mb-1 block text-muted-foreground dark:text-slate-300">
+              <span className="mb-1 block text-muted-foreground">
                 Password
               </span>
               <input
@@ -180,12 +178,12 @@ export default function SignupPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
                 aria-describedby="password-strength-hint"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none ring-primary/40 focus:ring-2"
               />
               {password ? (
                 <div
                   id="password-strength-hint"
-                  className="mt-2 space-y-1.5"
+                  className="mt-2 flex flex-col gap-1.5"
                   role="status"
                   aria-live="polite"
                 >
@@ -200,9 +198,9 @@ export default function SignupPage() {
                               : strength.level === 2
                                 ? "bg-amber-400/90"
                                 : strength.level === 3
-                                  ? "bg-primary/80 dark:bg-cyan-400/90"
+                                  ? "bg-primary/80"
                                   : "bg-emerald-400/90"
-                            : "bg-muted-foreground/20 dark:bg-slate-700/80"
+                            : "bg-muted-foreground/20"
                         }`}
                       />
                     ))}
@@ -210,20 +208,20 @@ export default function SignupPage() {
                   <p
                     className={`text-xs font-medium tracking-wide ${
                       strength.level <= 1
-                        ? "text-rose-700 dark:text-rose-300/90"
+                        ? "text-rose-700"
                         : strength.level === 2
-                          ? "text-amber-700 dark:text-amber-200/90"
+                          ? "text-amber-700"
                           : strength.level === 3
-                            ? "text-primary dark:text-cyan-200/90"
-                            : "text-emerald-700 dark:text-emerald-200/90"
+                            ? "text-primary"
+                            : "text-emerald-700"
                     }`}
                   >
                     {strength.label === "Too short"
-                      ? "Too short — at least 6 characters"
+                      ? "Too short - at least 6 characters"
                       : strength.label === "Weak"
-                        ? "Weak — add length and mix of characters"
+                        ? "Weak - add length and mix of characters"
                         : strength.label === "Fair"
-                          ? "Fair — could be stronger"
+                          ? "Fair - could be stronger"
                           : strength.label === "Good"
                             ? "Good password"
                             : "Strong password"}
@@ -232,7 +230,7 @@ export default function SignupPage() {
               ) : (
                 <p
                   id="password-strength-hint"
-                  className="mt-1.5 text-xs text-muted-foreground dark:text-slate-500"
+                  className="mt-1.5 text-xs text-muted-foreground"
                 >
                   Use at least 8 characters with upper and lower case, a number,
                   and a symbol for a strong password.
@@ -241,13 +239,13 @@ export default function SignupPage() {
             </label>
 
             {error ? (
-              <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
+              <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {error}
               </p>
             ) : null}
 
             {success ? (
-              <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+              <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
                 {success}
               </p>
             ) : null}
@@ -255,7 +253,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:opacity-90"
+              className="creator-cta w-full rounded-md px-4 py-2 font-semibold text-primary-foreground transition disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Creating account..." : "Create free account"}
             </button>
@@ -266,17 +264,17 @@ export default function SignupPage() {
               type="button"
               onClick={() => void signInWithGoogle()}
               disabled={loading}
-              className="mt-4 w-full rounded-md border border-border bg-card px-4 py-2 font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-800"
+              className="creator-outline-cta mt-4 w-full rounded-md border px-4 py-2 font-semibold text-foreground transition disabled:cursor-not-allowed disabled:opacity-60"
             >
               Sign up with Google
             </button>
           ) : null}
 
-          <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
+          <p className="mt-4 text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="text-primary hover:underline dark:text-cyan-300"
+              className="text-primary hover:underline"
             >
               Log in
             </Link>

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect } from "react";
 import {
   BarChart3,
   Bell,
@@ -23,9 +26,16 @@ const appLinks = [
 export type AppQuickNavKey = (typeof appLinks)[number]["key"];
 
 export function AppQuickNav({ active }: { active: AppQuickNavKey }) {
+  useEffect(() => {
+    document.documentElement.classList.remove("dark");
+  }, []);
+
   return (
     <>
-      <nav className="-mx-1 flex gap-1 overflow-x-auto pb-1" aria-label="App">
+      <nav
+        className="-mx-1 flex gap-1 overflow-x-auto rounded-[1.35rem] border border-border/80 bg-white/75 p-1 shadow-sm backdrop-blur"
+        aria-label="App"
+      >
         {appLinks.map((item) => {
           const Icon = item.icon;
           const isActive = active === item.key;
@@ -36,8 +46,8 @@ export function AppQuickNav({ active }: { active: AppQuickNavKey }) {
               className={cn(
                 "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors",
                 isActive
-                  ? "border-primary bg-primary text-primary-foreground dark:border-cyan-300 dark:bg-cyan-400 dark:text-slate-950"
-                  : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white",
+                  ? "creator-sidebar-active border-transparent text-primary-foreground"
+                  : "border-transparent bg-white/60 text-muted-foreground hover:bg-white hover:text-foreground",
               )}
               aria-current={isActive ? "page" : undefined}
             >

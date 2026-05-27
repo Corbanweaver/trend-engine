@@ -96,7 +96,13 @@ export function FloatingAiAssistant() {
   } | null>(null);
 
   useEffect(() => {
-    const supabase = getSupabaseClient();
+    let supabase;
+    try {
+      supabase = getSupabaseClient();
+    } catch {
+      setUser(null);
+      return;
+    }
 
     const syncUser = (next: User | null) => {
       setUser(next);
@@ -339,7 +345,7 @@ export function FloatingAiAssistant() {
           left: renderedAssistantPosition.x,
           top: renderedAssistantPosition.y,
         }}
-        className={`fixed z-[80] inline-flex touch-none select-none items-center gap-2 rounded-full border border-primary/25 bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground shadow-[0_12px_28px_rgba(54,95,125,0.22)] transition hover:bg-primary/90 dark:border-cyan-300/40 dark:bg-slate-900 dark:text-cyan-100 dark:shadow-[0_0_24px_rgba(34,211,238,0.28)] dark:hover:bg-slate-800 sm:px-4 ${
+        className={`creator-cta fixed z-[80] inline-flex touch-none select-none items-center gap-2 rounded-full border border-primary/25 bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground shadow-[0_12px_28px_rgba(54,95,125,0.22)] transition hover:bg-primary/90 dark:border-cyan-300/40 dark:bg-slate-900 dark:text-cyan-100 dark:shadow-[0_0_24px_rgba(34,211,238,0.28)] dark:hover:bg-slate-800 sm:px-4 ${
           dragging ? "cursor-grabbing" : "cursor-grab"
         }`}
       >

@@ -4,10 +4,10 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "TrendBoard",
     short_name: "TrendBoard",
-    id: "/dashboard",
+    id: "/analyze",
     description:
-      "Find live content trends and turn them into hooks, scripts, hashtags, and polished idea cards.",
-    start_url: "/dashboard",
+      "Analyze creator trends and turn them into source-backed organic video idea cards.",
+    start_url: "/analyze",
     scope: "/",
     display: "standalone",
     display_override: ["standalone", "minimal-ui", "browser"],
@@ -48,10 +48,10 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: "Create Ideas",
-        short_name: "Create",
-        description: "Open the trend idea dashboard.",
-        url: "/dashboard",
+        name: "Analyze Trends",
+        short_name: "Analyze",
+        description: "Run trend analysis and generate organic video idea cards.",
+        url: "/analyze",
       },
       {
         name: "Saved Ideas",

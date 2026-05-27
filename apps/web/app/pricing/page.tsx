@@ -5,20 +5,26 @@ import {
   BadgeCheck,
   Check,
   CreditCard,
+  FileText,
   LineChart,
   LockKeyhole,
-  Sparkles,
+  ShieldCheck,
   Timer,
-  Zap,
+  TrendingUp,
 } from "lucide-react";
 
 import { AffiliateCheckoutFields } from "@/components/affiliate-checkout-fields";
+import {
+  MarketingFooter,
+  MarketingHeader,
+} from "@/components/marketing/marketing-shell";
+import { Badge } from "@/components/ui/badge";
 import { CREDIT_COSTS, CREDIT_LIMITS } from "@/lib/credits";
 
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Choose a TrendBoard plan for trend analyses, niches, saved ideas, and organic source thumbnails.",
+    "Choose a TrendBoard plan for organic video ideas, Trend Radar scans, source-backed video packs, saved ideas, and creator content planning.",
 };
 
 const plans = [
@@ -26,15 +32,15 @@ const plans = [
     name: "Free",
     price: "$0",
     period: "/mo",
-    description: "Try the essentials and explore trends.",
-    bestFor: "Testing the workflow",
-    outcome: "1 live trend scan to see whether the ideas fit your niche.",
+    description: "Test the radar before paying.",
+    bestFor: "Testing one niche",
+    outcome: "1 full Trend Radar scan to see whether the organic video ideas fit your workflow.",
     featured: false,
     features: [
       `${CREDIT_LIMITS.free} monthly credits`,
-      "1 full trend analysis",
-      "Basic niches only",
-      "Explore before upgrading",
+      "1 full Trend Radar scan",
+      "Basic niches",
+      "Free preview tools",
     ],
     ctaHref: "/signup",
     planKey: "free",
@@ -45,18 +51,18 @@ const plans = [
     name: "Creator",
     price: "$19.99",
     period: "/mo",
-    description: "Everything you need to ship ideas consistently.",
+    description: "Enough room for a consistent solo creator workflow.",
     bestFor: "Solo creators posting weekly",
     outcome:
       "Roughly 20 full scans each month, plus room for hooks, scripts, and hashtags.",
     featured: true,
-    popularLabel: "Most Popular",
+    popularLabel: "Recommended",
     features: [
       `${CREDIT_LIMITS.creator} monthly credits`,
-      "About 20 full trend analyses",
+      "About 20 full Trend Radar scans",
       "All niches",
-      "Save and organize ideas",
-      "Organic source thumbnails",
+      "Saved ideas",
+      "Source links and organic video packs",
     ],
     ctaHref: "/api/stripe/checkout",
     planKey: "creator",
@@ -67,17 +73,17 @@ const plans = [
     name: "Pro",
     price: "$49.99",
     period: "/mo",
-    description: "Maximum throughput for teams and power creators.",
-    bestFor: "Agencies, teams, and daily creators",
+    description: "More scans for teams, agencies, and daily publishing.",
+    bestFor: "Agencies and power creators",
     outcome:
-      "Roughly 60 full scans each month for testing more niches and angles.",
+      "Roughly 60 full scans each month for testing more niches, platforms, and angles.",
     featured: false,
     features: [
       `${CREDIT_LIMITS.pro.toLocaleString()} monthly credits`,
-      "About 60 full trend analyses",
+      "About 60 full Trend Radar scans",
       "All niches",
       "Saved ideas",
-      "Organic source thumbnails",
+      "Source links and organic video packs",
       "Priority trend processing",
       "Early access to new features",
     ],
@@ -91,26 +97,26 @@ const plans = [
 const buyerSignals = [
   {
     icon: LineChart,
-    title: "Pay for better decisions",
-    body: "Each scan ranks live momentum so creators can spend less time guessing what to film next.",
+    title: "Pay for clearer posting windows",
+    body: "Each scan ranks wave score, platform fit, and saturation risk so you can post before a topic cools off.",
   },
   {
-    icon: Sparkles,
-    title: "Expand only the winners",
-    body: "Idea cards stay short first. Hooks, hashtags, and scripts only use credits when you ask for them.",
+    icon: FileText,
+    title: "Package the winners fast",
+    body: "Turn a promising wave into organic video hooks, shot lists, captions, hashtags, and planning notes.",
   },
   {
     icon: Timer,
-    title: "Move faster every week",
-    body: "Save source links, hashtags, hooks, and calendar notes together so research does not disappear.",
+    title: "Keep creator research organized",
+    body: "Save source links, proof points, organic video packs, and calendar notes together.",
   },
 ] as const;
 
 const creditExamples = [
   {
-    label: "Full trend scan",
+    label: "Trend Radar scan",
     cost: CREDIT_COSTS.analysis,
-    note: "Finds current topics and creates idea cards for one niche.",
+    note: "Finds rising waves and creates organic video idea cards for one niche.",
   },
   {
     label: "Hook variations",
@@ -127,8 +133,8 @@ const creditExamples = [
 const trustChecks = [
   { icon: CreditCard, label: "Secure Stripe checkout" },
   { icon: BadgeCheck, label: "Cancel through billing anytime" },
-  { icon: LockKeyhole, label: "Credits prevent overuse and keep costs fair" },
-  { icon: Zap, label: "Built around fast creator workflows" },
+  { icon: LockKeyhole, label: "Credits keep usage predictable" },
+  { icon: ShieldCheck, label: "Support path for account issues" },
 ] as const;
 
 const pricingFaqItems = [
@@ -139,6 +145,10 @@ const pricingFaqItems = [
   {
     q: "Why does TrendBoard use credits?",
     a: "Credits keep heavier trend scans predictable, fair, and harder to abuse while still giving paid creators enough room to work.",
+  },
+  {
+    q: "Do unused credits roll over?",
+    a: "Monthly plan credits are designed around the current billing period. If rollover support changes, the pricing page should say that clearly before checkout.",
   },
   {
     q: "Can I cancel anytime?",
@@ -158,51 +168,6 @@ const pricingFaqJsonLd = {
     },
   })),
 };
-
-function PricingHeader() {
-  return (
-    <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-7">
-      <Link
-        href="/"
-        className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
-      >
-        TrendBoard
-      </Link>
-      <nav className="flex items-center gap-6 text-sm">
-        <Link
-          href="/trending"
-          className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-        >
-          Trending
-        </Link>
-        <Link
-          href="/pricing"
-          className="fluid-transition font-medium text-primary hover:text-foreground"
-        >
-          Pricing
-        </Link>
-        <Link
-          href="/about"
-          className="fluid-transition text-muted-foreground hover:text-foreground"
-        >
-          About
-        </Link>
-        <Link
-          href="/login"
-          className="fluid-transition text-muted-foreground hover:text-foreground"
-        >
-          Sign in
-        </Link>
-        <Link
-          href="/dashboard"
-          className="fluid-transition glass-surface rounded-xl border border-border bg-card px-4 py-2 font-semibold text-foreground hover:bg-muted"
-        >
-          Open app
-        </Link>
-      </nav>
-    </header>
-  );
-}
 
 type PricingPageProps = {
   searchParams?: Promise<{
@@ -237,145 +202,155 @@ function checkoutErrorMessage(reason: string | undefined) {
   }
 }
 
+function StatusNotice({
+  checkoutStatus,
+  checkoutReason,
+  stripeRequestId,
+}: {
+  checkoutStatus?: string;
+  checkoutReason?: string;
+  stripeRequestId?: string;
+}) {
+  if (checkoutStatus === "success") {
+    return (
+      <div className="mx-auto mt-8 max-w-2xl rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4 text-center text-sm text-emerald-800">
+        Checkout complete. Your subscription is now active.
+      </div>
+    );
+  }
+
+  if (checkoutStatus === "cancelled") {
+    return (
+      <div className="mx-auto mt-8 max-w-2xl rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-center text-sm text-amber-800">
+        Checkout canceled. No charge was made.
+      </div>
+    );
+  }
+
+  if (checkoutStatus === "error") {
+    return (
+      <div className="mx-auto mt-8 max-w-2xl rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-center text-sm text-red-800">
+        {checkoutErrorMessage(checkoutReason)}
+        {stripeRequestId ? (
+          <span className="mt-2 block text-xs text-red-700">
+            Stripe request ID: {stripeRequestId}
+          </span>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (checkoutStatus === "configuration") {
+    return (
+      <div className="mx-auto mt-8 max-w-2xl rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-center text-sm text-red-800">
+        Stripe checkout is not fully configured yet. Please contact support if
+        this keeps happening.
+      </div>
+    );
+  }
+
+  if (checkoutStatus === "choose-plan") {
+    return (
+      <div className="mx-auto mt-8 max-w-2xl rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-center text-sm text-amber-800">
+        Choose a plan below to start checkout.
+      </div>
+    );
+  }
+
+  return null;
+}
+
 export default async function PricingPage({ searchParams }: PricingPageProps) {
   const resolvedSearchParams = await searchParams;
   const checkoutStatus = resolvedSearchParams?.checkout;
   const checkoutReason = resolvedSearchParams?.reason;
   const stripeRequestId = resolvedSearchParams?.request_id;
-  const isCheckoutSuccess = checkoutStatus === "success";
-  const isCheckoutCancelled = checkoutStatus === "cancelled";
-  const isCheckoutError = checkoutStatus === "error";
-  const isCheckoutConfigurationError = checkoutStatus === "configuration";
-  const isChoosePlanNotice = checkoutStatus === "choose-plan";
 
   return (
-    <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
+    <main className="creator-page min-h-svh text-foreground">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingFaqJsonLd) }}
       />
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-primary/10 blur-3xl dark:bg-fuchsia-500/25" />
-        <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-secondary/70 blur-3xl dark:bg-cyan-500/20" />
-        <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 animate-pulse rounded-full bg-primary/5 blur-3xl dark:bg-indigo-500/20" />
-      </div>
 
-      <PricingHeader />
+      <MarketingHeader currentPath="/pricing" />
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 pb-24 pt-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="rounded-full border border-border bg-card px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-primary dark:border-white/20 dark:bg-white/10 dark:text-cyan-200">
-            Pricing
-          </span>
-          <h1 className="mt-6 text-balance bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-4xl font-extrabold text-transparent sm:text-5xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
-            Plans that scale with your creativity
+      <div className="mx-auto max-w-6xl px-4 pb-20 pt-12 sm:px-6">
+        <div className="mx-auto max-w-3xl text-center">
+          <h1 className="text-balance text-4xl font-semibold sm:text-5xl">
+            Plans for creators who want better organic video ideas
           </h1>
-          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-            Pick the tier that matches your workflow. Credits reset monthly and
-            keep heavier trend scans fair for everyone.
+          <p className="mt-4 text-lg leading-7 text-muted-foreground">
+            Pick the monthly credit level that matches how often you scan
+            trends, package organic videos, and publish while the window is open.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             {trustChecks.map((item) => (
-              <span
+              <Badge
                 key={item.label}
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
+                variant="outline"
+                className="gap-2 bg-card px-3 py-2 text-muted-foreground shadow-sm"
               >
-                <item.icon className="size-3.5 text-primary dark:text-cyan-300" />
+                <item.icon className="size-3.5 text-primary" />
                 {item.label}
-              </span>
+              </Badge>
             ))}
           </div>
         </div>
 
-        {isCheckoutSuccess ? (
-          <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-5 py-4 text-center text-sm text-emerald-200">
-            Checkout complete. Your subscription is now active.
-          </div>
-        ) : null}
+        <StatusNotice
+          checkoutStatus={checkoutStatus}
+          checkoutReason={checkoutReason}
+          stripeRequestId={stripeRequestId}
+        />
 
-        {isCheckoutCancelled ? (
-          <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-amber-400/40 bg-amber-500/10 px-5 py-4 text-center text-sm text-amber-100">
-            Checkout canceled. No charge was made.
-          </div>
-        ) : null}
-
-        {isCheckoutError ? (
-          <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-red-400/40 bg-red-500/10 px-5 py-4 text-center text-sm text-red-100">
-            {checkoutErrorMessage(checkoutReason)}
-            {stripeRequestId ? (
-              <span className="mt-2 block text-xs text-red-100/80">
-                Stripe request ID: {stripeRequestId}
-              </span>
-            ) : null}
-          </div>
-        ) : null}
-
-        {isCheckoutConfigurationError ? (
-          <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-red-400/40 bg-red-500/10 px-5 py-4 text-center text-sm text-red-100">
-            Stripe checkout is not fully configured yet. Please contact support
-            if this keeps happening.
-          </div>
-        ) : null}
-
-        {isChoosePlanNotice ? (
-          <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-amber-400/40 bg-amber-500/10 px-5 py-4 text-center text-sm text-amber-100">
-            Choose a plan below to start checkout.
-          </div>
-        ) : null}
-
-        <div className="mx-auto mt-16 grid max-w-5xl gap-8 lg:mx-auto lg:grid-cols-3 lg:items-stretch">
+        <div className="mx-auto mt-14 grid max-w-5xl gap-5 lg:grid-cols-3 lg:items-stretch">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`fluid-transition relative flex flex-col rounded-3xl border p-8 shadow-xl ${
+              className={`creator-card relative flex flex-col rounded-xl border p-6 shadow-sm ${
                 plan.featured
-                  ? "z-[1] border-primary/30 bg-card shadow-[0_18px_44px_-20px_rgba(54,95,125,0.35)] lg:-translate-y-2 lg:scale-[1.02] dark:border-cyan-400/40 dark:bg-slate-950/80 dark:shadow-[0_0_60px_-12px_rgba(34,211,238,0.35)]"
-                  : "glass-surface border-border bg-card backdrop-blur-sm hover:border-primary/25 dark:border-white/10 dark:bg-slate-950/50 dark:hover:border-white/20"
+                  ? "creator-card-coral border-primary bg-card shadow-[0_18px_42px_rgba(20,26,35,0.10)]"
+                  : plan.name === "Free"
+                    ? "creator-card-cyan border-border bg-card"
+                    : "creator-card-gold border-border bg-card"
               }`}
             >
               {plan.featured && plan.popularLabel ? (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-lg dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950">
+                <div className="mb-4">
+                  <Badge variant="secondary" className="w-fit">
                     {plan.popularLabel}
-                  </span>
+                  </Badge>
                 </div>
               ) : null}
 
               <div className="mb-6">
-                <h2 className="text-xl font-bold text-foreground dark:text-white">
-                  {plan.name}
-                </h2>
-                <p className="mt-2 min-h-[3rem] text-sm leading-relaxed text-muted-foreground dark:text-slate-400">
+                <h2 className="text-xl font-bold">{plan.name}</h2>
+                <p className="mt-2 min-h-[3rem] text-sm leading-6 text-muted-foreground">
                   {plan.description}
                 </p>
-                <div className="mt-4 rounded-2xl border border-border bg-muted/45 p-3 text-sm dark:border-white/10 dark:bg-white/[0.04]">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-slate-400">
+                <div className="mt-5 rounded-lg border border-border bg-background p-3 text-sm">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
                     Best for
                   </p>
-                  <p className="mt-1 font-semibold text-foreground dark:text-white">
-                    {plan.bestFor}
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-muted-foreground dark:text-slate-400">
+                  <p className="mt-1 font-semibold">{plan.bestFor}</p>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
                     {plan.outcome}
                   </p>
                 </div>
                 <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold tracking-tight text-foreground dark:text-white">
-                    {plan.price}
-                  </span>
-                  <span className="text-muted-foreground dark:text-slate-400">
-                    {plan.period}
-                  </span>
+                  <span className="text-4xl font-extrabold">{plan.price}</span>
+                  <span className="text-muted-foreground">{plan.period}</span>
                 </div>
               </div>
 
-              <ul className="mb-8 flex flex-1 flex-col gap-3 text-sm text-foreground dark:text-slate-200">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex gap-3">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-cyan-500/15 dark:text-cyan-300">
+              <ul className="mb-8 flex flex-1 flex-col gap-3 text-sm">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex gap-3">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                       <Check className="h-3.5 w-3.5" strokeWidth={3} />
                     </span>
-                    <span>{f}</span>
+                    <span>{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -385,8 +360,8 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                   href={plan.ctaHref}
                   className={
                     plan.ctaVariant === "primary"
-                      ? "inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-center text-base font-bold text-primary-foreground shadow-[0_12px_24px_rgba(54,95,125,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_32px_rgba(54,95,125,0.24)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_32px_rgba(56,189,248,0.4)] dark:hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
-                      : "inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-6 py-3.5 text-center text-base font-semibold text-foreground transition-all duration-200 hover:border-primary/25 hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:border-white/35 dark:hover:bg-white/10"
+                      ? "creator-cta inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-center text-base font-bold text-primary-foreground transition"
+                      : "creator-outline-cta inline-flex w-full items-center justify-center gap-2 rounded-lg border px-6 py-3.5 text-center text-base font-semibold text-foreground transition"
                   }
                 >
                   {plan.ctaLabel}
@@ -400,8 +375,8 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                     type="submit"
                     className={
                       plan.ctaVariant === "primary"
-                        ? "inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-center text-base font-bold text-primary-foreground shadow-[0_12px_24px_rgba(54,95,125,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_32px_rgba(54,95,125,0.24)] dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:shadow-[0_0_32px_rgba(56,189,248,0.4)] dark:hover:shadow-[0_0_44px_rgba(56,189,248,0.55)]"
-                        : "inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-card px-6 py-3.5 text-center text-base font-semibold text-foreground transition-all duration-200 hover:border-primary/25 hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:border-white/35 dark:hover:bg-white/10"
+                        ? "creator-cta inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-center text-base font-bold text-primary-foreground transition"
+                        : "creator-outline-cta inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border px-6 py-3.5 text-center text-base font-semibold text-foreground transition"
                     }
                   >
                     {plan.ctaLabel}
@@ -415,53 +390,42 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
 
         <section className="mx-auto mt-12 grid max-w-5xl gap-4 lg:grid-cols-3">
           {buyerSignals.map((item) => (
-            <div
-              key={item.title}
-              className="rounded-3xl border border-border bg-card/85 p-5 shadow-sm dark:border-white/10 dark:bg-slate-950/55"
-            >
-              <div className="flex size-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 dark:border-cyan-300/25 dark:bg-cyan-400/10">
-                <item.icon className="size-5 text-primary dark:text-cyan-300" />
+            <div key={item.title} className="creator-card rounded-lg border border-border bg-card p-5 shadow-sm">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <item.icon className="size-5" />
               </div>
-              <h2 className="mt-4 text-base font-bold text-foreground dark:text-white">
-                {item.title}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground dark:text-slate-400">
+              <h2 className="mt-4 text-base font-bold">{item.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {item.body}
               </p>
             </div>
           ))}
         </section>
 
-        <section className="mx-auto mt-10 max-w-5xl rounded-3xl border border-border bg-card/90 p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/70 sm:p-8">
-          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <section className="creator-studio-panel mx-auto mt-10 max-w-5xl rounded-xl border border-border p-6 shadow-sm sm:p-8">
+          <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary dark:text-cyan-200">
-                How credits work
-              </p>
-              <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-foreground dark:text-white">
-                Predictable for customers, safer for your costs
+              <h2 className="text-2xl font-extrabold">
+                What your credits buy
               </h2>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground dark:text-slate-400">
-                Trend scans are the expensive part. Credits let creators buy a
-                clear monthly workflow while keeping the app protected from
-                runaway usage.
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                Trend scans are the heavier workflow. Credits make the monthly
+                plan easy to understand while keeping usage predictable.
               </p>
             </div>
             <div className="grid gap-3">
               {creditExamples.map((item) => (
                 <div
                   key={item.label}
-                  className="flex items-start justify-between gap-4 rounded-2xl border border-border bg-background p-4 dark:border-white/10 dark:bg-slate-900/70"
+                  className="flex items-start justify-between gap-4 rounded-lg border border-border bg-white/70 p-4"
                 >
                   <div>
-                    <p className="font-semibold text-foreground dark:text-white">
-                      {item.label}
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground dark:text-slate-400">
+                    <p className="font-semibold">{item.label}</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
                       {item.note}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-bold text-primary dark:border-cyan-300/30 dark:bg-cyan-400/10 dark:text-cyan-100">
+                  <span className="shrink-0 rounded-md border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
                     {item.cost} credits
                   </span>
                 </div>
@@ -472,23 +436,21 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
 
         <section className="mx-auto mt-14 max-w-3xl">
           <div className="text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary dark:text-cyan-200">
+            <TrendingUp className="mx-auto size-8 text-primary" />
+            <h2 className="mt-3 text-3xl font-extrabold">
               Pricing FAQ
-            </p>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight">
-              Pick the plan that fits your pace
             </h2>
           </div>
-          <div className="mt-8 space-y-3">
+          <div className="mt-8 flex flex-col gap-3">
             {pricingFaqItems.map((item) => (
               <details
                 key={item.q}
-                className="rounded-2xl border border-border bg-card px-5 py-2 dark:border-white/10 dark:bg-slate-950/55"
+                className="rounded-lg border border-border bg-card px-5 py-2"
               >
                 <summary className="cursor-pointer py-3 text-sm font-semibold">
                   {item.q}
                 </summary>
-                <p className="border-t border-border pb-4 pt-3 text-sm leading-6 text-muted-foreground dark:border-white/10">
+                <p className="border-t border-border pb-4 pt-3 text-sm leading-6 text-muted-foreground">
                   {item.a}
                 </p>
               </details>
@@ -496,21 +458,9 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           </div>
         </section>
 
-        <nav className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
-          <Link href="/support" className="hover:text-foreground">
-            Support
-          </Link>
-          <Link href="/status" className="hover:text-foreground">
-            Status
-          </Link>
-          <Link href="/privacy" className="hover:text-foreground">
-            Privacy
-          </Link>
-          <Link href="/terms" className="hover:text-foreground">
-            Terms
-          </Link>
-        </nav>
       </div>
+
+      <MarketingFooter />
     </main>
   );
 }

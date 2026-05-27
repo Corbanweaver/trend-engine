@@ -15,6 +15,10 @@ import {
   Youtube,
 } from "lucide-react";
 
+import {
+  MarketingFooter,
+  MarketingHeader,
+} from "@/components/marketing/marketing-shell";
 import { apiFetch } from "@/lib/api";
 import type {
   DailyPlatformSection,
@@ -139,7 +143,11 @@ export function TrendingLivePage() {
       setData(json);
       hasLoadedOnce.current = true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load trends.");
+      setError(
+        e instanceof Error && e.message.trim()
+          ? e.message
+          : "The live trend source did not respond.",
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -166,43 +174,15 @@ export function TrendingLivePage() {
   );
 
   return (
-    <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-primary/10 blur-3xl dark:bg-fuchsia-500/20" />
-        <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-secondary/70 blur-3xl dark:bg-cyan-500/15" />
-        <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 rounded-full bg-primary/5 blur-3xl dark:bg-indigo-500/15" />
-      </div>
+    <main className="creator-page min-h-svh text-foreground">
+      <MarketingHeader currentPath="/trending" />
 
-      <header className="relative z-20 mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-7">
-        <div className="flex flex-wrap items-center gap-6">
-          <Link
-            href="/"
-            className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
-          >
-            TrendBoard
-          </Link>
-          <nav className="flex items-center gap-6 text-sm">
-            <span className="font-medium text-primary">Trending</span>
-            <Link
-              href="/pricing"
-              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/dashboard"
-              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-            >
-              Dashboard
-            </Link>
-          </nav>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
+      <section className="mx-auto max-w-7xl px-4 pb-16 pt-10 sm:px-6">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
           <div
             className={cn(
-              "flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200",
-              "shadow-[0_0_20px_rgba(16,185,129,0.25)]",
+              "flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800",
+              "shadow-[0_8px_24px_rgba(16,185,129,0.14)]",
             )}
           >
             <span className="relative flex h-2 w-2">
@@ -210,17 +190,13 @@ export function TrendingLivePage() {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
             Live pulse
-            {relative ? (
-              <span className="text-emerald-700/90 dark:text-emerald-300/90">
-                - updated {relative}
-              </span>
-            ) : null}
+            {relative ? <span>- updated {relative}</span> : null}
           </div>
           <button
             type="button"
             onClick={() => void load(true)}
             disabled={refreshing}
-            className="fluid-transition inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-60 dark:border-white/15 dark:bg-slate-900/80 dark:hover:bg-slate-800"
+            className="creator-outline-cta fluid-transition inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold text-foreground disabled:opacity-60"
           >
             {refreshing ? (
               <Loader2 className="size-4 animate-spin" />
@@ -230,14 +206,12 @@ export function TrendingLivePage() {
             Refresh
           </button>
         </div>
-      </header>
 
-      <section className="relative z-10 mx-auto max-w-7xl px-6 pb-16">
         <div className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary dark:text-cyan-200">
+          <p className="text-xs font-semibold uppercase text-primary">
             Social momentum
           </p>
-          <h1 className="mt-4 text-balance text-4xl font-extrabold tracking-tight sm:text-5xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
+          <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
             What creators are reacting to now
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
@@ -251,7 +225,7 @@ export function TrendingLivePage() {
           {TRENDING_PUBLIC_GUIDES.map((guide) => (
             <article
               key={guide.title}
-              className="rounded-2xl border border-border bg-card/80 p-5 shadow-sm dark:border-white/10 dark:bg-slate-900/55"
+              className="creator-card rounded-xl border border-border bg-card/90 p-5 shadow-sm"
             >
               <h2 className="text-base font-semibold">{guide.title}</h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -267,13 +241,22 @@ export function TrendingLivePage() {
             <p className="text-sm">Pulling creator-platform signals...</p>
           </div>
         ) : error ? (
-          <div className="mt-10 rounded-2xl border border-destructive/40 bg-destructive/10 px-5 py-4 text-sm text-destructive-foreground">
-            <p className="font-medium">Couldn&apos;t reach the trend API.</p>
-            <p className="mt-1 text-destructive/90">{error}</p>
+          <div className="mt-10 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+            <p className="font-medium">Live trend feed is warming up.</p>
+            <p className="mt-1">
+              The source feed did not respond in this preview. Refresh in a
+              moment, or run a niche analysis to create idea cards directly.
+            </p>
+            <details className="mt-2 text-xs text-amber-800/80">
+              <summary className="cursor-pointer font-medium">
+                Technical detail
+              </summary>
+              <p className="mt-1">{error}</p>
+            </details>
             <button
               type="button"
               onClick={() => void load(true)}
-              className="mt-4 rounded-lg bg-destructive/20 px-4 py-2 text-destructive-foreground hover:bg-destructive/30"
+              className="mt-4 rounded-lg bg-amber-100 px-4 py-2 font-semibold text-amber-900 hover:bg-amber-200"
             >
               Try again
             </button>
@@ -286,15 +269,14 @@ export function TrendingLivePage() {
                 <div
                   key={section.key}
                   className={cn(
-                    "fluid-transition flex flex-col rounded-2xl border border-border bg-card/80 p-5 shadow-sm backdrop-blur-sm",
-                    "dark:border-white/10 dark:bg-slate-900/60",
+                    "creator-card fluid-transition flex flex-col rounded-xl border border-border bg-card/90 p-5 shadow-sm backdrop-blur-sm",
                     "animate-in fade-in slide-in-from-bottom-2 duration-500",
                   )}
                   style={{ animationDelay: `${si * 70}ms` }}
                 >
-                  <div className="flex items-center gap-3 border-b border-border pb-4 dark:border-white/10">
-                    <div className="rounded-xl border border-primary/20 bg-primary/10 p-2 dark:border-cyan-400/25 dark:bg-cyan-400/10">
-                      <Icon className="size-5 text-primary dark:text-cyan-300" />
+                  <div className="flex items-center gap-3 border-b border-border pb-4">
+                    <div className="rounded-lg border border-primary/20 bg-primary/10 p-2">
+                      <Icon className="size-5 text-primary" />
                     </div>
                     <div>
                       <h2 className="text-base font-semibold">
@@ -307,7 +289,7 @@ export function TrendingLivePage() {
                   </div>
                   <ul className="mt-4 flex max-h-[min(420px,50vh)] flex-col gap-2 overflow-y-auto pr-1">
                     {section.items.length === 0 ? (
-                      <li className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground dark:border-white/15">
+                      <li className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
                         {emptySectionMessage(section.key)}
                       </li>
                     ) : (
@@ -320,7 +302,7 @@ export function TrendingLivePage() {
                                 className={cn(
                                   "line-clamp-2 text-sm font-medium leading-snug text-foreground",
                                   href &&
-                                    "group-hover:text-primary dark:group-hover:text-cyan-200",
+                                    "group-hover:text-primary",
                                 )}
                               >
                                 {item.title}
@@ -350,7 +332,7 @@ export function TrendingLivePage() {
                                 rel="noreferrer"
                                 className={cn(
                                   "group flex gap-3 rounded-xl border border-transparent px-2 py-2.5 transition-colors",
-                                  "hover:border-primary/25 hover:bg-muted/60 dark:hover:bg-white/5",
+                                  "hover:border-primary/25 hover:bg-muted/60",
                                 )}
                               >
                                 {inner}
@@ -371,20 +353,21 @@ export function TrendingLivePage() {
           </div>
         ) : null}
 
-        <div className="mt-14 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-muted/45 px-6 py-5 dark:border-white/10 dark:bg-gradient-to-r dark:from-slate-950/80 dark:via-slate-900/60 dark:to-indigo-950/40">
+        <div className="creator-studio-panel mt-14 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border px-6 py-5">
           <p className="max-w-xl text-sm text-muted-foreground">
-            Turn these signals into full scripts, hooks, and source links in the
-            dashboard - niches from breaking news to gaming.
+            Turn these signals into organic video idea cards, hooks, scripts,
+            and source links on the analysis page.
           </p>
           <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-lg hover:opacity-95 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
+            href="/analyze"
+            className="creator-cta inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-bold text-primary-foreground"
           >
-            Open TrendBoard
+            Analyze trends
             <ArrowRight className="size-4" />
           </Link>
         </div>
       </section>
+      <MarketingFooter />
     </main>
   );
 }

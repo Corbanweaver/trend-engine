@@ -136,7 +136,7 @@ export default async function AdminPage() {
 
   if (!isAdminEmail(email)) {
     return (
-      <main className="min-h-svh bg-background px-4 py-10 text-foreground">
+      <main className="creator-app-page min-h-svh px-4 py-10 text-foreground">
         <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-6">
           <p className="text-sm font-medium text-muted-foreground">Admin</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">
@@ -159,7 +159,7 @@ export default async function AdminPage() {
   const admin = getAdminClient();
   if (!admin) {
     return (
-      <main className="min-h-svh bg-background px-4 py-10 text-foreground">
+      <main className="creator-app-page min-h-svh px-4 py-10 text-foreground">
         <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-6">
           <p className="text-sm font-medium text-muted-foreground">Admin</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">
@@ -402,7 +402,7 @@ export default async function AdminPage() {
   const events = (eventsResult.data ?? []) as OperationalEventRow[];
 
   return (
-    <main className="min-h-svh bg-background px-4 py-8 text-foreground">
+    <main className="creator-app-page min-h-svh px-4 py-8 text-foreground">
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>

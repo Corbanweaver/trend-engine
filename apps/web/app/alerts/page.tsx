@@ -192,7 +192,7 @@ export default function TrendAlertsPage() {
   };
 
   return (
-    <main className="min-h-svh bg-background px-4 py-8 text-foreground">
+    <main className="creator-app-page min-h-svh px-4 py-8 text-foreground">
       <div className="mx-auto max-w-2xl space-y-6">
         {toast ? (
           <div className="fixed right-4 top-4 z-50 rounded-xl border border-emerald-300/60 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 shadow-lg dark:border-emerald-300/40 dark:bg-emerald-500/15 dark:text-emerald-100">

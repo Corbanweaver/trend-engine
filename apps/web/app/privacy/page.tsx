@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+
+import {
+  MarketingFooter,
+  MarketingHeader,
+} from "@/components/marketing/marketing-shell";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -17,15 +21,10 @@ export default function PrivacyPage() {
   )}`;
 
   return (
-    <main className="min-h-svh bg-background px-4 py-10 text-foreground">
-      <div className="mx-auto max-w-3xl space-y-8">
-        <Link
-          href="/"
-          className="text-sm font-medium text-primary hover:underline"
-        >
-          TrendBoard
-        </Link>
-        <div>
+    <main className="creator-page min-h-svh text-foreground">
+      <MarketingHeader />
+      <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+        <div className="creator-studio-panel rounded-xl border border-border p-6 shadow-sm sm:p-8">
           <h1 className="text-3xl font-semibold tracking-tight">
             Privacy Policy
           </h1>
@@ -34,7 +33,7 @@ export default function PrivacyPage() {
           </p>
         </div>
 
-        <section className="space-y-3 text-sm leading-6 text-muted-foreground">
+        <section className="mt-6 flex flex-col gap-3 rounded-xl border border-border bg-card p-6 text-sm leading-6 text-muted-foreground shadow-sm">
           <p>
             TrendBoard collects the account details you provide, such as your
             email address, saved ideas, selected niches, subscription status,
@@ -68,7 +67,8 @@ export default function PrivacyPage() {
             or use the Support page.
           </p>
         </section>
-      </div>
+      </article>
+      <MarketingFooter />
     </main>
   );
 }

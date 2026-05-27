@@ -16,6 +16,10 @@ import {
 } from "lucide-react";
 
 import { ConversionEventTracker } from "@/components/analytics/conversion-event-tracker";
+import {
+  MarketingFooter,
+  MarketingHeader,
+} from "@/components/marketing/marketing-shell";
 import { ConversionLink } from "@/components/seo/conversion-link";
 import { FreeResourceWidget } from "@/components/seo/free-resource-widget";
 import type { SeoPage } from "@/lib/seo-content";
@@ -501,13 +505,13 @@ export function SeoContentPage({ page }: { page: SeoPage }) {
   const freePreviewKind = isAdLandingPage
     ? getFreePreviewKind(page)
     : page.resourceKind;
-  const primaryCtaHref = isAdLandingPage ? "#free-preview" : "/dashboard";
+  const primaryCtaHref = isAdLandingPage ? "#free-preview" : "/analyze";
   const primaryCtaLabel = isAdLandingPage
     ? "Generate Free Ideas"
-    : "Try TrendBoard";
+    : "Analyze trends";
 
   return (
-    <main className="min-h-svh bg-background pb-20 text-foreground sm:pb-0">
+    <main className="creator-page min-h-svh pb-20 text-foreground sm:pb-0">
       <JsonLd data={pageSchema(page)} />
       <JsonLd data={breadcrumbSchema(page)} />
       <JsonLd data={faqSchema(page)} />
@@ -516,46 +520,7 @@ export function SeoContentPage({ page }: { page: SeoPage }) {
         context={{ page: page.path, group: page.group }}
       />
 
-      <header className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-7">
-        <Link
-          href="/"
-          className="text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
-        >
-          TrendBoard
-        </Link>
-        <nav className="flex flex-wrap items-center gap-5 text-sm">
-          <Link
-            href="/trending"
-            className="font-medium text-muted-foreground hover:text-foreground"
-          >
-            Trending
-          </Link>
-          <Link
-            href="/free-tiktok-hook-ideas"
-            className="font-medium text-muted-foreground hover:text-foreground"
-          >
-            Free tools
-          </Link>
-          <Link
-            href="/niches"
-            className="font-medium text-muted-foreground hover:text-foreground"
-          >
-            Niches
-          </Link>
-          <Link
-            href="/pricing"
-            className="font-medium text-muted-foreground hover:text-foreground"
-          >
-            Pricing
-          </Link>
-          <Link
-            href="/dashboard"
-            className="rounded-xl border border-border bg-card px-4 py-2 font-semibold text-foreground hover:bg-muted dark:border-white/10 dark:bg-slate-900 dark:hover:bg-slate-800"
-          >
-            Open app
-          </Link>
-        </nav>
-      </header>
+      <MarketingHeader />
 
       <nav
         aria-label="Breadcrumb"
@@ -794,11 +759,11 @@ export function SeoContentPage({ page }: { page: SeoPage }) {
               </p>
             </div>
             <ConversionLink
-              href={isAdLandingPage ? "#free-preview" : "/dashboard"}
+              href={isAdLandingPage ? "#free-preview" : "/analyze"}
               event="landing_cta_clicked"
               eventContext={{
                 page: page.path,
-                destination: isAdLandingPage ? "#free-preview" : "/dashboard",
+                destination: isAdLandingPage ? "#free-preview" : "/analyze",
                 placement: "bottom_cta",
               }}
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
@@ -839,6 +804,7 @@ export function SeoContentPage({ page }: { page: SeoPage }) {
           </ConversionLink>
         </div>
       ) : null}
+      <MarketingFooter />
     </main>
   );
 }

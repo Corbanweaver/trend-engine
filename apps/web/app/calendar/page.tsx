@@ -213,7 +213,7 @@ export default function CalendarPage() {
     : false;
 
   return (
-    <main className="min-h-svh bg-background p-4 text-foreground">
+    <main className="creator-app-page min-h-svh p-4 text-foreground">
       <div className="mx-auto max-w-7xl space-y-5">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">
