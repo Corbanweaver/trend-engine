@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { TrendingLivePage } from "./trending-client";
 
 export const metadata: Metadata = {
-  title: "Live Creator Trends Across TikTok, Instagram, Threads, Bluesky, and Search",
+  title: "Live Creator Trends",
   description:
-    "See a public creator-focused trend pulse across TikTok, Instagram, X, Bluesky, Threads, Pinterest, YouTube Shorts, search, and news context.",
+    "Find live creator trends from social, search, community, and news signals before turning them into content ideas.",
   alternates: {
     canonical: "/trending",
   },

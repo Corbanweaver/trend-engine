@@ -49,20 +49,11 @@ const SOCIAL_SECTION_LABELS: Record<string, string> = {
   news: "News context",
 };
 
-const TRENDING_PUBLIC_GUIDES = [
-  {
-    title: "Trending creator topics today",
-    body: "Watch for topics that appear across more than one source, then connect them to a specific niche before filming.",
-  },
-  {
-    title: "Platforms scanned",
-    body: "TrendBoard checks creator platforms like TikTok, Instagram, X, Bluesky, Threads, Pinterest, YouTube Shorts, Reddit, search, and news context when available.",
-  },
-  {
-    title: "Content examples",
-    body: "Use a live signal as a reaction, quick explainer, myth check, carousel, Shorts script, or save-worthy checklist.",
-  },
-];
+const HOW_TO_USE_TRENDS = [
+  "Pick one topic people are reacting to.",
+  "Connect it to your niche.",
+  "Turn it into a reaction, explainer, checklist, or short script.",
+] as const;
 
 function sectionIcon(key: string) {
   switch (key) {
@@ -174,99 +165,102 @@ export function TrendingLivePage() {
   );
 
   return (
-    <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-primary/10 blur-3xl dark:bg-fuchsia-500/20" />
-        <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-secondary/70 blur-3xl dark:bg-cyan-500/15" />
-        <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 rounded-full bg-primary/5 blur-3xl dark:bg-indigo-500/15" />
-      </div>
-
-      <header className="relative z-20 mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-7">
-        <div className="flex flex-wrap items-center gap-6">
+    <main className="min-h-svh bg-background text-foreground">
+      <header className="border-b border-border bg-background/95 px-4 py-4 backdrop-blur dark:border-white/10 dark:bg-slate-950/95 sm:px-6">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <Link
             href="/"
-            className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
+            className="flex min-w-0 items-center gap-2 text-sm font-semibold tracking-[0.08em] text-foreground hover:text-primary sm:tracking-[0.16em]"
           >
-            TrendBoard
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
+              T
+            </span>
+            <span className="truncate">TrendBoard</span>
           </Link>
-          <nav className="flex items-center gap-6 text-sm">
-            <span className="font-medium text-primary">Trending</span>
+          <nav className="flex items-center gap-3 text-sm sm:gap-5">
             <Link
               href="/pricing"
-              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
+              className="hidden font-medium text-muted-foreground hover:text-foreground sm:inline"
             >
               Pricing
             </Link>
             <Link
               href="/dashboard"
-              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
             >
-              Dashboard
+              Open app
             </Link>
           </nav>
         </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div
-            className={cn(
-              "flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200",
-              "shadow-[0_0_20px_rgba(16,185,129,0.25)]",
-            )}
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-            </span>
-            Live pulse
-            {relative ? (
-              <span className="text-emerald-700/90 dark:text-emerald-300/90">
-                - updated {relative}
-              </span>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            onClick={() => void load(true)}
-            disabled={refreshing}
-            className="fluid-transition inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-60 dark:border-white/15 dark:bg-slate-900/80 dark:hover:bg-slate-800"
-          >
-            {refreshing ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <RefreshCw className="size-4" />
-            )}
-            Refresh
-          </button>
-        </div>
       </header>
 
-      <section className="relative z-10 mx-auto max-w-7xl px-6 pb-16">
-        <div className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary dark:text-cyan-200">
-            Social momentum
-          </p>
-          <h1 className="mt-4 text-balance text-4xl font-extrabold tracking-tight sm:text-5xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
-            What creators are reacting to now
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground">
-            A creator-focused snapshot from TikTok, Instagram/Reels, YouTube
-            Shorts, Reddit conversations, plus search and news context. It
-            refreshes automatically so the page feels alive.
-          </p>
+      <section className="mx-auto max-w-7xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
+        <div className="grid gap-8 lg:grid-cols-[1fr_420px] lg:items-end">
+          <div>
+            <h1 className="max-w-3xl text-balance text-4xl font-extrabold tracking-tight sm:text-5xl">
+              Find a trend. Make a post.
+            </h1>
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-muted-foreground">
+              This page shows live topics creators can react to right now.
+              TrendBoard checks social, search, community, and news signals so
+              you can spot ideas before they feel old.
+            </p>
+          </div>
+
+          <aside className="rounded-3xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/70">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-800 dark:border-emerald-400/30 dark:text-emerald-200">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+                Live trends
+                {relative ? (
+                  <span className="text-emerald-700/90 dark:text-emerald-300/90">
+                    updated {relative}
+                  </span>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={() => void load(true)}
+                disabled={refreshing}
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-60 dark:border-white/15 dark:bg-slate-900 dark:hover:bg-slate-800"
+              >
+                {refreshing ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="size-4" />
+                )}
+                Refresh
+              </button>
+            </div>
+            <h2 className="mt-5 text-base font-bold">How to use this page</h2>
+            <ol className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
+              {HOW_TO_USE_TRENDS.map((step, index) => (
+                <li key={step} className="flex gap-3">
+                  <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-black text-primary dark:bg-cyan-400/10 dark:text-cyan-200">
+                    {index + 1}
+                  </span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+          </aside>
         </div>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {TRENDING_PUBLIC_GUIDES.map((guide) => (
-            <article
-              key={guide.title}
-              className="rounded-2xl border border-border bg-card/80 p-5 shadow-sm dark:border-white/10 dark:bg-slate-900/55"
-            >
-              <h2 className="text-base font-semibold">{guide.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {guide.body}
-              </p>
-            </article>
-          ))}
+        <div className="mt-10 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 dark:border-white/10 dark:bg-slate-950/70 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm leading-6 text-muted-foreground">
+            Want the app to turn a signal into hooks, scripts, hashtags, and
+            source links?
+          </p>
+          <Link
+            href="/dashboard"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+          >
+            Open TrendBoard
+            <ArrowRight className="size-4" />
+          </Link>
         </div>
 
         {loading ? (
@@ -379,19 +373,6 @@ export function TrendingLivePage() {
           </div>
         ) : null}
 
-        <div className="mt-14 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-muted/45 px-6 py-5 dark:border-white/10 dark:bg-gradient-to-r dark:from-slate-950/80 dark:via-slate-900/60 dark:to-indigo-950/40">
-          <p className="max-w-xl text-sm text-muted-foreground">
-            Turn these signals into full scripts, hooks, and source links in the
-            dashboard - niches from breaking news to gaming.
-          </p>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-lg hover:opacity-95 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
-          >
-            Open TrendBoard
-            <ArrowRight className="size-4" />
-          </Link>
-        </div>
       </section>
     </main>
   );
