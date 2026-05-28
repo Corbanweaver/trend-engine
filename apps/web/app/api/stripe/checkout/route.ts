@@ -217,7 +217,9 @@ export async function POST(request: Request) {
       success_url: `${siteUrl}/dashboard?success=true&plan=${encodeURIComponent(
         selectedPlan,
       )}&checkout_session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}/pricing?checkout=cancelled`,
+      cancel_url: `${siteUrl}/pricing?checkout=cancelled&plan=${encodeURIComponent(
+        selectedPlan,
+      )}`,
       ...(affiliateCouponId
         ? { discounts: [{ coupon: affiliateCouponId }] }
         : { allow_promotion_codes: true }),

@@ -286,6 +286,8 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
   const isCheckoutConfigurationError = checkoutStatus === "configuration";
   const isChoosePlanNotice = checkoutStatus === "choose-plan";
   const shouldResumeCheckout = isChoosePlanNotice && resumeCheckoutPlan;
+  const shouldRetryCancelledCheckout =
+    isCheckoutCancelled && resumeCheckoutPlan;
 
   return (
     <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
@@ -360,7 +362,21 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
 
         {isCheckoutCancelled ? (
           <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-amber-400/40 bg-amber-500/10 px-5 py-4 text-center text-sm text-amber-100">
-            Checkout canceled. No charge was made.
+            {shouldRetryCancelledCheckout ? (
+              <>
+                <p className="text-balance leading-6">
+                  Checkout canceled. No charge was made. You can reopen{" "}
+                  {resumeCheckoutPlan.name} checkout when you are ready.
+                </p>
+                <ResumeCheckoutForm
+                  plan={resumeCheckoutPlan.planKey}
+                  planName={resumeCheckoutPlan.name}
+                  autoSubmit={false}
+                />
+              </>
+            ) : (
+              "Checkout canceled. No charge was made."
+            )}
           </div>
         ) : null}
 

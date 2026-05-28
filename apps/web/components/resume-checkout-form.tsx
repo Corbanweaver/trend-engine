@@ -8,23 +8,26 @@ import { AffiliateCheckoutFields } from "@/components/affiliate-checkout-fields"
 type ResumeCheckoutFormProps = {
   plan: "creator" | "pro";
   planName: string;
+  autoSubmit?: boolean;
 };
 
 export function ResumeCheckoutForm({
   plan,
   planName,
+  autoSubmit = true,
 }: ResumeCheckoutFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isResuming, setIsResuming] = useState(false);
 
   useEffect(() => {
+    if (!autoSubmit) return;
     const timer = window.setTimeout(() => {
       setIsResuming(true);
       formRef.current?.requestSubmit();
     }, 350);
 
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [autoSubmit]);
 
   return (
     <form ref={formRef} action="/api/stripe/checkout" method="POST">
