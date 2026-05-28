@@ -98,107 +98,113 @@ function LoginForm() {
   };
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
-      <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
+    <main className="min-h-svh bg-background px-4 py-8 text-foreground">
+      <div className="mx-auto flex min-h-[calc(100svh-4rem)] w-full max-w-md flex-col justify-center">
         <Link
           href="/"
-          className="mb-6 block text-xs font-semibold uppercase tracking-[0.2em] text-primary dark:text-cyan-300"
+          className="mb-5 flex w-fit items-center gap-2 text-sm font-semibold tracking-[0.08em] text-foreground hover:text-primary"
         >
-          TrendBoard
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
+            T
+          </span>
+          <span>TrendBoard</span>
         </Link>
-        <h1 className="text-2xl font-semibold">
-          {checkoutIntent
-            ? `Continue ${checkoutIntent.planName} checkout`
-            : "Log in"}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
-          {checkoutIntent
-            ? "Sign in so Stripe can attach this subscription to your TrendBoard account."
-            : "Access your saved ideas, alerts, billing, and creator dashboard."}
-        </p>
-        {verifyPrompt ? (
-          <p className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">
-            Please check your email to confirm your account.
+
+        <section className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/70">
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            {checkoutIntent
+              ? `Continue ${checkoutIntent.planName}`
+              : "Log in to TrendBoard"}
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            {checkoutIntent
+              ? "Sign in so Stripe can attach this plan to your TrendBoard account."
+              : "Open your saved ideas, trend scans, scripts, calendar, and billing."}
           </p>
-        ) : null}
 
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          <label className="block text-sm">
-            <span className="mb-1 block text-muted-foreground dark:text-slate-300">
-              Email
-            </span>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
-            />
-          </label>
-
-          <label className="block text-sm">
-            <span className="mb-1 block text-muted-foreground dark:text-slate-300">
-              Password
-            </span>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
-            />
-          </label>
-
-          {error ? (
-            <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
-              {error}
-            </p>
-          ) : null}
-          {status ? (
-            <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
-              {status}
+          {verifyPrompt ? (
+            <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">
+              Check your email to confirm your account, then log in.
             </p>
           ) : null}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:opacity-90"
-          >
-            {loading ? loadingLabel : submitLabel}
-          </button>
-        </form>
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+            <label className="block text-sm">
+              <span className="mb-1.5 block font-medium text-muted-foreground">
+                Email
+              </span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-12 w-full rounded-xl border border-input bg-background px-3 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
+              />
+            </label>
 
-        <div className="mt-4 space-y-3">
+            <label className="block text-sm">
+              <span className="mb-1.5 block font-medium text-muted-foreground">
+                Password
+              </span>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-12 w-full rounded-xl border border-input bg-background px-3 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
+              />
+            </label>
+
+            {error ? (
+              <p className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
+                {error}
+              </p>
+            ) : null}
+            {status ? (
+              <p className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+                {status}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+            >
+              {loading ? loadingLabel : submitLabel}
+            </button>
+          </form>
+
           {googleAuthEnabled ? (
             <button
               type="button"
               onClick={() => void signInWithGoogle()}
               disabled={loading}
-              className="w-full rounded-md border border-border bg-card px-4 py-2 font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-800"
+              className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-bold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-slate-900 dark:hover:bg-slate-800"
             >
               {checkoutIntent
                 ? "Continue checkout with Google"
                 : "Sign in with Google"}
             </button>
           ) : null}
+
           <Link
             href="/forgot-password"
-            className="block text-center text-sm text-primary hover:underline dark:text-cyan-300"
+            className="mt-4 block text-center text-sm font-semibold text-primary hover:underline dark:text-cyan-300"
           >
             Forgot password?
           </Link>
-        </div>
 
-        <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
-          No account?{" "}
-          <Link
-            href={signupHref}
-            className="text-primary hover:underline dark:text-cyan-300"
-          >
-            Sign up
-          </Link>
-        </p>
+          <p className="mt-5 text-center text-sm text-muted-foreground">
+            New here?{" "}
+            <Link
+              href={signupHref}
+              className="font-semibold text-primary hover:underline dark:text-cyan-300"
+            >
+              Create a free account
+            </Link>
+          </p>
+        </section>
       </div>
     </main>
   );
@@ -209,10 +215,8 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
-          <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 dark:border-white/10 dark:bg-slate-900">
-            <p className="text-sm text-muted-foreground dark:text-slate-300">
-              Loading login...
-            </p>
+          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 dark:border-white/10 dark:bg-slate-950/70">
+            <p className="text-sm text-muted-foreground">Loading login...</p>
           </div>
         </main>
       }

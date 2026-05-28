@@ -21,17 +21,15 @@ const googleAuthEnabled =
   process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
 
 const signupBenefits = [
-  "Start with a free account",
-  "No credit card required",
-  "Run your first trend scan after confirming email",
-  "Upgrade only when you need more monthly credits",
+  "Save ideas worth filming",
+  "Run your first trend scan",
+  "No card needed to start",
 ] as const;
 
 const paidSignupBenefits = [
-  "Secure Stripe checkout after account confirmation",
-  "Full cross-platform source coverage",
-  "Saved ideas, hooks, scripts, hashtags, and calendar notes",
-  "Billing tied to the right TrendBoard account",
+  "Create the account first",
+  "Then continue to Stripe checkout",
+  "Credits and saved ideas stay connected",
 ] as const;
 
 function safeRedirectTarget(value: string | null) {
@@ -95,7 +93,7 @@ function SignupForm() {
       }
 
       setSuccess(
-        "Account created. Check your email to confirm your account, then you will continue where you left off.",
+        "Account created. Check your email, then come back to continue.",
       );
       trackConversionEvent({
         event: "signup_completed",
@@ -141,31 +139,31 @@ function SignupForm() {
   };
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-background px-4 py-8 text-foreground">
-      <div className="grid w-full max-w-4xl overflow-hidden rounded-2xl border border-border bg-card shadow-sm dark:border-white/10 dark:bg-slate-900 md:grid-cols-[0.9fr_1.1fr]">
-        <aside className="border-b border-border bg-muted/40 p-6 dark:border-white/10 dark:bg-white/[0.04] md:border-b-0 md:border-r">
-          <Link
-            href="/"
-            className="mb-8 block text-xs font-semibold uppercase tracking-[0.2em] text-primary dark:text-cyan-300"
-          >
-            TrendBoard
-          </Link>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary dark:text-cyan-300">
+    <main className="min-h-svh bg-background px-4 py-8 text-foreground">
+      <div className="mx-auto flex min-h-[calc(100svh-4rem)] w-full max-w-md flex-col justify-center">
+        <Link
+          href="/"
+          className="mb-5 flex w-fit items-center gap-2 text-sm font-semibold tracking-[0.08em] text-foreground hover:text-primary"
+        >
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
+            T
+          </span>
+          <span>TrendBoard</span>
+        </Link>
+
+        <section className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/70">
+          <h1 className="text-3xl font-extrabold tracking-tight">
             {checkoutIntent
-              ? `${checkoutIntent.planName} checkout`
-              : "Free account"}
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-            {checkoutIntent
-              ? `Start ${checkoutIntent.planName} with the right account.`
-              : "Save the ideas worth filming."}
+              ? `Create account for ${checkoutIntent.planName}`
+              : "Create your free account"}
           </h1>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground dark:text-slate-400">
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
             {checkoutIntent
-              ? "Create your account first so monthly credits, billing, and saved ideas stay connected after Stripe checkout."
-              : "Create an account when you want live trend scans, saved source links, hooks, scripts, hashtags, and calendar-ready idea cards."}
+              ? "Create your account so billing, credits, and saved ideas stay together."
+              : "Save creator ideas, run trend scans, and come back when it is time to film."}
           </p>
-          <ul className="mt-6 space-y-3 text-sm text-foreground">
+
+          <ul className="mt-5 grid gap-2 text-sm">
             {benefits.map((benefit) => (
               <li key={benefit} className="flex gap-2">
                 <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary dark:text-cyan-300" />
@@ -173,29 +171,10 @@ function SignupForm() {
               </li>
             ))}
           </ul>
-        </aside>
-
-        <section className="p-6">
-          <Link
-            href="/"
-            className="mb-6 block text-xs font-semibold uppercase tracking-[0.2em] text-primary dark:text-cyan-300 md:hidden"
-          >
-            TrendBoard
-          </Link>
-          <h2 className="text-2xl font-semibold">
-            {checkoutIntent
-              ? `Create account for ${checkoutIntent.planName}`
-              : "Create your account"}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
-            {checkoutIntent
-              ? "Confirm your email, then you will continue to checkout."
-              : "Confirm your email, then run your first trend analysis."}
-          </p>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             <label className="block text-sm">
-              <span className="mb-1 block text-muted-foreground dark:text-slate-300">
+              <span className="mb-1.5 block font-medium text-muted-foreground">
                 Email
               </span>
               <input
@@ -203,12 +182,12 @@ function SignupForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
+                className="h-12 w-full rounded-xl border border-input bg-background px-3 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
               />
             </label>
 
             <label className="block text-sm">
-              <span className="mb-1 block text-muted-foreground dark:text-slate-300">
+              <span className="mb-1.5 block font-medium text-muted-foreground">
                 Password
               </span>
               <input
@@ -219,7 +198,7 @@ function SignupForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
                 aria-describedby="password-strength-hint"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
+                className="h-12 w-full rounded-xl border border-input bg-background px-3 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
               />
               {password ? (
                 <div
@@ -247,7 +226,7 @@ function SignupForm() {
                     ))}
                   </div>
                   <p
-                    className={`text-xs font-medium tracking-wide ${
+                    className={`text-xs font-medium ${
                       strength.level <= 1
                         ? "text-rose-700 dark:text-rose-300/90"
                         : strength.level === 2
@@ -258,11 +237,11 @@ function SignupForm() {
                     }`}
                   >
                     {strength.label === "Too short"
-                      ? "Too short — at least 6 characters"
+                      ? "Too short - use at least 6 characters"
                       : strength.label === "Weak"
-                        ? "Weak — add length and mix of characters"
+                        ? "Weak - add length and mix of characters"
                         : strength.label === "Fair"
-                          ? "Fair — could be stronger"
+                          ? "Fair - could be stronger"
                           : strength.label === "Good"
                             ? "Good password"
                             : "Strong password"}
@@ -271,22 +250,21 @@ function SignupForm() {
               ) : (
                 <p
                   id="password-strength-hint"
-                  className="mt-1.5 text-xs text-muted-foreground dark:text-slate-500"
+                  className="mt-1.5 text-xs text-muted-foreground"
                 >
-                  Use at least 8 characters with upper and lower case, a number,
-                  and a symbol for a strong password.
+                  Use at least 6 characters. 8+ is better.
                 </p>
               )}
             </label>
 
             {error ? (
-              <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
+              <p className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
                 {error}
               </p>
             ) : null}
 
             {success ? (
-              <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+              <p className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
                 {success}
               </p>
             ) : null}
@@ -294,7 +272,7 @@ function SignupForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:opacity-90"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
             >
               {loading ? signupLoadingLabel : signupButtonLabel}
             </button>
@@ -305,19 +283,19 @@ function SignupForm() {
               type="button"
               onClick={() => void signInWithGoogle()}
               disabled={loading}
-              className="mt-4 w-full rounded-md border border-border bg-card px-4 py-2 font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-800"
+              className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-bold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-slate-900 dark:hover:bg-slate-800"
             >
               {checkoutIntent
-                ? `Continue ${checkoutIntent.planName} checkout with Google`
+                ? `Continue ${checkoutIntent.planName} with Google`
                 : "Sign up with Google"}
             </button>
           ) : null}
 
-          <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
+          <p className="mt-5 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link
               href={loginHref}
-              className="text-primary hover:underline dark:text-cyan-300"
+              className="font-semibold text-primary hover:underline dark:text-cyan-300"
             >
               Log in
             </Link>
@@ -333,10 +311,8 @@ export default function SignupPage() {
     <Suspense
       fallback={
         <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
-          <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 dark:border-white/10 dark:bg-slate-900">
-            <p className="text-sm text-muted-foreground dark:text-slate-300">
-              Loading signup...
-            </p>
+          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 dark:border-white/10 dark:bg-slate-950/70">
+            <p className="text-sm text-muted-foreground">Loading signup...</p>
           </div>
         </main>
       }
