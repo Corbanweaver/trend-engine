@@ -210,13 +210,13 @@ function PricingHeader() {
         </Link>
         <Link
           href="/about"
-          className="fluid-transition text-muted-foreground hover:text-foreground"
+          className="fluid-transition hidden text-muted-foreground hover:text-foreground sm:inline"
         >
           About
         </Link>
         <Link
           href="/login"
-          className="fluid-transition text-muted-foreground hover:text-foreground"
+          className="fluid-transition hidden text-muted-foreground hover:text-foreground sm:inline"
         >
           Sign in
         </Link>
@@ -306,21 +306,47 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           <span className="rounded-full border border-border bg-card px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-primary dark:border-white/20 dark:bg-white/10 dark:text-cyan-200">
             Pricing
           </span>
-          <h1 className="mt-6 text-balance bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-4xl font-extrabold text-transparent sm:text-5xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
+          <h1 className="mt-6 text-balance bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-3xl font-extrabold text-transparent sm:text-5xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
             Plans that scale with your creativity
           </h1>
-          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-xs text-base leading-relaxed text-muted-foreground sm:max-w-xl sm:text-lg">
             Pick the tier that matches your workflow. Credits reset monthly and
             keep heavier trend scans fair for everyone.
           </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <div className="mx-auto mt-7 flex w-full max-w-72 flex-col items-center justify-center gap-3 sm:max-w-none sm:flex-row">
+            <form
+              action="/api/stripe/checkout"
+              method="POST"
+              className="w-full sm:w-auto"
+            >
+              <input type="hidden" name="plan" value="creator" />
+              <AffiliateCheckoutFields />
+              <button
+                type="submit"
+                className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-bold text-primary-foreground shadow-[0_12px_24px_rgba(54,95,125,0.2)] transition hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300 sm:w-auto"
+              >
+                Start Creator checkout
+                <ArrowRight className="size-4" />
+              </button>
+            </form>
+            <Link
+              href="#plans"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-border bg-card px-6 text-sm font-semibold text-foreground transition hover:bg-muted dark:border-white/10 dark:bg-slate-950 dark:hover:bg-slate-900 sm:w-auto"
+            >
+              Compare all plans
+            </Link>
+          </div>
+          <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-muted-foreground sm:max-w-sm">
+            Creator is $19.99/mo for about 20 full trend analyses.
+          </p>
+          <div className="mx-auto mt-6 flex max-w-xs flex-wrap justify-center gap-2 sm:max-w-none">
             {trustChecks.map((item) => (
               <span
                 key={item.label}
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
+                className="inline-flex max-w-full items-center gap-2 whitespace-normal rounded-full border border-border bg-card px-3 py-1.5 text-left text-xs font-semibold text-muted-foreground shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
               >
-                <item.icon className="size-3.5 text-primary dark:text-cyan-300" />
-                {item.label}
+                <item.icon className="size-3.5 shrink-0 text-primary dark:text-cyan-300" />
+                <span className="min-w-0 break-words">{item.label}</span>
               </span>
             ))}
           </div>
