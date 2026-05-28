@@ -8,14 +8,22 @@ import {
   type PointerEvent,
 } from "react";
 import type { User } from "@supabase/supabase-js";
-import { Bot, Loader2, MessageCircle, Send, X } from "lucide-react";
+import { ArrowRight, Bot, Loader2, MessageCircle, Send, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 
+import { AffiliateCheckoutFields } from "@/components/affiliate-checkout-fields";
+import { CREDIT_COSTS } from "@/lib/credits";
 import { getSupabaseClient } from "@/lib/supabase";
+import { trackConversionEvent } from "@/lib/telemetry";
 
 type ChatMessage = {
   role: "user" | "assistant";
   content: string;
+};
+
+type CreditSnapshot = {
+  creditsRemaining: number;
+  creditsLimit: number;
 };
 
 const QUICK_PROMPTS = [
@@ -27,6 +35,9 @@ const QUICK_PROMPTS = [
 
 const ASSISTANT_MESSAGES_STORAGE_KEY = "trend_engine:assistant_messages";
 const ASSISTANT_POSITION_STORAGE_KEY = "trend_engine:assistant_position";
+const MAX_ASSISTANT_MESSAGE_CHARS = 1200;
+const ASSISTANT_HISTORY_LIMIT = 12;
+const ASSISTANT_MESSAGE_COST = CREDIT_COSTS.assistantMessage;
 
 const INITIAL_ASSISTANT_MESSAGE: ChatMessage = {
   role: "assistant",
@@ -82,6 +93,10 @@ export function FloatingAiAssistant() {
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [creditsBlocked, setCreditsBlocked] = useState(false);
+  const [creditSnapshot, setCreditSnapshot] = useState<CreditSnapshot | null>(
+    null,
+  );
   const [assistantPosition, setAssistantPosition] =
     useState<AssistantPosition | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -144,7 +159,7 @@ export function FloatingAiAssistant() {
                 message.content.trim().length > 0
               );
             })
-            .slice(-20);
+            .slice(-ASSISTANT_HISTORY_LIMIT);
           if (normalized.length > 0) {
             setMessages(normalized);
           }
@@ -159,7 +174,7 @@ export function FloatingAiAssistant() {
     try {
       window.localStorage.setItem(
         ASSISTANT_MESSAGES_STORAGE_KEY,
-        JSON.stringify(messages.slice(-20)),
+        JSON.stringify(messages.slice(-ASSISTANT_HISTORY_LIMIT)),
       );
     } catch {
       // Ignore localStorage errors
@@ -199,7 +214,11 @@ export function FloatingAiAssistant() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const canSend = input.trim().length > 0 && !loading;
+  const trimmedInput = input.trim();
+  const canSend =
+    trimmedInput.length > 0 &&
+    trimmedInput.length <= MAX_ASSISTANT_MESSAGE_CHARS &&
+    !loading;
 
   if (pathname === "/" || user === undefined || user === null) {
     return null;
@@ -282,6 +301,7 @@ export function FloatingAiAssistant() {
     setMessages(nextMessages);
     setInput("");
     setError(null);
+    setCreditsBlocked(false);
     setLoading(true);
 
     try {
@@ -289,12 +309,18 @@ export function FloatingAiAssistant() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: nextMessages,
+          messages: nextMessages.slice(-ASSISTANT_HISTORY_LIMIT),
         }),
       });
 
-      const body = (await res.json()) as { reply?: string; error?: string };
+      const body = (await res.json()) as {
+        reply?: string;
+        error?: string;
+        credits?: CreditSnapshot;
+      };
+      setCreditSnapshot(body.credits ?? null);
       if (!res.ok || !body.reply) {
+        if (res.status === 402) setCreditsBlocked(true);
         throw new Error(body.error ?? "Failed to get AI response.");
       }
 
@@ -355,7 +381,7 @@ export function FloatingAiAssistant() {
               <div>
                 <p className="text-sm font-semibold">Trend Assistant</p>
                 <p className="text-[11px] text-muted-foreground dark:text-slate-400">
-                  Model: GPT-4
+                  GPT-4 coach - {ASSISTANT_MESSAGE_COST} credit/message
                 </p>
               </div>
             </div>
@@ -391,9 +417,36 @@ export function FloatingAiAssistant() {
           </div>
 
           {error ? (
-            <p className="border-t border-red-300/60 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-400/25 dark:bg-red-500/10 dark:text-red-200">
-              {error}
-            </p>
+            <div className="border-t border-red-300/60 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-400/25 dark:bg-red-500/10 dark:text-red-200">
+              <p>{error}</p>
+              {creditsBlocked ? (
+                <form
+                  action="/api/stripe/checkout"
+                  method="POST"
+                  className="mt-2"
+                  onSubmit={() =>
+                    trackConversionEvent({
+                      event: "upgrade_prompt_clicked",
+                      context: {
+                        placement: "assistant_credit_blocked",
+                        targetPlan: "creator",
+                        creditsRemaining: creditSnapshot?.creditsRemaining,
+                      },
+                    })
+                  }
+                >
+                  <input type="hidden" name="plan" value="creator" />
+                  <AffiliateCheckoutFields />
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-red-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-red-800 dark:bg-red-200 dark:text-red-950 dark:hover:bg-red-100"
+                  >
+                    Start Creator checkout
+                    <ArrowRight className="size-3" />
+                  </button>
+                </form>
+              ) : null}
+            </div>
           ) : null}
 
           <div className="border-t border-border px-3 py-2 dark:border-white/10">
@@ -412,21 +465,35 @@ export function FloatingAiAssistant() {
             </div>
             <form
               onSubmit={(e) => void onSubmit(e)}
-              className="flex items-center gap-2"
+              className="space-y-1.5"
             >
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about niches, trends, ideas..."
-                className="h-10 flex-1 rounded-xl border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground dark:border-white/15 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
-              />
-              <button
-                type="submit"
-                disabled={!canSend}
-                className="inline-flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950"
-              >
-                <Send className="size-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  maxLength={MAX_ASSISTANT_MESSAGE_CHARS}
+                  placeholder="Ask about niches, trends, ideas..."
+                  className="h-10 flex-1 rounded-xl border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground dark:border-white/15 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+                />
+                <button
+                  type="submit"
+                  disabled={!canSend}
+                  className="inline-flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950"
+                  aria-label="Send assistant message"
+                >
+                  <Send className="size-4" />
+                </button>
+              </div>
+              <div className="flex items-center justify-between px-1 text-[10px] text-muted-foreground dark:text-slate-500">
+                <span>
+                  {creditSnapshot
+                    ? `${creditSnapshot.creditsRemaining}/${creditSnapshot.creditsLimit} credits left`
+                    : `${ASSISTANT_MESSAGE_COST} credit per message`}
+                </span>
+                <span>
+                  {MAX_ASSISTANT_MESSAGE_CHARS - input.length} characters left
+                </span>
+              </div>
             </form>
           </div>
         </section>
