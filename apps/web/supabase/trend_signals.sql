@@ -1,6 +1,6 @@
 create table if not exists public.trend_signals (
   id text primary key,
-  platform text not null check (platform in ('youtube', 'tiktok', 'instagram', 'pinterest', 'x', 'reddit')),
+  platform text not null check (platform in ('youtube', 'tiktok', 'instagram', 'pinterest', 'x', 'bluesky', 'threads', 'reddit')),
   niche text not null,
   query text not null,
   title text not null default '',
@@ -13,6 +13,24 @@ create table if not exists public.trend_signals (
   raw_json jsonb not null,
   fetched_at timestamptz not null default now()
 );
+
+do $$
+begin
+  if exists (
+    select 1
+    from pg_constraint
+    where conname = 'trend_signals_platform_check'
+      and conrelid = 'public.trend_signals'::regclass
+  ) then
+    alter table public.trend_signals drop constraint trend_signals_platform_check;
+  end if;
+
+  alter table public.trend_signals
+    add constraint trend_signals_platform_check
+    check (platform in ('youtube', 'tiktok', 'instagram', 'pinterest', 'x', 'bluesky', 'threads', 'reddit'));
+exception
+  when duplicate_object then null;
+end $$;
 
 create index if not exists idx_trend_signals_lookup
   on public.trend_signals (platform, niche, query, fetched_at desc);

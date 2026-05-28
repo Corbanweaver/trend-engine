@@ -4,6 +4,8 @@ export type PlatformKey =
   | "tiktok"
   | "instagram"
   | "x"
+  | "bluesky"
+  | "threads"
   | "youtube"
   | "reddit"
   | "hackernews"
@@ -17,6 +19,8 @@ const PLATFORM_LABEL: Record<PlatformKey, string> = {
   tiktok: "TikTok",
   instagram: "Instagram",
   x: "X",
+  bluesky: "Bluesky",
+  threads: "Threads",
   youtube: "YouTube",
   reddit: "Reddit",
   hackernews: "Tech forums",
@@ -44,6 +48,8 @@ export function computeEngagementRaw(trend: TrendIdea): number {
   }
   score += trend.instagram_posts.length * 35;
   score += (trend.x_posts ?? []).length * 28;
+  score += (trend.bluesky_posts ?? []).length * 24;
+  score += (trend.threads_posts ?? []).length * 24;
   for (const s of trend.hackernews_stories) {
     score += num(s.score);
   }
@@ -85,6 +91,14 @@ export function primaryPlatform(trend: TrendIdea): {
     {
       key: "x",
       w: (trend.x_posts ?? []).length * 32,
+    },
+    {
+      key: "bluesky",
+      w: (trend.bluesky_posts ?? []).length * 28,
+    },
+    {
+      key: "threads",
+      w: (trend.threads_posts ?? []).length * 28,
     },
     {
       key: "reddit",

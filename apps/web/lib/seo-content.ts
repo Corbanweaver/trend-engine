@@ -59,7 +59,7 @@ const keywordEntries: KeywordEntry[] = [
     audience:
       "TikTok creators, social media managers, coaches, and small brands",
     sources:
-      "TikTok, Instagram, Pinterest, YouTube Shorts, X, search, and news",
+      "TikTok, Instagram, Pinterest, YouTube Shorts, X, Bluesky, Threads, search, and news",
     examples: [
       {
         title: "Trend reaction",
@@ -192,7 +192,7 @@ const keywordEntries: KeywordEntry[] = [
       "finding signals early enough to create while the topic still has momentum",
     audience: "content teams, creators, marketers, and small businesses",
     sources:
-      "TikTok, Instagram, X, Pinterest, YouTube, Reddit, search, and news",
+      "TikTok, Instagram, X, Bluesky, Threads, Pinterest, YouTube, Reddit, search, and news",
     examples: [
       {
         title: "Cross-platform check",
@@ -270,7 +270,7 @@ const keywordEntries: KeywordEntry[] = [
     focus:
       "opening lines that quickly answer why a viewer should keep watching",
     audience: "YouTube creators, educators, coaches, and niche experts",
-    sources: "YouTube Shorts, search, TikTok, Instagram, Pinterest, and news",
+    sources: "YouTube Shorts, search, TikTok, Instagram, Bluesky, Threads, Pinterest, and news",
     examples: [
       {
         title: "Question hook",
@@ -354,7 +354,7 @@ const keywordEntries: KeywordEntry[] = [
     audience:
       "real estate agents, mortgage creators, local experts, and property investors",
     sources:
-      "local trends, TikTok, Instagram, Pinterest, YouTube Shorts, search, and news",
+      "local trends, TikTok, Instagram, Bluesky, Threads, Pinterest, YouTube Shorts, search, and news",
     examples: [
       {
         title: "Local market answer",
@@ -1005,7 +1005,7 @@ export const resourcePages: SeoPage[] = [
     metaTitle: "How to Find Trends Before They Blow Up",
     title: "How to Find Trends Before They Blow Up",
     description:
-      "A practical creator checklist for spotting early trend signals across TikTok, Instagram, Pinterest, YouTube, search, and news.",
+      "A practical creator checklist for spotting early trend signals across TikTok, Instagram, Bluesky, Threads, Pinterest, YouTube, search, and news.",
     eyebrow: "Creator guide",
     h1: "How to Find Trends Before They Blow Up",
     intro:

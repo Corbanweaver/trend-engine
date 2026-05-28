@@ -22,7 +22,16 @@ from app.social_signal_fetcher import fetch_platform_signals, refresh_social_cac
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/trending", tags=["trending"])
-ALLOWED_REFRESH_PLATFORMS = {"youtube", "tiktok", "instagram", "pinterest", "x", "reddit"}
+ALLOWED_REFRESH_PLATFORMS = {
+    "youtube",
+    "tiktok",
+    "instagram",
+    "pinterest",
+    "x",
+    "bluesky",
+    "threads",
+    "reddit",
+}
 
 
 async def _safe(coro, default, timeout: float = 14.0):
@@ -219,6 +228,28 @@ def _items_from_x(rows: object) -> list[DailyTrendItem]:
     return out
 
 
+def _items_from_conversation(rows: object, label: str) -> list[DailyTrendItem]:
+    if not isinstance(rows, list):
+        return []
+    out: list[DailyTrendItem] = []
+    for row in rows[:8]:
+        if not isinstance(row, dict):
+            continue
+        title = str(row.get("title", "") or row.get("snippet", "") or "").strip()
+        if not title:
+            title = f"{label} post"
+        author = str(row.get("author", "") or row.get("handle", "") or label).strip()
+        out.append(
+            DailyTrendItem(
+                title=title[:120],
+                subtitle=author,
+                url=str(row.get("url", "") or ""),
+                meta="Live conversation",
+            )
+        )
+    return out
+
+
 def _items_from_reddit(rows: object) -> list[DailyTrendItem]:
     if not isinstance(rows, list):
         return []
@@ -258,11 +289,13 @@ async def get_daily_trending():
         _safe(fetch_platform_signals("instagram", "viral trends", max_results=8, days_back=3), []),
         _safe(fetch_platform_signals("pinterest", "viral trends", max_results=8, days_back=3), []),
         _safe(fetch_platform_signals("x", "viral trends", max_results=8, days_back=3), []),
+        _safe(fetch_platform_signals("bluesky", "viral trends", max_results=8, days_back=3), []),
+        _safe(fetch_platform_signals("threads", "viral trends", max_results=8, days_back=3), []),
         _safe(fetch_platform_signals("reddit", "global viral pulse", max_results=8, days_back=3), []),
     ]
 
     results = await asyncio.gather(*coros)
-    gdata, news, yt, tt, instagram, pinterest, x_posts, reddit = results
+    gdata, news, yt, tt, instagram, pinterest, x_posts, bluesky_posts, threads_posts, reddit = results
 
     sections = [
         DailyPlatformSection(
@@ -299,6 +332,16 @@ async def get_daily_trending():
             key="x",
             label="X",
             items=_items_from_x(x_posts),
+        ),
+        DailyPlatformSection(
+            key="bluesky",
+            label="Bluesky",
+            items=_items_from_conversation(bluesky_posts, "Bluesky"),
+        ),
+        DailyPlatformSection(
+            key="threads",
+            label="Threads",
+            items=_items_from_conversation(threads_posts, "Threads"),
         ),
         DailyPlatformSection(
             key="reddit",

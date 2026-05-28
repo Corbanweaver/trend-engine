@@ -60,6 +60,8 @@ class TrendIdea(BaseModel):
     instagram_posts: list[dict] = []
     tiktok_videos: list[dict] = []
     x_posts: list[dict] = []
+    bluesky_posts: list[dict] = []
+    threads_posts: list[dict] = []
     google_news: list[dict] = []
     google_trends_data: dict = {}
     hackernews_stories: list[dict] = []
@@ -130,7 +132,19 @@ class DailyTrendingResponse(BaseModel):
 class TrendSignalRefreshRequest(BaseModel):
     niches: list[str] = Field(default_factory=lambda: ["fitness", "beauty", "food", "fashion", "business"], max_length=20)
     max_results: int = Field(default=8, ge=1, le=25)
-    platforms: list[str] = Field(default_factory=lambda: ["youtube", "tiktok", "instagram", "pinterest", "x", "reddit"], max_length=10)
+    platforms: list[str] = Field(
+        default_factory=lambda: [
+            "youtube",
+            "tiktok",
+            "instagram",
+            "pinterest",
+            "x",
+            "bluesky",
+            "threads",
+            "reddit",
+        ],
+        max_length=12,
+    )
 
 
 class TrendSignalRefreshResponse(BaseModel):

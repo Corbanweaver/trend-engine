@@ -18,6 +18,7 @@ Set these in Vercel and Railway/FastAPI as noted:
 - `TREND_ENGINE_BACKEND_KEY` in Vercel: same value as `OPERATIONAL_API_KEY`.
 - `YOUTUBE_API_KEY` in Railway/FastAPI: official YouTube source.
 - `APIFY_API_TOKEN` in Railway/FastAPI: enables Apify social actors.
+- Bluesky uses its public AppView API and does not require an API key.
 
 ## Optional Actor Variables
 
@@ -27,13 +28,14 @@ Start with TikTok and Instagram, then add Pinterest/X actors once selected in Ap
 - `APIFY_INSTAGRAM_ACTOR_ID=apify/instagram-scraper`
 - `APIFY_PINTEREST_ACTOR_ID=`
 - `APIFY_X_ACTOR_ID=`
+- `APIFY_THREADS_ACTOR_ID=`
 
-The Pinterest and X actor IDs are intentionally blank by default because Apify has multiple community actors with different pricing and schemas. The backend will only call them after you choose and configure an actor.
+The Pinterest, X, and Threads actor IDs are intentionally blank by default because Apify has multiple community actors with different pricing and schemas. The backend will only call them after you choose and configure an actor.
 
 ## Cost Controls
 
 - `TREND_CACHE_NICHES=fitness,beauty,food,fashion,business,relationships,travel`
-- `TREND_CACHE_PLATFORMS=youtube,tiktok,instagram,pinterest,x,reddit`
+- `TREND_CACHE_PLATFORMS=youtube,tiktok,instagram,pinterest,x,bluesky,threads,reddit`
 - `TREND_CACHE_MAX_RESULTS=8`
 - `TREND_SIGNAL_CACHE_TTL_MINUTES=45`
 - `APIFY_INTERACTIVE_TIMEOUT_SECONDS=6`

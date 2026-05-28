@@ -27,6 +27,8 @@ const SOCIAL_SECTION_ORDER = [
   "tiktok",
   "instagram",
   "x",
+  "bluesky",
+  "threads",
   "pinterest",
   "youtube",
   "reddit",
@@ -38,6 +40,8 @@ const SOCIAL_SECTION_LABELS: Record<string, string> = {
   tiktok: "TikTok",
   instagram: "Instagram Reels",
   x: "X",
+  bluesky: "Bluesky",
+  threads: "Threads",
   pinterest: "Pinterest",
   youtube: "YouTube Shorts",
   reddit: "Reddit conversations",
@@ -52,7 +56,7 @@ const TRENDING_PUBLIC_GUIDES = [
   },
   {
     title: "Platforms scanned",
-    body: "TrendBoard checks creator platforms like TikTok, Instagram, X, Pinterest, YouTube Shorts, Reddit, search, and news context when available.",
+    body: "TrendBoard checks creator platforms like TikTok, Instagram, X, Bluesky, Threads, Pinterest, YouTube Shorts, Reddit, search, and news context when available.",
   },
   {
     title: "Content examples",
@@ -73,6 +77,10 @@ function sectionIcon(key: string) {
     case "instagram":
       return Instagram;
     case "x":
+      return Flame;
+    case "bluesky":
+      return TrendingUp;
+    case "threads":
       return Flame;
     case "pinterest":
       return TrendingUp;

@@ -18,6 +18,8 @@ SOCIAL_BUCKETS = {
     "instagram": "instagram_posts",
     "tiktok": "tiktok_videos",
     "x": "x_posts",
+    "bluesky": "bluesky_posts",
+    "threads": "threads_posts",
     "reddit": "reddit_posts",
     "pinterest": "pinterest_pins",
 }
@@ -27,6 +29,8 @@ PLATFORM_LABELS = {
     "instagram": "Instagram",
     "tiktok": "TikTok",
     "x": "X",
+    "bluesky": "Bluesky",
+    "threads": "Threads",
     "reddit": "Reddit",
     "pinterest": "Pinterest",
 }
@@ -36,6 +40,8 @@ MIN_ROW_SCORE = {
     "tiktok": 28,
     "instagram": 18,
     "x": 18,
+    "bluesky": 18,
+    "threads": 14,
     "reddit": 16,
     "pinterest": 12,
 }
@@ -168,7 +174,20 @@ def platform_metrics(platform: str, item: dict[str, Any]) -> dict[str, int]:
         item,
         ["comment_count", "commentCount", "comments", "comments_count", "num_comments"],
     )
-    shares = _first_num(item, ["share_count", "shareCount", "shares", "retweets", "repins"])
+    shares = _first_num(
+        item,
+        [
+            "share_count",
+            "shareCount",
+            "shares",
+            "retweets",
+            "reposts",
+            "repostCount",
+            "quotes",
+            "quoteCount",
+            "repins",
+        ],
+    )
     saves = _first_num(item, ["save_count", "saveCount", "saves", "repin_count"])
     score = _first_num(item, ["score", "engagement"])
 
@@ -196,10 +215,20 @@ def is_low_value_fallback(platform: str, item: dict[str, Any]) -> bool:
     title = _title(item, platform).lower()
     if "fallback" in source or "quota exceeded" in title:
         return True
-    if any(phrase in title for phrase in ["browse tiktok", "browse pinterest", "search x:", "search youtube for"]):
+    if any(
+        phrase in title
+        for phrase in [
+            "browse tiktok",
+            "browse pinterest",
+            "search x:",
+            "search threads:",
+            "search bluesky:",
+            "search youtube for",
+        ]
+    ):
         return True
     return (
-        platform in {"tiktok", "pinterest", "x"}
+        platform in {"tiktok", "pinterest", "x", "threads"}
         and "/search" in url
         and platform_metrics(platform, item)["engagement"] <= 0
     )
@@ -464,6 +493,8 @@ def discovery_signal_context(raw_sources: dict[str, Any]) -> str:
         "tiktok": "tiktok",
         "pinterest": "pinterest",
         "x": "x",
+        "bluesky": "bluesky",
+        "threads": "threads",
         "reddit_multi": "reddit",
     }
     for source_key, platform in source_map.items():

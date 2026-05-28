@@ -34,10 +34,13 @@ from app.multi_reddit_client import multi_reddit_ingest
 from app.pinterest_client import pinterest_search
 from app.medium_client import medium_search
 from app.x_client import search_x
+from app.bluesky_client import bluesky_search
+from app.threads_client import threads_search
 from app.apify_client import apify_timeout_seconds
 from app.social_signal_fetcher import cached_or_fetch, fetch_platform_signals
 from app.trend_quality import (
     discovery_signal_context,
+    is_low_value_fallback,
     rank_topic_media,
     score_topic,
 )
@@ -292,6 +295,16 @@ async def _safe_fetch(coro, default, timeout=10.0):
         return default
 
 
+def _quality_context_rows(platform: str, rows: object, limit: int) -> list[dict]:
+    if not isinstance(rows, list):
+        return []
+    return [
+        row
+        for row in rows
+        if isinstance(row, dict) and not is_low_value_fallback(platform, row)
+    ][:limit]
+
+
 def _first_str(item: dict, keys: list[str]) -> str:
     for key in keys:
         value = item.get(key)
@@ -350,8 +363,10 @@ async def discover_trends(niche: str) -> tuple[list[str], dict]:
         _safe_fetch(fetch_platform_signals("tiktok", niche, max_results=6, days_back=RECENCY_DAYS), []),
         _safe_fetch(fetch_platform_signals("pinterest", niche, max_results=6, days_back=RECENCY_DAYS), []),
         _safe_fetch(fetch_platform_signals("x", niche, max_results=6, days_back=RECENCY_DAYS), []),
+        _safe_fetch(fetch_platform_signals("bluesky", niche, max_results=6, days_back=RECENCY_DAYS), []),
+        _safe_fetch(fetch_platform_signals("threads", niche, max_results=6, days_back=RECENCY_DAYS), []),
     ]
-    news, trends_data, web_results, reddit_posts, youtube, instagram, tiktok, pins, x_posts = await asyncio.gather(*coros)
+    news, trends_data, web_results, reddit_posts, youtube, instagram, tiktok, pins, x_posts, bluesky_posts, threads_posts = await asyncio.gather(*coros)
 
     context_parts = []
     if news:
@@ -364,18 +379,30 @@ async def discover_trends(niche: str) -> tuple[list[str], dict]:
         context_parts.append("Currently trending: " + ", ".join(ts[:8]))
     if web_results:
         context_parts.append("Web articles:\n" + "\n".join(f"- {r['title']}" for r in web_results[:8]))
-    if reddit_posts:
-        context_parts.append("Reddit discussions:\n" + "\n".join(f"- r/{p['subreddit']}: {p['title']}" for p in reddit_posts[:8]))
-    if youtube:
-        context_parts.append("YouTube Shorts:\n" + "\n".join(f"- {v.get('title', '')}" for v in youtube[:6]))
-    if instagram:
-        context_parts.append("Instagram/Reels signals:\n" + "\n".join(f"- {p.get('caption', '')}" for p in instagram[:6]))
-    if tiktok:
-        context_parts.append("TikTok signals:\n" + "\n".join(f"- {v.get('description', '')}" for v in tiktok[:6]))
-    if pins:
-        context_parts.append("Pinterest pins:\n" + "\n".join(f"- {p.get('title', '')}" for p in pins[:6]))
-    if x_posts:
-        context_parts.append("X conversations:\n" + "\n".join(f"- {p.get('title', '')}" for p in x_posts[:6]))
+    reddit_context = _quality_context_rows("reddit", reddit_posts, 8)
+    youtube_context = _quality_context_rows("youtube", youtube, 6)
+    instagram_context = _quality_context_rows("instagram", instagram, 6)
+    tiktok_context = _quality_context_rows("tiktok", tiktok, 6)
+    pins_context = _quality_context_rows("pinterest", pins, 6)
+    x_context = _quality_context_rows("x", x_posts, 6)
+    bluesky_context = _quality_context_rows("bluesky", bluesky_posts, 6)
+    threads_context = _quality_context_rows("threads", threads_posts, 6)
+    if reddit_context:
+        context_parts.append("Reddit discussions:\n" + "\n".join(f"- r/{p.get('subreddit', '')}: {p.get('title', '')}" for p in reddit_context))
+    if youtube_context:
+        context_parts.append("YouTube Shorts:\n" + "\n".join(f"- {v.get('title', '')}" for v in youtube_context))
+    if instagram_context:
+        context_parts.append("Instagram/Reels signals:\n" + "\n".join(f"- {p.get('caption', '')}" for p in instagram_context))
+    if tiktok_context:
+        context_parts.append("TikTok signals:\n" + "\n".join(f"- {v.get('description', '')}" for v in tiktok_context))
+    if pins_context:
+        context_parts.append("Pinterest pins:\n" + "\n".join(f"- {p.get('title', '')}" for p in pins_context))
+    if x_context:
+        context_parts.append("X conversations:\n" + "\n".join(f"- {p.get('title', '')}" for p in x_context))
+    if bluesky_context:
+        context_parts.append("Bluesky conversations:\n" + "\n".join(f"- {p.get('title', '')}" for p in bluesky_context))
+    if threads_context:
+        context_parts.append("Threads conversations:\n" + "\n".join(f"- {p.get('title', '')}" for p in threads_context))
 
     raw_sources = {
         "google_news": news,
@@ -387,6 +414,8 @@ async def discover_trends(niche: str) -> tuple[list[str], dict]:
         "tiktok": tiktok,
         "pinterest": pins,
         "x": x_posts,
+        "bluesky": bluesky_posts,
+        "threads": threads_posts,
     }
     ranked_context = discovery_signal_context(raw_sources)
     if ranked_context:
@@ -451,6 +480,32 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
             source="apify-x",
             min_cached=3,
         ), []),
+        _safe_fetch(cached_or_fetch(
+            "bluesky",
+            niche,
+            search_query,
+            max_results=5,
+            fetch=lambda: bluesky_search(
+                search_query,
+                max_results=5,
+                days_back=RECENCY_DAYS,
+            ),
+            source="bluesky-public-api",
+            min_cached=3,
+        ), []),
+        _safe_fetch(cached_or_fetch(
+            "threads",
+            niche,
+            search_query,
+            max_results=5,
+            fetch=lambda: threads_search(
+                search_query,
+                max_results=5,
+                timeout_seconds=timeout_seconds,
+            ),
+            source="threads-public-search",
+            min_cached=3,
+        ), []),
         _safe_fetch(google_news_search(search_query, max_results=4), []),
         _safe_fetch(web_search(f"{search_query} trending", max_results=4), []),
         _safe_fetch(cached_or_fetch(
@@ -468,17 +523,21 @@ async def gather_topic_media(niche: str, topic: str) -> dict:
         ), []),
         _safe_fetch(medium_search(search_query, max_results=4), []),
     ]
-    youtube, instagram_results, tiktok, x_posts, news, web, pins, articles = await asyncio.gather(*coros)
+    youtube, instagram_results, tiktok, x_posts, bluesky_posts, threads_posts, news, web, pins, articles = await asyncio.gather(*coros)
     logger.info("Instagram results for topic '%s': %s items", topic, len(instagram_results))
     youtube_tagged = [{**item, "platform": "youtube"} for item in youtube if isinstance(item, dict)]
     instagram_tagged = [{**item, "platform": "instagram"} for item in instagram_results if isinstance(item, dict)]
     tiktok_tagged = [{**item, "platform": "tiktok"} for item in tiktok if isinstance(item, dict)]
     x_tagged = [{**item, "platform": "x"} for item in x_posts if isinstance(item, dict)]
+    bluesky_tagged = [{**item, "platform": "bluesky"} for item in bluesky_posts if isinstance(item, dict)]
+    threads_tagged = [{**item, "platform": "threads"} for item in threads_posts if isinstance(item, dict)]
     return {
         "youtube": youtube_tagged,
         "instagram": instagram_tagged,
         "tiktok": tiktok_tagged,
         "x": x_tagged,
+        "bluesky": bluesky_tagged,
+        "threads": threads_tagged,
         "google_news": news,
         "hackernews": [],
         "web_search": web,
@@ -522,6 +581,14 @@ def build_context_prompt(
     xp = topic_media.get("x", [])
     if xp:
         parts.append("X conversations:\n" + "\n".join(f"- {p.get('title', '')}" for p in xp[:4]))
+
+    bp = topic_media.get("bluesky", [])
+    if bp:
+        parts.append("Bluesky conversations:\n" + "\n".join(f"- {p.get('title', '')}" for p in bp[:4]))
+
+    th = topic_media.get("threads", [])
+    if th:
+        parts.append("Threads conversations:\n" + "\n".join(f"- {p.get('title', '')}" for p in th[:4]))
 
     news = topic_media.get("google_news", [])
     if news:
@@ -584,6 +651,8 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
             instagram_posts=media.get("instagram", [])[:4],
             tiktok_videos=media.get("tiktok", [])[:4],
             x_posts=media.get("x", [])[:4],
+            bluesky_posts=media.get("bluesky", [])[:4],
+            threads_posts=media.get("threads", [])[:4],
             google_news=media.get("google_news", [])[:4],
             google_trends_data={},
             hackernews_stories=media.get("hackernews", [])[:3],
@@ -601,6 +670,8 @@ async def _process_topic(client, niche: str, topic: str, discovery_context: list
             instagram_posts=[],
             tiktok_videos=[],
             x_posts=[],
+            bluesky_posts=[],
+            threads_posts=[],
         )
 
 

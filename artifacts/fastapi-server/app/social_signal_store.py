@@ -12,7 +12,16 @@ from app.database import SessionLocal
 
 logger = logging.getLogger(__name__)
 
-SOCIAL_PLATFORMS = {"youtube", "tiktok", "instagram", "pinterest", "x", "reddit"}
+SOCIAL_PLATFORMS = {
+    "youtube",
+    "tiktok",
+    "instagram",
+    "pinterest",
+    "x",
+    "bluesky",
+    "threads",
+    "reddit",
+}
 DEFAULT_CACHE_TTL_MINUTES = 45
 
 
@@ -73,6 +82,14 @@ def _engagement(platform: str, item: dict[str, Any]) -> int:
             + _to_int(item.get("replies") or item.get("reply_count")) * 4
             + _to_int(item.get("views") or item.get("view_count"))
         )
+    if platform in {"bluesky", "threads"}:
+        return (
+            _to_int(item.get("likes") or item.get("like_count"))
+            + _to_int(item.get("reposts") or item.get("repost_count")) * 3
+            + _to_int(item.get("replies") or item.get("reply_count")) * 4
+            + _to_int(item.get("quotes") or item.get("quote_count")) * 3
+            + _to_int(item.get("views") or item.get("view_count"))
+        )
     if platform == "reddit":
         return _to_int(item.get("score") or item.get("engagement"))
     return _to_int(item.get("engagement") or item.get("score"))
@@ -116,6 +133,18 @@ def normalize_signal(
         url = _first_str(item, ["url", "link"])
         thumbnail = _first_str(item, ["thumbnail_url", "image_url"])
         author = _first_str(item, ["author", "username", "userName"])
+    elif platform == "bluesky":
+        title = _first_str(item, ["title", "text", "snippet"])[:140]
+        text_value = _first_str(item, ["text", "snippet", "title"])
+        url = _first_str(item, ["url", "link"])
+        thumbnail = _first_str(item, ["thumbnail_url", "image_url"])
+        author = _first_str(item, ["author", "handle", "username"])
+    elif platform == "threads":
+        title = _first_str(item, ["title", "text", "snippet", "caption"])[:140]
+        text_value = _first_str(item, ["text", "snippet", "caption", "title"])
+        url = _first_str(item, ["url", "link", "permalink"])
+        thumbnail = _first_str(item, ["thumbnail_url", "image_url"])
+        author = _first_str(item, ["author", "username", "userName", "handle"])
     elif platform == "reddit":
         title = _first_str(item, ["title"])
         text_value = _first_str(item, ["selftext", "text", "snippet"])

@@ -68,7 +68,7 @@ const NICHE_HISTORY_KEY = "trend_dashboard:niche_history";
 const CALENDAR_PLAN_STORAGE_KEY = "calendar:plans";
 const ANALYSIS_PROGRESS_STEPS = [
   "Starting live trend scan...",
-  "Checking TikTok, X, Instagram, Pinterest, and YouTube...",
+  "Checking TikTok, X, Bluesky, Threads, Instagram, Pinterest, and YouTube...",
   "Ranking recent views, velocity, and cross-platform momentum...",
   "Drafting short, human idea cards...",
   "Attaching organic source thumbnails...",
@@ -168,6 +168,8 @@ function getTrendDetectedLabel(trend: TrendIdea): string {
     ...trend.reddit_posts,
     ...trend.instagram_posts,
     ...(trend.x_posts ?? []),
+    ...(trend.bluesky_posts ?? []),
+    ...(trend.threads_posts ?? []),
     ...trend.pinterest_pins,
     ...trend.google_news,
     ...trend.hackernews_stories,
@@ -301,7 +303,9 @@ type PlatformChip =
   | "Reddit"
   | "Instagram"
   | "Pinterest"
-  | "X";
+  | "X"
+  | "Bluesky"
+  | "Threads";
 
 const PLATFORM_CHIPS: PlatformChip[] = [
   "All",
@@ -311,6 +315,8 @@ const PLATFORM_CHIPS: PlatformChip[] = [
   "Instagram",
   "Pinterest",
   "X",
+  "Bluesky",
+  "Threads",
 ];
 
 const platformIconStyles: Record<string, string> = {
@@ -320,6 +326,8 @@ const platformIconStyles: Record<string, string> = {
   Instagram: "bg-purple-500/20 text-purple-200 border-purple-400/40",
   Pinterest: "bg-rose-500/20 text-rose-200 border-rose-400/40",
   X: "bg-sky-500/20 text-sky-200 border-sky-400/40",
+  Bluesky: "bg-blue-500/20 text-blue-200 border-blue-400/40",
+  Threads: "bg-zinc-500/20 text-zinc-100 border-zinc-300/40",
 };
 
 const platformGlyph: Record<string, string> = {
@@ -329,6 +337,8 @@ const platformGlyph: Record<string, string> = {
   Instagram: "IG",
   Pinterest: "P",
   X: "X",
+  Bluesky: "B",
+  Threads: "Th",
 };
 
 function hasPlatform(
@@ -375,6 +385,22 @@ function hasPlatform(
       )
     );
   }
+  if (platform === "Bluesky") {
+    return (
+      (trend.bluesky_posts ?? []).length > 0 ||
+      (trend.bluesky_posts ?? []).some(
+        (p) => (p as { platform?: string }).platform === "bluesky",
+      )
+    );
+  }
+  if (platform === "Threads") {
+    return (
+      (trend.threads_posts ?? []).length > 0 ||
+      (trend.threads_posts ?? []).some(
+        (p) => (p as { platform?: string }).platform === "threads",
+      )
+    );
+  }
   return (
     (trend.x_posts ?? []).length > 0 ||
     (trend.x_posts ?? []).some(
@@ -391,7 +417,9 @@ function getPlatformBadges(trend: TrendIdea): string[] {
   if (hasPlatform(trend, "Instagram")) badges.push("Instagram");
   if (hasPlatform(trend, "Pinterest")) badges.push("Pinterest");
   if (hasPlatform(trend, "X")) badges.push("X");
-  return [...new Set(badges)].slice(0, 5);
+  if (hasPlatform(trend, "Bluesky")) badges.push("Bluesky");
+  if (hasPlatform(trend, "Threads")) badges.push("Threads");
+  return [...new Set(badges)].slice(0, 7);
 }
 
 const IMAGE_URL_KEYS = [
@@ -485,6 +513,8 @@ function getCardVisual(trend: TrendIdea) {
     trend.instagram_posts,
     trend.tiktok_videos,
     trend.x_posts ?? [],
+    trend.bluesky_posts ?? [],
+    trend.threads_posts ?? [],
     trend.ideas,
   );
 }
@@ -575,6 +605,36 @@ function getXUrl(trend: TrendIdea): string | null {
     : null;
 }
 
+function getBlueskyUrl(trend: TrendIdea): string | null {
+  const candidate = (trend.bluesky_posts ?? []).find((post) => {
+    const sourceKeys = ["url", "link", "permalink"] as const;
+    return sourceKeys.some((key) => {
+      const value = post[key];
+      return typeof value === "string" && value.trim().length > 0;
+    });
+  });
+  if (!candidate) return null;
+  const preferred = candidate.url ?? candidate.link ?? candidate.permalink;
+  return typeof preferred === "string" && preferred.trim().length > 0
+    ? preferred
+    : null;
+}
+
+function getThreadsUrl(trend: TrendIdea): string | null {
+  const candidate = (trend.threads_posts ?? []).find((post) => {
+    const sourceKeys = ["url", "link", "permalink"] as const;
+    return sourceKeys.some((key) => {
+      const value = post[key];
+      return typeof value === "string" && value.trim().length > 0;
+    });
+  });
+  if (!candidate) return null;
+  const preferred = candidate.url ?? candidate.link ?? candidate.permalink;
+  return typeof preferred === "string" && preferred.trim().length > 0
+    ? preferred
+    : null;
+}
+
 function TrendCard({
   trend,
   index,
@@ -613,6 +673,8 @@ function TrendCard({
     trend.web_results.length +
     trend.pinterest_pins.length +
     (trend.x_posts ?? []).length +
+    (trend.bluesky_posts ?? []).length +
+    (trend.threads_posts ?? []).length +
     trend.medium_articles.length;
   const platformBadges = getPlatformBadges(trend);
   const visual = getCardVisual(trend);
@@ -622,6 +684,8 @@ function TrendCard({
   const instagramUrl = getInstagramUrl(trend);
   const pinterestUrl = getPinterestUrl(trend);
   const xUrl = getXUrl(trend);
+  const blueskyUrl = getBlueskyUrl(trend);
+  const threadsUrl = getThreadsUrl(trend);
   const trendLabel = getTrendDetectedLabel(trend);
   const trendReason =
     trend.trend_reason ||
@@ -764,7 +828,9 @@ function TrendCard({
           redditUrl ||
           instagramUrl ||
           pinterestUrl ||
-          xUrl ? (
+          xUrl ||
+          blueskyUrl ||
+          threadsUrl ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {tiktokUrl ? (
                 <a
@@ -865,6 +931,40 @@ function TrendCard({
                 >
                   <span className="text-xs font-bold">X</span>
                   View on X
+                  <ExternalLink className="size-3.5" />
+                </a>
+              ) : null}
+              {blueskyUrl ? (
+                <a
+                  href={blueskyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    platformIconStyles.Bluesky,
+                    "hover:bg-blue-500/30",
+                  )}
+                >
+                  <span className="text-xs font-bold">B</span>
+                  View on Bluesky
+                  <ExternalLink className="size-3.5" />
+                </a>
+              ) : null}
+              {threadsUrl ? (
+                <a
+                  href={threadsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    platformIconStyles.Threads,
+                    "hover:bg-zinc-500/30",
+                  )}
+                >
+                  <span className="text-xs font-bold">Th</span>
+                  View on Threads
                   <ExternalLink className="size-3.5" />
                 </a>
               ) : null}
@@ -1545,6 +1645,22 @@ export function TrendDashboard() {
             title: String(post.title || post.snippet || "X post"),
           }),
         ),
+        ...((sourceTrend?.bluesky_posts ?? []) as Record<
+          string,
+          unknown
+        >[]).map((post) => ({
+          label: "Bluesky",
+          url: String(post.url || post.link || post.permalink || ""),
+          title: String(post.title || post.snippet || "Bluesky post"),
+        })),
+        ...((sourceTrend?.threads_posts ?? []) as Record<
+          string,
+          unknown
+        >[]).map((post) => ({
+          label: "Threads",
+          url: String(post.url || post.link || post.permalink || ""),
+          title: String(post.title || post.snippet || "Threads post"),
+        })),
         ...(sourceTrend?.example_videos ?? []).map((post) => ({
           label: "YouTube",
           url: String(post.url || post.link || ""),

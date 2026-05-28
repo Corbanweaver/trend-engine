@@ -15,7 +15,16 @@ const DEFAULT_NICHES = [
   "relationships",
   "travel",
 ];
-const DEFAULT_PLATFORMS = ["youtube", "tiktok", "instagram", "pinterest", "x", "reddit"];
+const DEFAULT_PLATFORMS = [
+  "youtube",
+  "tiktok",
+  "instagram",
+  "pinterest",
+  "x",
+  "bluesky",
+  "threads",
+  "reddit",
+];
 
 function csvEnv(name: string, fallback: string[]): string[] {
   const raw = process.env[name]?.trim();

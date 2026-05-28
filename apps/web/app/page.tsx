@@ -49,7 +49,7 @@ const howSteps = [
   {
     step: "02",
     title: "Scan live signals",
-    body: "We pull fresh momentum from TikTok, X, Instagram, Pinterest, YouTube Shorts, search, and news in one run.",
+    body: "We pull fresh momentum from TikTok, X, Bluesky, Threads, Instagram, Pinterest, YouTube Shorts, search, and news in one run.",
   },
   {
     step: "03",
@@ -125,7 +125,7 @@ const testimonials = [
   },
   {
     quote:
-      "Watch TikTok, X, Instagram, Pinterest, YouTube Shorts, search, and news signals together so a small team can choose the angle before the topic cools off.",
+      "Watch TikTok, X, Bluesky, Threads, Instagram, Pinterest, YouTube Shorts, search, and news signals together so a small team can choose the angle before the topic cools off.",
     name: "Tech & news",
     handle: "Small team workflow",
     role: "Cross-platform signal checks",

@@ -6,10 +6,12 @@ import os
 from collections.abc import Awaitable, Callable
 
 from app.apify_client import apify_timeout_seconds
+from app.bluesky_client import bluesky_search
 from app.instagram_client import search_instagram
 from app.multi_reddit_client import multi_reddit_ingest
 from app.pinterest_client import pinterest_search
 from app.social_signal_store import cache_items, cached_items
+from app.threads_client import threads_search
 from app.tiktok_client import tiktok_trending_search
 from app.youtube_client import youtube_search
 from app.x_client import search_x
@@ -77,6 +79,10 @@ def platform_query(platform: str, niche: str) -> str:
         return f"{cleaned} ideas"
     if platform == "x":
         return f"{cleaned} viral"
+    if platform == "bluesky":
+        return f"{cleaned} discussion"
+    if platform == "threads":
+        return f"{cleaned} trend"
     if platform == "reddit":
         return cleaned
     return cleaned
@@ -161,6 +167,36 @@ async def fetch_platform_signals(
                 timeout_seconds=timeout_seconds,
             ),
             source="apify-x",
+            force_refresh=force_refresh,
+            min_cached=min(3, max_results),
+        )
+    if platform == "bluesky":
+        return await cached_or_fetch(
+            platform,
+            niche,
+            query,
+            max_results=max_results,
+            fetch=lambda: bluesky_search(
+                query,
+                max_results=max_results,
+                days_back=days_back,
+            ),
+            source="bluesky-public-api",
+            force_refresh=force_refresh,
+            min_cached=min(3, max_results),
+        )
+    if platform == "threads":
+        return await cached_or_fetch(
+            platform,
+            niche,
+            query,
+            max_results=max_results,
+            fetch=lambda: threads_search(
+                query,
+                max_results=max_results,
+                timeout_seconds=timeout_seconds,
+            ),
+            source="threads-public-search",
             force_refresh=force_refresh,
             min_cached=min(3, max_results),
         )
