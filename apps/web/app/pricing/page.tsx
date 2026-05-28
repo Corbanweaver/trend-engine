@@ -301,7 +301,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
 
       <PricingHeader />
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 pb-24 pt-6">
+      <div className="relative z-10 mx-auto max-w-6xl px-6 pb-36 pt-6 sm:pb-24">
         <div className="mx-auto max-w-2xl text-center">
           <span className="rounded-full border border-border bg-card px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-primary dark:border-white/20 dark:bg-white/10 dark:text-cyan-200">
             Pricing
@@ -656,6 +656,22 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
             Terms
           </Link>
         </nav>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/94 py-3 shadow-[0_-12px_32px_rgba(15,23,42,0.14)] backdrop-blur dark:border-white/10 dark:bg-slate-950/94 sm:hidden">
+        <div className="mx-auto max-w-sm" style={{ width: "calc(100vw - 24px)" }}>
+          <form action="/api/stripe/checkout" method="POST">
+            <input type="hidden" name="plan" value="creator" />
+            <AffiliateCheckoutFields />
+            <button
+              type="submit"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 text-sm font-bold text-primary-foreground dark:bg-cyan-400 dark:text-slate-950"
+            >
+              Start Creator
+              <ArrowRight className="size-4" />
+            </button>
+          </form>
+        </div>
       </div>
     </main>
   );
