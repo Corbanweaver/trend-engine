@@ -38,7 +38,10 @@ const creatorAffiliateCouponIds: Record<string, string> = {
 };
 
 type UserSubscriptionRow = {
+  plan: "free" | "creator" | "pro" | null;
   stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  stripe_subscription_status: string | null;
 };
 
 type StripeCheckoutError = {
@@ -137,6 +140,50 @@ function checkoutFailureReason(error: StripeCheckoutError) {
   return "stripe-error";
 }
 
+function isPaidStripeStatus(status: string | null | undefined) {
+  return status === "active" || status === "trialing" || status === "past_due";
+}
+
+function hasActivePaidSubscription(
+  subscription: UserSubscriptionRow | null,
+): subscription is UserSubscriptionRow & {
+  plan: "creator" | "pro";
+  stripe_subscription_id: string;
+  stripe_subscription_status: string;
+} {
+  if (!subscription || subscription.plan === "free") return false;
+  if (!subscription.stripe_subscription_id) return false;
+  return isPaidStripeStatus(subscription.stripe_subscription_status);
+}
+
+async function getBillingPortalCustomerId(
+  stripe: Stripe,
+  subscription: UserSubscriptionRow,
+) {
+  if (subscription.stripe_customer_id) {
+    return subscription.stripe_customer_id;
+  }
+
+  if (!subscription.stripe_subscription_id) {
+    return null;
+  }
+
+  const stripeSubscription = await stripe.subscriptions.retrieve(
+    subscription.stripe_subscription_id,
+  );
+  const { customer } = stripeSubscription;
+
+  if (typeof customer === "string") {
+    return customer;
+  }
+
+  if ("deleted" in customer && customer.deleted) {
+    return null;
+  }
+
+  return customer.id;
+}
+
 export function GET(request: Request) {
   return redirectToPricing(request, "choose-plan");
 }
@@ -201,11 +248,30 @@ export async function POST(request: Request) {
 
     const { data: subscription } = await supabase
       .from("user_subscriptions")
-      .select("stripe_customer_id")
+      .select(
+        "plan,stripe_customer_id,stripe_subscription_id,stripe_subscription_status",
+      )
       .eq("user_id", user.id)
       .maybeSingle<UserSubscriptionRow>();
 
     const stripe = new Stripe(stripeSecretKey);
+
+    if (hasActivePaidSubscription(subscription)) {
+      const customerId = await getBillingPortalCustomerId(stripe, subscription);
+      if (!customerId) {
+        return redirectToPricing(request, "error", {
+          reason: "missing-customer",
+        });
+      }
+
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${siteUrl}/profile?billing=returned`,
+      });
+
+      return NextResponse.redirect(portalSession.url, 303);
+    }
+
     const checkoutCustomer = await getCheckoutCustomer(
       stripe,
       subscription,
