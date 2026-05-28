@@ -20,8 +20,9 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { AffiliateCheckoutFields } from "@/components/affiliate-checkout-fields";
 import { CREDIT_COSTS, type SubscriptionPlan } from "@/lib/credits";
-import { trackUiEvent } from "@/lib/telemetry";
+import { trackConversionEvent, trackUiEvent } from "@/lib/telemetry";
 import { getVideoIdeaThumbnailUrls } from "@/lib/trend-ideas-types";
 import type { TrendIdea, VideoIdea } from "@/lib/trend-ideas-types";
 import { cn } from "@/lib/utils";
@@ -189,6 +190,54 @@ function renderMarkdownLikeContent(text: string): React.ReactNode {
 
   flushList();
   return <div className="space-y-1 font-sans">{blocks}</div>;
+}
+
+function ToolCreditUpgradeAction({
+  placement,
+  plan,
+  creditsRemaining,
+}: {
+  placement: string;
+  plan: SubscriptionPlan;
+  creditsRemaining?: number;
+}) {
+  if (plan !== "free") {
+    return (
+      <Link
+        href="/profile"
+        className="inline-flex w-fit items-center rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:hover:bg-white/10"
+      >
+        Manage billing
+      </Link>
+    );
+  }
+
+  return (
+    <form
+      action="/api/stripe/checkout"
+      method="POST"
+      onSubmit={() =>
+        trackConversionEvent({
+          event: "upgrade_prompt_clicked",
+          context: {
+            placement,
+            plan: "free",
+            targetPlan: "creator",
+            creditsRemaining,
+          },
+        })
+      }
+    >
+      <input type="hidden" name="plan" value="creator" />
+      <AffiliateCheckoutFields />
+      <button
+        type="submit"
+        className="inline-flex w-fit cursor-pointer items-center rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+      >
+        Start Creator checkout
+      </button>
+    </form>
+  );
 }
 
 export function IdeaPanel({
@@ -804,9 +853,18 @@ export function IdeaPanel({
                   </Button>
                 </div>
                 {hooksErrorByIndex[i] ? (
-                  <p className="text-xs text-red-600 dark:text-red-300">
-                    {hooksErrorByIndex[i]}
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-xs text-red-600 dark:text-red-300">
+                      {hooksErrorByIndex[i]}
+                    </p>
+                    {!hasToolCredits(CREDIT_COSTS.hooks) ? (
+                      <ToolCreditUpgradeAction
+                        placement="idea_panel_hooks_blocked"
+                        plan={plan}
+                        creditsRemaining={creditsRemaining}
+                      />
+                    ) : null}
+                  </div>
                 ) : null}
                 {hookListsByIndex[i]?.length ? (
                   <div className="rounded-md border border-fuchsia-500/25 bg-fuchsia-50 p-3 dark:border-fuchsia-400/30 dark:bg-fuchsia-950/30">
@@ -821,9 +879,18 @@ export function IdeaPanel({
                   </div>
                 ) : null}
                 {fullScriptErrorByIndex[i] ? (
-                  <p className="text-xs text-red-600 dark:text-red-300">
-                    {fullScriptErrorByIndex[i]}
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-xs text-red-600 dark:text-red-300">
+                      {fullScriptErrorByIndex[i]}
+                    </p>
+                    {!hasToolCredits(CREDIT_COSTS.fullScript) ? (
+                      <ToolCreditUpgradeAction
+                        placement="idea_panel_script_blocked"
+                        plan={plan}
+                        creditsRemaining={creditsRemaining}
+                      />
+                    ) : null}
+                  </div>
                 ) : null}
                 {fullScriptByIndex[i] ? (
                   <div className="rounded-md border border-indigo-500/25 bg-indigo-50 p-3 font-sans dark:border-indigo-400/30 dark:bg-indigo-950/25">
@@ -905,15 +972,16 @@ export function IdeaPanel({
                     </p>
                   ) : null}
                   {!canGenerateTags ? (
-                    <p className="text-xs text-muted-foreground dark:text-slate-400">
-                      Need more credits for fresh hashtags.{" "}
-                      <Link
-                        href="/pricing"
-                        className="font-semibold text-primary underline underline-offset-2 dark:text-cyan-200"
-                      >
-                        View plans
-                      </Link>
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground dark:text-slate-400">
+                        Need more credits for fresh hashtags.
+                      </p>
+                      <ToolCreditUpgradeAction
+                        placement="idea_panel_hashtags_blocked"
+                        plan={plan}
+                        creditsRemaining={creditsRemaining}
+                      />
+                    </div>
                   ) : null}
                   {!tagsLoadingByIndex[i] &&
                   generatedTags.length > 0 &&
