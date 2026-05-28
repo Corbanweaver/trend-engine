@@ -182,6 +182,14 @@ export async function POST(request: Request) {
       error: userError,
     } = await supabase.auth.getUser();
     if (userError || !user) {
+      await recordConversionEvent({
+        event: "checkout_auth_required",
+        metadata: {
+          plan: selectedPlan,
+          affiliate: checkoutAffiliate,
+          source: "stripe_checkout_route",
+        },
+      });
       return redirectToLoginForCheckout(request, selectedPlan, checkoutAffiliate);
     }
     const affiliate =

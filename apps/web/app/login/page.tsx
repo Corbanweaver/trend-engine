@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
 
+import { getCheckoutIntentFromRedirectTarget } from "@/lib/checkout-intent";
 import { getSupabaseClient } from "@/lib/supabase";
 
 const googleAuthEnabled =
@@ -29,6 +30,12 @@ function LoginForm() {
   const signupHref = `/signup?redirect=${encodeURIComponent(
     safeRedirectTarget,
   )}`;
+  const checkoutIntent =
+    getCheckoutIntentFromRedirectTarget(safeRedirectTarget);
+  const submitLabel = checkoutIntent ? "Continue checkout" : "Log in";
+  const loadingLabel = checkoutIntent
+    ? "Continuing checkout..."
+    : "Logging in...";
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -99,9 +106,15 @@ function LoginForm() {
         >
           TrendBoard
         </Link>
-        <h1 className="text-2xl font-semibold">Log in</h1>
+        <h1 className="text-2xl font-semibold">
+          {checkoutIntent
+            ? `Continue ${checkoutIntent.planName} checkout`
+            : "Log in"}
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
-          Access your saved ideas, alerts, billing, and creator dashboard.
+          {checkoutIntent
+            ? "Sign in so Stripe can attach this subscription to your TrendBoard account."
+            : "Access your saved ideas, alerts, billing, and creator dashboard."}
         </p>
         {verifyPrompt ? (
           <p className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">
@@ -152,7 +165,7 @@ function LoginForm() {
             disabled={loading}
             className="w-full rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:opacity-90"
           >
-            {loading ? "Logging in..." : "Log in"}
+            {loading ? loadingLabel : submitLabel}
           </button>
         </form>
 
@@ -164,7 +177,9 @@ function LoginForm() {
               disabled={loading}
               className="w-full rounded-md border border-border bg-card px-4 py-2 font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-800"
             >
-              Sign in with Google
+              {checkoutIntent
+                ? "Continue checkout with Google"
+                : "Sign in with Google"}
             </button>
           ) : null}
           <Link

@@ -12,6 +12,7 @@ import {
   appendAffiliateToUrl,
   captureAffiliateAttribution,
 } from "@/lib/affiliate-attribution";
+import { getCheckoutIntentFromRedirectTarget } from "@/lib/checkout-intent";
 import { getPasswordStrength } from "@/lib/password-strength";
 import { getSupabaseClient } from "@/lib/supabase";
 import { trackConversionEvent } from "@/lib/telemetry";
@@ -24,6 +25,13 @@ const signupBenefits = [
   "No credit card required",
   "Run your first trend scan after confirming email",
   "Upgrade only when you need more monthly credits",
+] as const;
+
+const paidSignupBenefits = [
+  "Secure Stripe checkout after account confirmation",
+  "Full cross-platform source coverage",
+  "Saved ideas, hooks, scripts, hashtags, and calendar notes",
+  "Billing tied to the right TrendBoard account",
 ] as const;
 
 function safeRedirectTarget(value: string | null) {
@@ -47,6 +55,14 @@ function SignupForm() {
   );
   const encodedRedirectTarget = encodeURIComponent(redirectTarget);
   const loginHref = `/login?redirect=${encodedRedirectTarget}`;
+  const checkoutIntent = getCheckoutIntentFromRedirectTarget(redirectTarget);
+  const benefits = checkoutIntent ? paidSignupBenefits : signupBenefits;
+  const signupButtonLabel = checkoutIntent
+    ? `Create account for ${checkoutIntent.planName}`
+    : "Create free account";
+  const signupLoadingLabel = checkoutIntent
+    ? "Creating checkout account..."
+    : "Creating account...";
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -135,17 +151,22 @@ function SignupForm() {
             TrendBoard
           </Link>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary dark:text-cyan-300">
-            Free account
+            {checkoutIntent
+              ? `${checkoutIntent.planName} checkout`
+              : "Free account"}
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-            Save the ideas worth filming.
+            {checkoutIntent
+              ? `Start ${checkoutIntent.planName} with the right account.`
+              : "Save the ideas worth filming."}
           </h1>
           <p className="mt-3 text-sm leading-6 text-muted-foreground dark:text-slate-400">
-            Create an account when you want live trend scans, saved source
-            links, hooks, scripts, hashtags, and calendar-ready idea cards.
+            {checkoutIntent
+              ? "Create your account first so monthly credits, billing, and saved ideas stay connected after Stripe checkout."
+              : "Create an account when you want live trend scans, saved source links, hooks, scripts, hashtags, and calendar-ready idea cards."}
           </p>
           <ul className="mt-6 space-y-3 text-sm text-foreground">
-            {signupBenefits.map((benefit) => (
+            {benefits.map((benefit) => (
               <li key={benefit} className="flex gap-2">
                 <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary dark:text-cyan-300" />
                 <span>{benefit}</span>
@@ -161,9 +182,15 @@ function SignupForm() {
           >
             TrendBoard
           </Link>
-          <h2 className="text-2xl font-semibold">Create your account</h2>
+          <h2 className="text-2xl font-semibold">
+            {checkoutIntent
+              ? `Create account for ${checkoutIntent.planName}`
+              : "Create your account"}
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
-            Confirm your email, then run your first trend analysis.
+            {checkoutIntent
+              ? "Confirm your email, then you will continue to checkout."
+              : "Confirm your email, then run your first trend analysis."}
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -269,7 +296,7 @@ function SignupForm() {
               disabled={loading}
               className="w-full rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:opacity-90"
             >
-              {loading ? "Creating account..." : "Create free account"}
+              {loading ? signupLoadingLabel : signupButtonLabel}
             </button>
           </form>
 
@@ -280,7 +307,9 @@ function SignupForm() {
               disabled={loading}
               className="mt-4 w-full rounded-md border border-border bg-card px-4 py-2 font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-800"
             >
-              Sign up with Google
+              {checkoutIntent
+                ? `Continue ${checkoutIntent.planName} checkout with Google`
+                : "Sign up with Google"}
             </button>
           ) : null}
 
