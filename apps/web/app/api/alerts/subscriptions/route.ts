@@ -2,7 +2,11 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-import { parseLimitedJsonBody } from "@/lib/api-request-guards";
+import {
+  hasTrustedOrigin,
+  invalidOriginResponse,
+  parseLimitedJsonBody,
+} from "@/lib/api-request-guards";
 import { checkRateLimits, rateLimitResponse } from "@/lib/server-rate-limit";
 import { getServerSupabaseAdmin } from "@/lib/server-supabase-admin";
 
@@ -108,6 +112,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!hasTrustedOrigin(request)) {
+    return invalidOriginResponse();
+  }
+
   const auth = await getAuthorizedClients();
   if ("error" in auth) return auth.error;
 
@@ -226,6 +234,10 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  if (!hasTrustedOrigin(request)) {
+    return invalidOriginResponse();
+  }
+
   const auth = await getAuthorizedClients();
   if ("error" in auth) return auth.error;
 

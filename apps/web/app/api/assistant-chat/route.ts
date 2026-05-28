@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { parseLimitedJsonBody } from "@/lib/api-request-guards";
+import {
+  hasTrustedOrigin,
+  invalidOriginResponse,
+  parseLimitedJsonBody,
+} from "@/lib/api-request-guards";
 import { CREDIT_COSTS } from "@/lib/credits";
 import { recordOperationalEvent } from "@/lib/server-events";
 import {
@@ -133,6 +137,10 @@ async function callGpt4(messages: ChatMessage[]): Promise<string> {
 }
 
 export async function POST(request: Request) {
+  if (!hasTrustedOrigin(request)) {
+    return invalidOriginResponse();
+  }
+
   const usage = await loadUsage();
   if (!usage.ok) {
     return NextResponse.json({ error: usage.error }, { status: usage.status });

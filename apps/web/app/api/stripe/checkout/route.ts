@@ -9,6 +9,7 @@ import {
   getAffiliateFromFormData,
   getAffiliateFromMetadata,
 } from "@/lib/affiliate-attribution";
+import { hasTrustedOrigin } from "@/lib/api-request-guards";
 import { recordConversionEvent } from "@/lib/conversion-events";
 import { enforceStripeRateLimit } from "../rate-limit";
 
@@ -190,6 +191,10 @@ export function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!hasTrustedOrigin(request)) {
+    return redirectToPricing(request, "error", { reason: "invalid-origin" });
+  }
+
   if (!stripeSecretKey) {
     console.error("Stripe checkout missing STRIPE_SECRET_KEY");
     return redirectToPricing(request, "configuration");

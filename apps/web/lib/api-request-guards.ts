@@ -2,9 +2,38 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 
+const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+
 type LimitedJsonBodyResult<T> =
   | { ok: true; body: T }
   | { ok: false; response: NextResponse };
+
+export function hasTrustedOrigin(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) return true;
+
+  try {
+    const requestOrigin = new URL(request.url).origin;
+    const originHost = new URL(origin).hostname;
+    const requestHost = new URL(requestOrigin).hostname;
+    const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+
+    if (localHosts.has(originHost) && localHosts.has(requestHost)) {
+      return true;
+    }
+
+    return (
+      origin === requestOrigin ||
+      (configuredSiteUrl ? origin === configuredSiteUrl : false)
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function invalidOriginResponse() {
+  return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+}
 
 export async function parseLimitedJsonBody<T>(
   request: Request,

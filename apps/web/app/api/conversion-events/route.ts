@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { parseLimitedJsonBody } from "@/lib/api-request-guards";
+import {
+  hasTrustedOrigin,
+  invalidOriginResponse,
+  parseLimitedJsonBody,
+} from "@/lib/api-request-guards";
 import {
   isAllowedConversionEvent,
   recordConversionEvent,
@@ -12,31 +16,11 @@ import { getServerSupabaseAdmin } from "@/lib/server-supabase-admin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
 const CONVERSION_EVENT_BODY_LIMIT_BYTES = 4 * 1024;
-
-function hasTrustedOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  if (!origin) return true;
-
-  try {
-    const requestOrigin = new URL(request.url).origin;
-    const originHost = new URL(origin).hostname;
-    const requestHost = new URL(requestOrigin).hostname;
-    const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
-    if (localHosts.has(originHost) && localHosts.has(requestHost)) {
-      return true;
-    }
-
-    return origin === requestOrigin || (siteUrl ? origin === siteUrl : false);
-  } catch {
-    return false;
-  }
-}
 
 export async function POST(request: Request) {
   if (!hasTrustedOrigin(request)) {
-    return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+    return invalidOriginResponse();
   }
 
   const parsedBody = await parseLimitedJsonBody<unknown>(request, {

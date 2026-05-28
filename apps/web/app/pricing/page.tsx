@@ -262,6 +262,8 @@ function checkoutErrorMessage(reason: string | undefined) {
       return "Stripe checkout could not start because Stripe returned an error.";
     case "rate-limited":
       return "Too many checkout attempts were started in a short period. Please wait a few minutes and try again.";
+    case "invalid-origin":
+      return "Checkout must be started from the TrendBoard website. Please refresh and try again.";
     default:
       return "Stripe checkout could not start. Make sure you are signed in and try again, or contact support if it keeps happening.";
   }

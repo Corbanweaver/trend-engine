@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { hasTrustedOrigin } from "@/lib/api-request-guards";
 import { enforceStripeRateLimit } from "../rate-limit";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -83,6 +84,10 @@ async function getCustomerId(
 }
 
 export async function POST(request: Request) {
+  if (!hasTrustedOrigin(request)) {
+    return redirectToProfile(request, "invalid-origin");
+  }
+
   if (!stripeSecretKey) {
     console.error("Stripe billing portal missing STRIPE_SECRET_KEY");
     return redirectToProfile(request, "configuration");

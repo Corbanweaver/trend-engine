@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-import { parseLimitedJsonBody } from "@/lib/api-request-guards";
+import {
+  hasTrustedOrigin,
+  invalidOriginResponse,
+  parseLimitedJsonBody,
+} from "@/lib/api-request-guards";
 import {
   checkRateLimits,
   getClientIp,
@@ -29,6 +33,10 @@ function isValidEmail(email: string): boolean {
 }
 
 export async function POST(request: Request) {
+  if (!hasTrustedOrigin(request)) {
+    return invalidOriginResponse();
+  }
+
   const supabase = getSupabaseAdmin();
   if (!supabase) {
     return NextResponse.json(

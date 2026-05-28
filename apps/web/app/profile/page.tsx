@@ -160,6 +160,11 @@ export default function ProfilePage() {
         "Too many billing sessions were opened in a short period. Please wait a few minutes and try again.",
       );
     }
+    if (billingStatus === "invalid-origin") {
+      setBillingMessage(
+        "Billing must be opened from the TrendBoard website. Please refresh and try again.",
+      );
+    }
     if (billingStatus === "error" || billingStatus === "portal-error") {
       setBillingMessage(
         "Stripe billing could not open. If you just subscribed, wait a moment and refresh your profile.",
