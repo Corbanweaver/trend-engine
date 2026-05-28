@@ -168,7 +168,7 @@ export function FreeResourceWidget({
 
   const description =
     kind === "fitness-ideas"
-      ? "Get a useful sample before you create an account. The full app adds live trend context, source links, and save-ready cards."
+      ? "Get a useful sample before you create an account. The full app adds live trend context, source links, and saved ideas."
       : "Get a useful sample before you create an account. No credits or card needed for this preview.";
 
   const rows = useMemo(() => {
@@ -261,7 +261,7 @@ export function FreeResourceWidget({
       {!hasGenerated ? (
         <div className="mt-7 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-4 text-sm leading-6 text-muted-foreground dark:border-cyan-300/25 dark:bg-cyan-400/5">
           Enter a niche and generate a small preview first. The full app adds
-          live trend signals, source links, saved cards, and deeper analysis.
+          live trend signals, source links, saved ideas, and deeper analysis.
         </div>
       ) : null}
 
@@ -315,7 +315,7 @@ export function FreeResourceWidget({
               </p>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 Creator gives you roughly 20 full scans each month, source
-                links, saved idea cards, hooks, scripts, and calendar notes.
+                links, saved ideas, hooks, scripts, and calendar notes.
               </p>
             </div>
             <div className="flex shrink-0 flex-col gap-2 sm:min-w-56">

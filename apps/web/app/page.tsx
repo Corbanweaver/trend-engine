@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   title:
     "AI Content Idea Generator for TikTok, Instagram, YouTube Shorts, and Pinterest",
   description:
-    "Use TrendBoard to find live trends, create short idea cards, generate hooks and scripts, and plan content for TikTok, Instagram, YouTube Shorts, and Pinterest.",
+    "Use TrendBoard to find live trends, create short post ideas, generate hooks and scripts, and plan content for TikTok, Instagram, YouTube Shorts, and Pinterest.",
   alternates: {
     canonical: "/",
   },
@@ -46,7 +46,7 @@ const workflowSteps = [
   {
     icon: Film,
     title: "Get post ideas",
-    body: "Use the cards as-is, or turn the best ones into hooks, hashtags, scripts, and calendar notes.",
+    body: "Use the ideas as-is, or turn the best ones into hooks, hashtags, scripts, and calendar notes.",
   },
 ] as const;
 
@@ -62,7 +62,7 @@ const simpleProof = [
   {
     icon: Play,
     title: "Post faster",
-    body: "Stop staring at a blank screen. Start with a ready idea card.",
+    body: "Stop staring at a blank screen. Start with a ready idea.",
   },
   {
     icon: Bookmark,
@@ -88,7 +88,7 @@ const faqItems = [
   },
   {
     q: "Do I need to understand AI tools?",
-    a: "No. Pick a niche, run a scan, open an idea card, and use the buttons for hooks, hashtags, scripts, saving, and scheduling.",
+    a: "No. Pick a niche, run a scan, open an idea, and use the buttons for hooks, hashtags, scripts, saving, and scheduling.",
   },
   {
     q: "Which platforms does it watch?",
@@ -172,73 +172,6 @@ function Header() {
   );
 }
 
-function ProductPreview() {
-  return (
-    <section
-      aria-label="Example TrendBoard scan"
-      className="mx-auto mt-10 w-[calc(100vw_-_2rem)] max-w-5xl rounded-3xl border border-border bg-card p-4 text-left shadow-sm dark:border-white/10 dark:bg-slate-950/80 sm:w-full sm:p-5"
-    >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary dark:text-cyan-200">
-            Example scan
-          </p>
-          <h2 className="mt-1 text-lg font-bold text-foreground">
-            Fitness creators
-          </h2>
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs font-semibold text-muted-foreground">
-          {["TikTok", "Instagram", "YouTube", "Reddit", "Search"].map(
-            (source) => (
-              <span
-                key={source}
-                className="rounded-full border border-border bg-background px-3 py-1.5 dark:border-white/10 dark:bg-slate-900"
-              >
-                {source}
-              </span>
-            ),
-          )}
-        </div>
-      </div>
-
-      <div className="mt-5 grid gap-3 md:grid-cols-3">
-        {[
-          {
-            label: "Trend",
-            title: "Beginner strength mistakes",
-            body: "Make a short video showing one form fix people can use today.",
-          },
-          {
-            label: "Hook",
-            title: "Stop doing squats like this",
-            body: "Open with the mistake, show the fix, then give one simple cue.",
-          },
-          {
-            label: "Next action",
-            title: "Save to Friday",
-            body: "Add hashtags, write a 45-second script, and move it to your calendar.",
-          },
-        ].map((item) => (
-          <article
-            key={item.label}
-            className="rounded-2xl border border-border bg-background p-4 dark:border-white/10 dark:bg-slate-900/70"
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary dark:text-cyan-200">
-              {item.label}
-            </p>
-            <h3 className="mt-3 text-base font-bold text-foreground">
-              {item.title}
-            </h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              {item.body}
-            </p>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function SectionHeading({
   eyebrow,
   title,
@@ -274,7 +207,7 @@ export default function Home() {
       />
       <Header />
 
-      <section className="mx-auto flex min-h-[calc(100svh-4rem)] w-full max-w-[100vw] flex-col items-center justify-center overflow-hidden px-4 pb-12 pt-10 text-center sm:max-w-6xl sm:px-6 sm:pb-16 sm:pt-16">
+      <section className="mx-auto flex w-full max-w-[100vw] flex-col items-center justify-center overflow-hidden px-4 pb-12 pt-10 text-center sm:max-w-6xl sm:px-6 sm:pb-16 sm:pt-16">
         <p className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-primary dark:border-white/10 dark:bg-slate-950 dark:text-cyan-200">
           <WandSparkles className="size-4" />
           For content creators
@@ -339,7 +272,6 @@ export default function Home() {
           </span>
         </p>
 
-        <ProductPreview />
       </section>
 
       <section
