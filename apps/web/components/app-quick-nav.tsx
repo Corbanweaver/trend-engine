@@ -17,7 +17,7 @@ const appLinks = [
   { href: "/calendar", label: "Calendar", icon: CalendarDays, key: "calendar" },
   { href: "/alerts", label: "Alerts", icon: Bell, key: "alerts" },
   { href: "/analytics", label: "Stats", icon: BarChart3, key: "analytics" },
-  { href: "/profile", label: "Profile", icon: UserRound, key: "profile" },
+  { href: "/profile", label: "Account", icon: UserRound, key: "profile" },
 ] as const;
 
 export type AppQuickNavKey = (typeof appLinks)[number]["key"];

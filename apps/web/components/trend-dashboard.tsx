@@ -68,12 +68,12 @@ const NICHE_FAVORITES_KEY = "trend_dashboard:niche_favorites";
 const NICHE_HISTORY_KEY = "trend_dashboard:niche_history";
 const CALENDAR_PLAN_STORAGE_KEY = "calendar:plans";
 const ANALYSIS_PROGRESS_STEPS = [
-  "Starting live trend scan...",
-  "Checking TikTok, X, Bluesky, Threads, Instagram, Pinterest, and YouTube...",
-  "Ranking recent views, velocity, and cross-platform momentum...",
-  "Drafting short, human idea cards...",
-  "Attaching organic source thumbnails...",
-  "Packaging your trend cards...",
+  "Starting your scan...",
+  "Checking social, search, community, and news sources...",
+  "Finding what people are reacting to now...",
+  "Turning trends into simple post ideas...",
+  "Adding source links and thumbnails...",
+  "Building your idea cards...",
 ] as const;
 
 type SubscriptionPlan = "free" | "creator" | "pro";
@@ -120,9 +120,9 @@ const creatorMonthlyScanCount = Math.floor(
   getMonthlyCreditLimit("creator") / CREDIT_COSTS.analysis,
 );
 const postAnalysisUpgradePoints = [
-  "Keep scanning new niches after your free credits run out.",
-  "Expand winners into hooks, hashtags, scripts, and calendar-ready briefs.",
-  "Use full source coverage across TikTok, Instagram, YouTube, X, Bluesky, Threads, Pinterest, Reddit, search, and news.",
+  "Run more scans when your free credits run out.",
+  "Turn ideas into hooks, hashtags, scripts, and calendar plans.",
+  "Check more public sources across short-form, social, search, and news.",
 ] as const;
 
 function formatPlanLabel(plan: SubscriptionPlan): "Free" | "Creator" | "Pro" {
@@ -699,8 +699,8 @@ function TrendCard({
   const trendReason =
     trend.trend_reason ||
     (signalCount > 0
-      ? `Based on ${signalCount} social, search, and creator-platform signal${signalCount === 1 ? "" : "s"}. Higher means more people are already reacting or searching.`
-      : "Waiting on enough live social and search signals to score this trend.");
+      ? `Found in ${signalCount} source${signalCount === 1 ? "" : "s"}. A higher score means more people are already reacting or searching.`
+      : "Not enough public sources yet to score this trend.");
   const [imageFailed, setImageFailed] = useState(false);
   const showVisual = Boolean(visual && !imageFailed);
 
@@ -793,7 +793,7 @@ function TrendCard({
             </div>
             <div className="rounded-2xl border border-border bg-muted/40 p-3 dark:border-white/10 dark:bg-white/5">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:text-slate-400">
-                Momentum
+                Trend score
               </p>
               <p className="mt-0.5 flex items-baseline justify-between gap-3 text-lg font-bold tabular-nums leading-none text-foreground dark:text-white">
                 <span className="text-sm">{momentumLabel}</span>
@@ -981,8 +981,8 @@ function TrendCard({
           ) : null}
         </CardContent>
         <CardFooter className="mt-auto pt-0 text-xs text-muted-foreground dark:text-slate-400">
-          {trend.ideas.length} AI idea{trend.ideas.length === 1 ? "" : "s"} -
-          Click for details
+          {trend.ideas.length} post idea{trend.ideas.length === 1 ? "" : "s"} -
+          Open ideas
           <ChevronRight className="ml-1 size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
         </CardFooter>
       </Card>
@@ -1102,11 +1102,11 @@ function PostAnalysisUpgradePrompt({
             </span>
           </div>
           <h2 className="mt-3 text-lg font-bold tracking-tight text-foreground dark:text-white">
-            Turn this {niche} scan into your weekly content workflow
+            Turn this {niche} scan into posts for the week
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground dark:text-slate-300">
             Creator gives roughly {creatorMonthlyScanCount} full scans each
-            month, so you can test more angles before deciding what to film.
+            month, so you can test more topics before deciding what to make.
           </p>
           <div className="mt-4 grid gap-2 text-sm text-foreground dark:text-slate-100 md:grid-cols-3">
             {postAnalysisUpgradePoints.map((point) => (
@@ -1690,7 +1690,7 @@ export function TrendDashboard() {
     { href: "/calendar", label: "Calendar", icon: Calendar },
     { href: "/alerts", label: "Alerts", icon: Bell },
     { href: "/trending", label: "Trending", icon: BarChart3 },
-    { href: "/profile", label: "Profile", icon: UserRound },
+    { href: "/profile", label: "Account", icon: UserRound },
     { href: "/support", label: "Support", icon: HelpCircle },
     ...(isAdmin
       ? [
@@ -1900,28 +1900,28 @@ export function TrendDashboard() {
     <div className="min-h-svh overflow-x-hidden bg-[#f6f5f2] pb-[calc(4.75rem+env(safe-area-inset-bottom))] text-foreground dark:bg-slate-950 lg:pl-[5.5rem] lg:pb-0 xl:pl-56">
       {showOnboarding ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 dark:bg-slate-950/80">
-          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl dark:border-white/15 dark:bg-slate-900">
+          <div className="w-full max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-2xl dark:border-white/15 dark:bg-slate-900 sm:max-w-lg sm:p-6">
             <h2 className="text-xl font-semibold text-foreground dark:text-white">
               Welcome to TrendBoard
             </h2>
             <p className="mt-2 text-sm text-muted-foreground dark:text-slate-300">
-              Your first workflow takes just a few steps:
+              Here is the basic flow:
             </p>
             <ol className="mt-4 space-y-2 text-sm text-foreground dark:text-slate-200">
-              <li>1. Pick your niche</li>
-              <li>2. Run your first analysis</li>
-              <li>3. Save your best idea with source links</li>
-              <li>4. Move it to your content calendar</li>
+              <li>1. Type what you make content about</li>
+              <li>2. Click Analyze</li>
+              <li>3. Open a trend card</li>
+              <li>4. Save or schedule the best idea</li>
             </ol>
-            <p className="mt-4 text-xs text-muted-foreground dark:text-slate-400">
-              Each analysis takes 30-90 seconds. If no result appears right
-              away, keep this window open and the process will continue.
+            <p className="mt-4 break-words text-xs text-muted-foreground dark:text-slate-400">
+              A scan usually takes 30-90 seconds. Keep this tab open while it
+              works.
             </p>
             <div className="mt-6 flex justify-end">
               <Button
                 type="button"
                 onClick={dismissOnboarding}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:hover:opacity-90"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950 dark:hover:opacity-90 sm:w-auto"
               >
                 Let&apos;s go
               </Button>
@@ -1989,10 +1989,10 @@ export function TrendDashboard() {
             </Link>
             <div className="hidden min-w-0 lg:block">
               <h1 className="truncate text-xl font-bold tracking-tight">
-                Create ideas
+                Create your next post
               </h1>
               <p className="text-xs text-muted-foreground dark:text-slate-400">
-                Pick a niche, scan live signals, save the best cards.
+                Type a niche, scan trends, and save the best idea.
               </p>
             </div>
             <div className="ml-auto flex items-center gap-2">
@@ -2038,7 +2038,7 @@ export function TrendDashboard() {
               <Link
                 href="/profile"
                 className="hidden items-center gap-2 rounded-full border border-border bg-card p-1.5 text-xs text-foreground shadow-sm hover:bg-muted dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 sm:flex"
-                title={userEmail || "Profile"}
+                title={userEmail || "Account"}
               >
                 {userAvatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -2068,7 +2068,7 @@ export function TrendDashboard() {
             <div className="grid grid-cols-[auto_1fr] gap-2 md:grid-cols-[minmax(0,1fr)_minmax(190px,260px)_auto_auto] md:items-center">
               <div className="relative col-span-2 md:col-span-1">
                 <label className="sr-only" htmlFor="quick-niche-search">
-                  Search any niche
+                  Type your niche
                 </label>
                 <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground dark:text-slate-500" />
                 <input
@@ -2076,7 +2076,7 @@ export function TrendDashboard() {
                   type="text"
                   value={customNiche}
                   onChange={(e) => handleNicheInputChange(e.target.value)}
-                  placeholder="Search any niche..."
+                  placeholder="Type your niche..."
                   disabled={loading}
                   className="h-12 w-full rounded-[1.15rem] border border-border bg-background py-0 pl-11 pr-4 text-base font-bold capitalize text-foreground outline-none placeholder:font-medium placeholder:normal-case placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/60 dark:border-white/10 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-cyan-300/60 sm:text-lg md:text-base"
                 />
@@ -2092,7 +2092,7 @@ export function TrendDashboard() {
                 className="col-span-2 h-12 rounded-[1.15rem] border border-border bg-background px-4 text-sm font-bold text-foreground outline-none focus:ring-2 focus:ring-primary/60 dark:border-white/10 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-cyan-300/60 md:col-span-1"
               >
                 <option value="" disabled>
-                  Preset niches
+                  Choose preset
                 </option>
                 {favoriteOptions.length > 0 ? (
                   <optgroup label="Favorites">
@@ -2176,7 +2176,7 @@ export function TrendDashboard() {
                 </span>
               ) : (
                 <span className="rounded-full bg-background px-3 py-1 text-xs text-muted-foreground shadow-sm dark:bg-white/5 dark:text-slate-300">
-                  Type a niche, then tap Analyze
+                  Type a niche, then click Analyze
                 </span>
               )}
               {analysisCreditBlocked ? (
@@ -2516,7 +2516,7 @@ export function TrendDashboard() {
               </p>
               <p className="mt-1 text-muted-foreground dark:text-fuchsia-100/80">
                 {plan === "free"
-                  ? "Upgrade when you want more live trend scans, hook variations, scripts, and calendar-ready briefs."
+                  ? "Upgrade when you want more scans, hooks, scripts, and calendar plans."
                   : "Your monthly credits reset automatically. Contact support if you need a higher-volume plan."}
               </p>
             </div>
@@ -2578,8 +2578,8 @@ export function TrendDashboard() {
                   Start with one niche
                 </p>
                 <p className="mt-1 max-w-md text-sm">
-                  The board fills with short trend cards. Open any card to build
-                  hooks, scripts, hashtags, and saved ideas.
+                  Type what you make content about. TrendBoard will show trends,
+                  post ideas, source links, and save buttons.
                 </p>
               </div>
             </div>
@@ -2767,7 +2767,7 @@ export function TrendDashboard() {
             className="flex flex-col items-center text-[11px] text-muted-foreground dark:text-slate-300"
           >
             <UserRound className="mb-1 size-4" />
-            Profile
+            Account
           </Link>
           {isAdmin ? (
             <Link

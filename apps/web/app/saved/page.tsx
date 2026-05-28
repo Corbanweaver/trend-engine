@@ -171,7 +171,7 @@ export default function SavedIdeasPage() {
   };
 
   useEffect(() => {
-    document.title = "Saved Ideas - TrendBoard";
+    document.title = "Saved post ideas - TrendBoard";
   }, []);
 
   useEffect(() => {
@@ -442,7 +442,7 @@ export default function SavedIdeasPage() {
       existing.add(item.id);
       map[dayKey] = [...existing];
       window.localStorage.setItem(PLAN_KEY, JSON.stringify(map));
-      showToast("Saved to Calendar");
+      showToast("Added to calendar");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to save idea to calendar.",
@@ -461,22 +461,19 @@ export default function SavedIdeasPage() {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary dark:text-cyan-200/80">
-              Library
-            </p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight">
-              Saved Ideas
+            <h1 className="text-3xl font-semibold tracking-tight">
+              Saved post ideas
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
               {ideas.length
-                ? `${ideas.length} saved idea${ideas.length === 1 ? "" : "s"} ready to reuse.`
-                : "Keep your strongest content concepts here for later."}
+                ? `${ideas.length} saved idea${ideas.length === 1 ? "" : "s"} ready to copy, share, or schedule.`
+                : "Save ideas from the dashboard so you can use them later."}
             </p>
           </div>
           <Button asChild variant="outline" className="w-full sm:w-auto">
             <Link href="/dashboard">
               <ExternalLink aria-hidden="true" />
-              Dashboard
+              Create ideas
             </Link>
           </Button>
         </div>
@@ -501,12 +498,11 @@ export default function SavedIdeasPage() {
                   No saved ideas yet
                 </p>
                 <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground dark:text-slate-400">
-                  Save a concept from the dashboard when it feels worth testing.
-                  It will show up here with sharing, download, and calendar
-                  actions.
+                  Run a scan, open a trend card, and save any idea you want to
+                  use later.
                 </p>
                 <Button asChild className="mt-5">
-                  <Link href="/dashboard">Find Ideas</Link>
+                  <Link href="/dashboard">Create ideas</Link>
                 </Button>
               </div>
               <div className="hidden border-l border-border bg-muted/45 p-8 dark:border-white/10 dark:bg-slate-950/35 md:block">
@@ -537,7 +533,7 @@ export default function SavedIdeasPage() {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search titles, scripts, niches..."
+                  placeholder="Search saved ideas..."
                   className="h-10 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-primary/45 focus:ring-2 focus:ring-ring/20 dark:border-white/10 dark:bg-slate-950/40 dark:focus:border-cyan-300/60 dark:focus:ring-cyan-300/20"
                 />
               </label>
@@ -581,7 +577,7 @@ export default function SavedIdeasPage() {
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
                 >
                   <Copy aria-hidden="true" className="size-3.5" />
-                  Copy shown
+                  Copy list
                 </button>
                 <button
                   type="button"
@@ -712,7 +708,7 @@ export default function SavedIdeasPage() {
                   <button
                     type="button"
                     aria-label="Save idea to calendar"
-                    title="Save to Calendar"
+                    title="Add to calendar"
                     onClick={(e) => {
                       e.stopPropagation();
                       saveIdeaToCalendar(item);
@@ -804,7 +800,7 @@ export default function SavedIdeasPage() {
                 onClick={() => void copyIdea(detailIdea)}
               >
                 <Copy aria-hidden="true" />
-                Copy Link
+                Copy link
               </Button>
               <Button
                 type="button"
@@ -831,7 +827,7 @@ export default function SavedIdeasPage() {
                 onClick={() => saveIdeaToCalendar(detailIdea)}
               >
                 <CalendarPlus aria-hidden="true" />
-                Calendar
+                Add to calendar
               </Button>
               <Button
                 type="button"

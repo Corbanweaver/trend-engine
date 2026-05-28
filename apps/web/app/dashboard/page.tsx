@@ -4,9 +4,8 @@ import { FloatingAiAssistant } from "@/components/floating-ai-assistant";
 import { TrendDashboard } from "@/components/trend-dashboard";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
-  description:
-    "Visual trend intelligence dashboard with AI-generated video ideas.",
+  title: "Create Ideas",
+  description: "Find trends for a niche and turn them into post ideas.",
 };
 
 export const dynamic = "force-dynamic";
