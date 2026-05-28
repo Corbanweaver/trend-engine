@@ -2493,12 +2493,39 @@ export function TrendDashboard() {
                   : "Your monthly credits reset automatically. Contact support if you need a higher-volume plan."}
               </p>
             </div>
-            <Link
-              href={plan === "free" ? "/pricing" : "/support"}
-              className="inline-flex shrink-0 items-center justify-center rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 dark:bg-fuchsia-200 dark:text-slate-950 dark:hover:bg-white"
-            >
-              {plan === "free" ? "View Creator plan" : "Contact support"}
-            </Link>
+            {plan === "free" ? (
+              <form
+                action="/api/stripe/checkout"
+                method="POST"
+                onSubmit={() =>
+                  trackConversionEvent({
+                    event: "upgrade_prompt_clicked",
+                    context: {
+                      placement: "credit_blocked_banner",
+                      plan: "free",
+                      targetPlan: "creator",
+                      creditsRemaining,
+                    },
+                  })
+                }
+              >
+                <input type="hidden" name="plan" value="creator" />
+                <AffiliateCheckoutFields />
+                <button
+                  type="submit"
+                  className="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 dark:bg-fuchsia-200 dark:text-slate-950 dark:hover:bg-white"
+                >
+                  Start Creator checkout
+                </button>
+              </form>
+            ) : (
+              <Link
+                href="/support"
+                className="inline-flex shrink-0 items-center justify-center rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 dark:bg-fuchsia-200 dark:text-slate-950 dark:hover:bg-white"
+              >
+                Contact support
+              </Link>
+            )}
           </div>
         </div>
       ) : null}
