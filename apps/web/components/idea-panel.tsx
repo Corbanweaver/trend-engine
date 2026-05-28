@@ -12,6 +12,8 @@ import {
 import {
   BookmarkPlus,
   CalendarPlus,
+  Check,
+  Copy,
   FileText,
   Loader2,
   ThumbsDown,
@@ -111,6 +113,70 @@ function buildOutline(idea: VideoIdea): string[] {
     "Show one quick example",
     "End with a soft CTA",
   ];
+}
+
+function formatHashtag(tag: string) {
+  const clean = tag.trim();
+  if (!clean) return "";
+  return clean.startsWith("#") ? clean : `#${clean}`;
+}
+
+function buildCreatorPostPack({
+  trendName,
+  niche,
+  idea,
+  hookVariations,
+  hashtags,
+  fullScript,
+}: {
+  trendName: string;
+  niche: string;
+  idea: VideoIdea;
+  hookVariations: string[];
+  hashtags: string[];
+  fullScript: string;
+}) {
+  return [
+    idea.optimized_title?.trim() || idea.hook || idea.idea || "Content idea",
+    "",
+    `Niche: ${(niche || "General creator").trim()}`,
+    `Trend: ${trendName}`,
+    "",
+    idea.hook ? `Opening hook:\n${idea.hook}` : "",
+    idea.angle ? `Angle:\n${idea.angle}` : "",
+    idea.idea ? `Concept:\n${idea.idea}` : "",
+    idea.seo_description ? `Caption note:\n${idea.seo_description}` : "",
+    hashtags.length
+      ? `Hashtags:\n${hashtags.map(formatHashtag).filter(Boolean).join(" ")}`
+      : "",
+    hookVariations.length
+      ? `Hook options:\n${hookVariations.map((hook, index) => `${index + 1}. ${hook}`).join("\n")}`
+      : "",
+    fullScript ? `Script:\n${fullScript}` : "",
+    `Outline:\n${buildOutline(idea)
+      .map((point) => `- ${point}`)
+      .join("\n")}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+async function writeClipboardText(text: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  if (!copied) throw new Error("Clipboard copy failed.");
 }
 
 function renderInlineMarkdown(text: string): React.ReactNode[] {
@@ -271,6 +337,7 @@ export function IdeaPanel({
   const [calendarSavedIndexes, setCalendarSavedIndexes] = useState<
     Record<number, boolean>
   >({});
+  const [copiedPackIndex, setCopiedPackIndex] = useState<number | null>(null);
   const [errorByIndex, setErrorByIndex] = useState<Record<number, string>>({});
   const [ideaRatings, setIdeaRatings] = useState<Record<string, "up" | "down">>(
     {},
@@ -322,6 +389,7 @@ export function IdeaPanel({
     setSavingCalendarIndex(null);
     setSavedIndexes({});
     setCalendarSavedIndexes({});
+    setCopiedPackIndex(null);
     setErrorByIndex({});
     setTrendingTagsByIndex({});
     setTagsLoadingByIndex({});
@@ -616,6 +684,51 @@ export function IdeaPanel({
       saveInFlightRef.current.delete(lockKey);
       if (mode === "saved") setSavingIdeaIndex(null);
       else setSavingCalendarIndex(null);
+    }
+  };
+
+  const copyPostPack = async (idea: VideoIdea, index: number) => {
+    if (!trend) return;
+    setErrorByIndex((prev) => ({ ...prev, [index]: "" }));
+
+    const hashtags = trendingTagsByIndex[index]?.length
+      ? trendingTagsByIndex[index]
+      : (idea.hashtags ?? []);
+    const pack = buildCreatorPostPack({
+      trendName: trend.trend,
+      niche,
+      idea,
+      hookVariations: hookListsByIndex[index] ?? [],
+      hashtags,
+      fullScript: fullScriptByIndex[index]?.trim() || idea.script || "",
+    });
+
+    try {
+      await writeClipboardText(pack);
+      setCopiedPackIndex(index);
+      window.setTimeout(() => {
+        setCopiedPackIndex((current) => (current === index ? null : current));
+      }, 1600);
+      trackUiEvent({
+        area: "idea_panel",
+        action: "copy_post_pack_success",
+        context: { trend: trend.trend },
+      });
+    } catch (err) {
+      trackUiEvent({
+        area: "idea_panel",
+        action: "copy_post_pack_failed",
+        level: "error",
+        message: err instanceof Error ? err.message : "unknown",
+        context: { trend: trend.trend },
+      });
+      setErrorByIndex((prev) => ({
+        ...prev,
+        [index]:
+          err instanceof Error
+            ? err.message
+            : "Failed to copy the post pack.",
+      }));
     }
   };
 
@@ -1019,7 +1132,21 @@ export function IdeaPanel({
                         </button>
                       </div>
                     </div>
-                    <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      <Button
+                        type="button"
+                        disabled={copiedPackIndex === i}
+                        onClick={() => void copyPostPack(idea, i)}
+                        variant="outline"
+                        className="h-10 rounded-full border-border bg-card px-3 text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:hover:bg-white/10"
+                      >
+                        {copiedPackIndex === i ? (
+                          <Check className="size-4" />
+                        ) : (
+                          <Copy className="size-4" />
+                        )}
+                        {copiedPackIndex === i ? "Copied" : "Copy pack"}
+                      </Button>
                       <Button
                         type="button"
                         disabled={isSavingThisIdea || savedIndexes[i]}
