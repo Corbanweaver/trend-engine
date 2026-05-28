@@ -115,6 +115,14 @@ const checkoutConversionValues: Record<string, number> = {
   creator: 19.99,
   pro: 49.99,
 };
+const creatorMonthlyScanCount = Math.floor(
+  getMonthlyCreditLimit("creator") / CREDIT_COSTS.analysis,
+);
+const postAnalysisUpgradePoints = [
+  "Keep scanning new niches after your free credits run out.",
+  "Expand winners into hooks, hashtags, scripts, and calendar-ready briefs.",
+  "Use full source coverage across TikTok, Instagram, YouTube, X, Bluesky, Threads, Pinterest, Reddit, search, and news.",
+] as const;
 
 function formatPlanLabel(plan: SubscriptionPlan): "Free" | "Creator" | "Pro" {
   if (plan === "creator") return "Creator";
@@ -1067,6 +1075,69 @@ function LoadingState({
         ))}
       </div>
     </div>
+  );
+}
+
+function PostAnalysisUpgradePrompt({
+  niche,
+  trendCount,
+  creditsRemaining,
+}: {
+  niche: string;
+  trendCount: number;
+  creditsRemaining: number;
+}) {
+  return (
+    <section className="mb-5 overflow-hidden rounded-[1.35rem] border border-primary/20 bg-primary/10 shadow-sm dark:border-cyan-300/25 dark:bg-cyan-400/10">
+      <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-background px-3 py-1 text-xs font-bold text-primary dark:border-cyan-300/30 dark:bg-slate-950/70 dark:text-cyan-100">
+              <BarChart3 className="size-3.5" />
+              {trendCount} trend{trendCount === 1 ? "" : "s"} found
+            </span>
+            <span className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+              {Math.max(creditsRemaining, 0)} free credits left
+            </span>
+          </div>
+          <h2 className="mt-3 text-lg font-bold tracking-tight text-foreground dark:text-white">
+            Turn this {niche} scan into your weekly content workflow
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground dark:text-slate-300">
+            Creator gives roughly {creatorMonthlyScanCount} full scans each
+            month, so you can test more angles before deciding what to film.
+          </p>
+          <div className="mt-4 grid gap-2 text-sm text-foreground dark:text-slate-100 md:grid-cols-3">
+            {postAnalysisUpgradePoints.map((point) => (
+              <div
+                key={point}
+                className="rounded-2xl border border-border bg-background/80 px-3 py-2 dark:border-white/10 dark:bg-slate-950/50"
+              >
+                {point}
+              </div>
+            ))}
+          </div>
+        </div>
+        <Link
+          href="/pricing#plans"
+          onClick={() =>
+            trackConversionEvent({
+              event: "upgrade_prompt_clicked",
+              context: {
+                placement: "post_analysis_dashboard",
+                plan: "free",
+                trendCount,
+                creditsRemaining,
+              },
+            })
+          }
+          className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+        >
+          See Creator plan
+          <ChevronRight className="size-4" />
+        </Link>
+      </div>
+    </section>
   );
 }
 
@@ -2446,33 +2517,42 @@ export function TrendDashboard() {
           ) : null}
 
           {data ? (
-            filteredTrends.length > 0 ? (
-              <div className="grid auto-rows-fr grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                {filteredTrends.map((trend, index) => {
-                  const realIndex = data.trend_ideas.findIndex(
-                    (t) => t.trend === trend.trend,
-                  );
-                  return (
-                    <TrendCard
-                      key={`${trend.trend}-${index}`}
-                      trend={trend}
-                      index={index}
-                      selected={selectedIndex === realIndex}
-                      onSelect={() => setSelectedIndex(realIndex)}
-                    />
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
-                <p className="text-sm font-medium text-foreground dark:text-slate-200">
-                  No trends match this filter
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground dark:text-slate-400">
-                  Try another platform chip or clear your search terms.
-                </p>
-              </div>
-            )
+            <>
+              {plan === "free" && !isAdmin ? (
+                <PostAnalysisUpgradePrompt
+                  niche={effectiveNiche}
+                  trendCount={data.trend_ideas.length}
+                  creditsRemaining={creditsRemaining}
+                />
+              ) : null}
+              {filteredTrends.length > 0 ? (
+                <div className="grid auto-rows-fr grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                  {filteredTrends.map((trend, index) => {
+                    const realIndex = data.trend_ideas.findIndex(
+                      (t) => t.trend === trend.trend,
+                    );
+                    return (
+                      <TrendCard
+                        key={`${trend.trend}-${index}`}
+                        trend={trend}
+                        index={index}
+                        selected={selectedIndex === realIndex}
+                        onSelect={() => setSelectedIndex(realIndex)}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+                  <p className="text-sm font-medium text-foreground dark:text-slate-200">
+                    No trends match this filter
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground dark:text-slate-400">
+                    Try another platform chip or clear your search terms.
+                  </p>
+                </div>
+              )}
+            </>
           ) : null}
         </div>
       </div>

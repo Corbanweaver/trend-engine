@@ -16,6 +16,7 @@ const allowedConversionEvents = new Set<ConversionEventName>([
   "signup_google_clicked",
   "analyze_clicked",
   "analyze_completed",
+  "upgrade_prompt_clicked",
   "checkout_started",
   "checkout_completed",
 ]);
