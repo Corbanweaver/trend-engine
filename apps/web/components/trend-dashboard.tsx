@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
+import { AffiliateCheckoutFields } from "@/components/affiliate-checkout-fields";
 import { IdeaPanel } from "@/components/idea-panel";
 import { Button } from "@/components/ui/button";
 import {
@@ -1118,24 +1119,38 @@ function PostAnalysisUpgradePrompt({
             ))}
           </div>
         </div>
-        <Link
-          href="/pricing#plans"
-          onClick={() =>
+        <form
+          action="/api/stripe/checkout"
+          method="POST"
+          onSubmit={() =>
             trackConversionEvent({
               event: "upgrade_prompt_clicked",
               context: {
                 placement: "post_analysis_dashboard",
                 plan: "free",
+                targetPlan: "creator",
                 trendCount,
                 creditsRemaining,
               },
             })
           }
-          className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
         >
-          See Creator plan
-          <ChevronRight className="size-4" />
-        </Link>
+          <input type="hidden" name="plan" value="creator" />
+          <AffiliateCheckoutFields />
+          <button
+            type="submit"
+            className="inline-flex min-h-12 w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300 lg:w-auto"
+          >
+            Start Creator checkout
+            <ChevronRight className="size-4" />
+          </button>
+          <Link
+            href="/pricing#plans"
+            className="mt-2 inline-flex w-full items-center justify-center text-xs font-semibold text-primary hover:text-foreground dark:text-cyan-100 dark:hover:text-white lg:w-auto"
+          >
+            Compare plans first
+          </Link>
+        </form>
       </div>
     </section>
   );
