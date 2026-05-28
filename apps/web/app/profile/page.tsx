@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { AchievementBadges } from "@/components/achievement-badges";
+import { AffiliateCheckoutFields } from "@/components/affiliate-checkout-fields";
 import { AppQuickNav } from "@/components/app-quick-nav";
 import {
   getMonthlyCreditLimit,
@@ -14,6 +15,7 @@ import {
   shouldResetMonthlyUsage,
 } from "@/lib/credits";
 import { getSupabaseClient } from "@/lib/supabase";
+import { trackConversionEvent } from "@/lib/telemetry";
 import { getSafeAvatarUrl } from "@/lib/user-avatar";
 import { computeEarnedBadgeIds, readTotalAnalyses } from "@/lib/user-stats";
 
@@ -390,15 +392,46 @@ export default function ProfilePage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <form action="/api/stripe/portal" method="POST">
-                <button
-                  type="submit"
-                  className="fluid-transition rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!ready || !email || !hasStripeBilling}
+              {ready && email && !isAdmin && plan === "free" ? (
+                <form
+                  action="/api/stripe/checkout"
+                  method="POST"
+                  onSubmit={() =>
+                    trackConversionEvent({
+                      event: "upgrade_prompt_clicked",
+                      context: {
+                        placement: "profile_account",
+                        plan: "free",
+                        targetPlan: "creator",
+                        creditsRemaining: getRemainingCredits(
+                          plan,
+                          creditsUsed,
+                        ),
+                      },
+                    })
+                  }
                 >
-                  Manage billing
-                </button>
-              </form>
+                  <input type="hidden" name="plan" value="creator" />
+                  <AffiliateCheckoutFields />
+                  <button
+                    type="submit"
+                    className="fluid-transition rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+                  >
+                    Start Creator
+                  </button>
+                </form>
+              ) : null}
+              {hasStripeBilling ? (
+                <form action="/api/stripe/portal" method="POST">
+                  <button
+                    type="submit"
+                    className="fluid-transition rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={!ready || !email}
+                  >
+                    Manage billing
+                  </button>
+                </form>
+              ) : null}
               {isAdmin ? (
                 <Link
                   href="/admin"
@@ -412,7 +445,7 @@ export default function ProfilePage() {
                   href="/pricing"
                   className="fluid-transition rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted"
                 >
-                  View plans
+                  Compare plans
                 </Link>
               ) : null}
               <button
