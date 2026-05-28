@@ -46,7 +46,7 @@ export default function ResetPasswordPage() {
 
         if (active && !session) {
           setError(
-            "This reset link is missing its secure token. Please request a fresh password reset email.",
+            "This reset link is missing its secure token. Please request a new reset email.",
           );
         }
         return;
@@ -141,72 +141,93 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
-      <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
-        <h1 className="text-2xl font-semibold">Choose a new password</h1>
-        <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
-          Enter a new password for your TrendBoard account.
-        </p>
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          <label className="block text-sm">
-            <span className="mb-1 block text-muted-foreground dark:text-slate-300">
-              New password
-            </span>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                minLength={6}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                autoComplete="new-password"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 pr-11 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((visible) => !visible)}
-                className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 dark:focus:ring-cyan-300/60"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" aria-hidden="true" />
-                ) : (
-                  <Eye className="h-4 w-4" aria-hidden="true" />
-                )}
-              </button>
-            </div>
-          </label>
-          {error ? (
-            <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
-              {error}
-            </p>
-          ) : null}
-          {message ? (
-            <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
-              {message}
-            </p>
-          ) : null}
-          <button
-            type="submit"
-            disabled={loading || verifyingLink}
-            className="w-full rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950"
-          >
-            {verifyingLink
-              ? "Verifying..."
-              : loading
-                ? "Updating..."
-                : "Update password"}
-          </button>
-        </form>
-        <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
-          Need a new reset link?{" "}
-          <Link
-            href="/forgot-password"
-            className="text-primary hover:underline dark:text-cyan-300"
-          >
-            Start over
-          </Link>
-        </p>
+    <main className="min-h-svh bg-background px-4 py-8 text-foreground">
+      <div className="mx-auto flex min-h-[calc(100svh-4rem)] w-full max-w-md flex-col justify-center">
+        <Link
+          href="/"
+          className="mb-5 flex w-fit items-center gap-2 text-sm font-semibold tracking-[0.08em] text-foreground hover:text-primary"
+        >
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
+            T
+          </span>
+          <span>TrendBoard</span>
+        </Link>
+
+        <section className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/70">
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            Choose a new password
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            Use a new password for your TrendBoard account.
+          </p>
+
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+            <label className="block text-sm">
+              <span className="mb-1.5 block font-medium text-muted-foreground">
+                New password
+              </span>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete="new-password"
+                  className="h-12 w-full rounded-xl border border-input bg-background px-3 pr-12 text-foreground outline-none ring-primary/40 focus:ring-2 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:ring-cyan-300/60"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  className="absolute right-2 top-1/2 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 dark:focus:ring-cyan-300/60"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" aria-hidden="true" />
+                  ) : (
+                    <Eye className="size-4" aria-hidden="true" />
+                  )}
+                </button>
+              </div>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Use at least 6 characters. 8+ is better.
+              </p>
+            </label>
+
+            {error ? (
+              <p className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
+                {error}
+              </p>
+            ) : null}
+            {message ? (
+              <p className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+                {message}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={loading || verifyingLink}
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+            >
+              {verifyingLink
+                ? "Verifying..."
+                : loading
+                  ? "Updating..."
+                  : "Update password"}
+            </button>
+          </form>
+
+          <p className="mt-5 text-center text-sm text-muted-foreground">
+            Need a new reset link?{" "}
+            <Link
+              href="/forgot-password"
+              className="font-semibold text-primary hover:underline dark:text-cyan-300"
+            >
+              Start over
+            </Link>
+          </p>
+        </section>
       </div>
     </main>
   );
