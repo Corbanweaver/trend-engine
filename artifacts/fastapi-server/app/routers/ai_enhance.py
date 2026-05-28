@@ -5,7 +5,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from app.security import expensive_endpoint_rate_limit
+from app.security import expensive_endpoint_rate_limit, require_operational_key
 from app.openai_client import get_openai_client
 
 try:
@@ -18,7 +18,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(
     prefix="/ai",
     tags=["ai-enhance"],
-    dependencies=[Depends(expensive_endpoint_rate_limit("ai-enhance"))],
+    dependencies=[
+        Depends(require_operational_key),
+        Depends(expensive_endpoint_rate_limit("ai-enhance")),
+    ],
 )
 
 

@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from app.security import (
     expensive_endpoint_rate_limit,
     require_digest_key,
-    require_operational_key_if_configured,
+    require_operational_key,
 )
 from app.openai_client import get_openai_client
 
@@ -46,7 +46,7 @@ router = APIRouter(
     prefix="/trend-ideas",
     tags=["trend-ideas"],
     dependencies=[
-        Depends(require_operational_key_if_configured),
+        Depends(require_operational_key),
         Depends(expensive_endpoint_rate_limit("trend-ideas")),
     ],
 )

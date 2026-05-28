@@ -1,8 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from app.hackernews_client import hn_search, hn_top_stories
+from app.security import expensive_endpoint_rate_limit, require_operational_key
 
-router = APIRouter(prefix="/hackernews", tags=["hackernews"])
+router = APIRouter(
+    prefix="/hackernews",
+    tags=["hackernews"],
+    dependencies=[
+        Depends(require_operational_key),
+        Depends(expensive_endpoint_rate_limit("hackernews")),
+    ],
+)
 
 
 class HNSearchRequest(BaseModel):

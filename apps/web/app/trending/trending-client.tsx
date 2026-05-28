@@ -19,7 +19,6 @@ import {
   MarketingFooter,
   MarketingHeader,
 } from "@/components/marketing/marketing-shell";
-import { apiFetch } from "@/lib/api";
 import type {
   DailyPlatformSection,
   DailyTrendingResponse,
@@ -134,7 +133,7 @@ export function TrendingLivePage() {
     else if (!hasLoadedOnce.current) setLoading(true);
     setError(null);
     try {
-      const res = await apiFetch("/trending/daily", { method: "GET" });
+      const res = await fetch("/api/trending/daily", { method: "GET" });
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || `HTTP ${res.status}`);

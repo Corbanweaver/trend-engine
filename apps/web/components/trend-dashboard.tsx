@@ -930,7 +930,7 @@ function DashboardNavLink({ item }: { item: DashboardNavItem }) {
       aria-label={item.label}
       title={item.label}
       className={cn(
-        "group flex items-center justify-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors",
+        "group flex h-11 min-w-0 items-center justify-center gap-3 rounded-2xl px-3 text-sm font-medium transition-colors",
         "text-muted-foreground hover:bg-white hover:text-foreground",
         item.active &&
           "creator-sidebar-active text-primary-foreground shadow-sm hover:text-primary-foreground",
@@ -1861,7 +1861,10 @@ export function TrendDashboard() {
           </div>
         </div>
       ) : null}
-      <aside className="creator-dashboard-shell fixed inset-y-0 left-0 z-50 hidden w-[5.5rem] flex-col border-r border-border bg-white/90 px-3 py-4 backdrop-blur lg:flex xl:w-56">
+      <aside
+        aria-label="Desktop dashboard navigation"
+        className="creator-dashboard-shell creator-dashboard-sidebar z-50 hidden w-[5.5rem] flex-col border-r border-border bg-white/90 px-3 py-4 backdrop-blur lg:flex xl:w-56"
+      >
         <Link
           href="/dashboard"
           className="mb-6 flex items-center justify-center gap-3 rounded-2xl px-3 py-2 text-primary xl:justify-start"
@@ -1881,7 +1884,7 @@ export function TrendDashboard() {
           type="button"
           disabled={signingOut}
           onClick={signOut}
-          className="group flex items-center justify-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-white hover:text-foreground disabled:opacity-60 xl:justify-start"
+          className="group flex h-11 items-center justify-center gap-3 rounded-2xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-white hover:text-foreground disabled:opacity-60 xl:justify-start"
           title="Logout"
         >
           {signingOut ? (
@@ -1894,7 +1897,7 @@ export function TrendDashboard() {
           </span>
         </button>
       </aside>
-      <header className="creator-topbar sticky top-0 z-40 border-b border-border/80 backdrop-blur">
+      <header className="creator-topbar sticky top-0 z-40 border-b border-border/80 backdrop-blur lg:fixed lg:left-[5.5rem] lg:right-0 xl:left-56">
         {loading ? (
           <div className="border-b border-primary/20 bg-accent/70 px-4 py-2">
             <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-1">
@@ -2540,94 +2543,96 @@ export function TrendDashboard() {
         </div>
       </header>
 
-      {error ? (
-        <div className="mx-4 mt-4 rounded-lg border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200">
-          {error}
-        </div>
-      ) : null}
-
-      {analysisCreditBlocked ? (
-        <div className="mx-4 mt-4 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-4 text-sm text-primary dark:border-fuchsia-400/40 dark:bg-fuchsia-500/10 dark:text-fuchsia-100">
-          <div className="mx-auto flex max-w-[1500px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-semibold text-foreground dark:text-white">
-                {plan === "free"
-                  ? "Free credits used for this month"
-                  : "Monthly credits used for this month"}
-              </p>
-              <p className="mt-1 text-muted-foreground dark:text-fuchsia-100/80">
-                {plan === "free"
-                  ? "Upgrade when you want more live trend scans, hook variations, scripts, and calendar-ready briefs."
-                  : "Your monthly credits reset automatically. Contact support if you need a higher-volume plan."}
-              </p>
-            </div>
-            <Link
-              href={plan === "free" ? "/pricing" : "/support"}
-              className="inline-flex shrink-0 items-center justify-center rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 dark:bg-fuchsia-200 dark:text-slate-950 dark:hover:bg-white"
-            >
-              {plan === "free" ? "View Creator plan" : "Contact support"}
-            </Link>
+      <div className="creator-dashboard-content">
+        {error ? (
+          <div className="mx-4 mt-4 rounded-lg border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200">
+            {error}
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      <div className="min-h-0">
-        <div className="mx-auto min-w-0 max-w-[1500px] p-3 sm:p-5">
-          {loading && !data ? (
-            <LoadingState
-              niche={effectiveNiche}
-              step={analysisStep}
-              progress={analysisProgress}
-              elapsedSeconds={analysisElapsedSeconds}
-            />
-          ) : null}
-
-          {!loading && !data && !error ? (
-            <div className="creator-app-surface mx-auto mt-10 flex max-w-2xl flex-col items-center justify-center gap-4 rounded-[2rem] border border-dashed border-border p-10 text-center text-muted-foreground">
-              <div className="flex size-14 items-center justify-center rounded-3xl bg-primary/10">
-                <Sparkles className="size-7 text-primary" />
-              </div>
+        {analysisCreditBlocked ? (
+          <div className="mx-4 mt-4 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-4 text-sm text-primary dark:border-fuchsia-400/40 dark:bg-fuchsia-500/10 dark:text-fuchsia-100">
+            <div className="mx-auto flex max-w-[1500px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-base font-semibold text-foreground">
-                  Start with one niche
+                <p className="font-semibold text-foreground dark:text-white">
+                  {plan === "free"
+                    ? "Free credits used for this month"
+                    : "Monthly credits used for this month"}
                 </p>
-                <p className="mt-1 max-w-md text-sm">
-                  The board fills with short trend cards. Open any card to build
-                  hooks, scripts, hashtags, and saved ideas.
+                <p className="mt-1 text-muted-foreground dark:text-fuchsia-100/80">
+                  {plan === "free"
+                    ? "Upgrade when you want more live trend scans, hook variations, scripts, and calendar-ready briefs."
+                    : "Your monthly credits reset automatically. Contact support if you need a higher-volume plan."}
                 </p>
               </div>
+              <Link
+                href={plan === "free" ? "/pricing" : "/support"}
+                className="inline-flex shrink-0 items-center justify-center rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 dark:bg-fuchsia-200 dark:text-slate-950 dark:hover:bg-white"
+              >
+                {plan === "free" ? "View Creator plan" : "Contact support"}
+              </Link>
             </div>
-          ) : null}
+          </div>
+        ) : null}
 
-          {data ? (
-            filteredTrends.length > 0 ? (
-              <div className="grid auto-rows-fr grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                {filteredTrends.map((trend, index) => {
-                  const realIndex = data.trend_ideas.findIndex(
-                    (t) => t.trend === trend.trend,
-                  );
-                  return (
-                    <TrendCard
-                      key={`${trend.trend}-${index}`}
-                      trend={trend}
-                      index={index}
-                      selected={selectedIndex === realIndex}
-                      onSelect={() => setSelectedIndex(realIndex)}
-                    />
-                  );
-                })}
+        <div className="min-h-0">
+          <div className="mx-auto min-w-0 max-w-[1500px] p-3 sm:p-5">
+            {loading && !data ? (
+              <LoadingState
+                niche={effectiveNiche}
+                step={analysisStep}
+                progress={analysisProgress}
+                elapsedSeconds={analysisElapsedSeconds}
+              />
+            ) : null}
+
+            {!loading && !data && !error ? (
+              <div className="creator-app-surface mx-auto mt-10 flex max-w-2xl flex-col items-center justify-center gap-4 rounded-[2rem] border border-dashed border-border p-10 text-center text-muted-foreground">
+                <div className="flex size-14 items-center justify-center rounded-3xl bg-primary/10">
+                  <Sparkles className="size-7 text-primary" />
+                </div>
+                <div>
+                  <p className="text-base font-semibold text-foreground">
+                    Start with one niche
+                  </p>
+                  <p className="mt-1 max-w-md text-sm">
+                    The board fills with short trend cards. Open any card to
+                    build hooks, scripts, hashtags, and saved ideas.
+                  </p>
+                </div>
               </div>
-            ) : (
-              <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
-                <p className="text-sm font-medium text-foreground">
-                  No trends match this filter
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Try another platform chip or clear your search terms.
-                </p>
-              </div>
-            )
-          ) : null}
+            ) : null}
+
+            {data ? (
+              filteredTrends.length > 0 ? (
+                <div className="grid auto-rows-fr grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                  {filteredTrends.map((trend, index) => {
+                    const realIndex = data.trend_ideas.findIndex(
+                      (t) => t.trend === trend.trend,
+                    );
+                    return (
+                      <TrendCard
+                        key={`${trend.trend}-${index}`}
+                        trend={trend}
+                        index={index}
+                        selected={selectedIndex === realIndex}
+                        onSelect={() => setSelectedIndex(realIndex)}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+                  <p className="text-sm font-medium text-foreground">
+                    No trends match this filter
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Try another platform chip or clear your search terms.
+                  </p>
+                </div>
+              )
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -2725,51 +2730,54 @@ export function TrendDashboard() {
           </div>
         </div>
       ) : null}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-white/92 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_30px_rgba(24,32,42,0.08)] backdrop-blur lg:hidden">
+      <nav
+        aria-label="Mobile dashboard navigation"
+        className="creator-mobile-taskbar z-[70] min-h-[4rem] border-t border-border bg-white/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_30px_rgba(24,32,42,0.08)] backdrop-blur lg:hidden"
+      >
         <div
           className={cn(
-            "mx-auto grid max-w-lg",
+            "mx-auto grid h-12 w-full max-w-lg items-center",
             isAdmin ? "grid-cols-7" : "grid-cols-6",
           )}
         >
           <Link
             href="/dashboard"
-            className="flex flex-col items-center text-[11px] text-primary"
+            className="flex h-12 min-w-0 flex-col items-center justify-center text-[11px] text-primary"
           >
             <Sparkles className="mb-1 size-4" />
             Create
           </Link>
           <Link
             href="/analytics"
-            className="flex flex-col items-center text-[11px] text-muted-foreground"
+            className="flex h-12 min-w-0 flex-col items-center justify-center text-[11px] text-muted-foreground"
           >
             <BarChart3 className="mb-1 size-4" />
             Stats
           </Link>
           <Link
             href="/saved"
-            className="flex flex-col items-center text-[11px] text-muted-foreground"
+            className="flex h-12 min-w-0 flex-col items-center justify-center text-[11px] text-muted-foreground"
           >
             <Bookmark className="mb-1 size-4" />
             Saved
           </Link>
           <Link
             href="/alerts"
-            className="flex flex-col items-center text-[11px] text-muted-foreground"
+            className="flex h-12 min-w-0 flex-col items-center justify-center text-[11px] text-muted-foreground"
           >
             <Bell className="mb-1 size-4" />
             Alerts
           </Link>
           <Link
             href="/calendar"
-            className="flex flex-col items-center text-[11px] text-muted-foreground"
+            className="flex h-12 min-w-0 flex-col items-center justify-center text-[11px] text-muted-foreground"
           >
             <Calendar className="mb-1 size-4" />
             Calendar
           </Link>
           <Link
             href="/profile"
-            className="flex flex-col items-center text-[11px] text-muted-foreground"
+            className="flex h-12 min-w-0 flex-col items-center justify-center text-[11px] text-muted-foreground"
           >
             <UserRound className="mb-1 size-4" />
             Profile
@@ -2777,7 +2785,7 @@ export function TrendDashboard() {
           {isAdmin ? (
             <Link
               href="/admin"
-              className="flex flex-col items-center text-[11px] text-primary"
+              className="flex h-12 min-w-0 flex-col items-center justify-center text-[11px] text-primary"
             >
               <ShieldCheck className="mb-1 size-4" />
               Admin

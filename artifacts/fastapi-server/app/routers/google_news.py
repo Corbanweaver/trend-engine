@@ -1,8 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from app.google_news_client import google_news_search
+from app.security import expensive_endpoint_rate_limit, require_operational_key
 
-router = APIRouter(prefix="/google-news", tags=["google-news"])
+router = APIRouter(
+    prefix="/google-news",
+    tags=["google-news"],
+    dependencies=[
+        Depends(require_operational_key),
+        Depends(expensive_endpoint_rate_limit("google-news")),
+    ],
+)
 
 
 class NewsSearchRequest(BaseModel):

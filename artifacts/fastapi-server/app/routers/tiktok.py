@@ -1,13 +1,21 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from app.apify_client import apify_token
+from app.security import expensive_endpoint_rate_limit, require_operational_key
 from app.tiktok_client import (
     configured_tiktok_actor_id,
     tiktok_hashtag_info,
     tiktok_trending_search,
 )
 
-router = APIRouter(prefix="/tiktok", tags=["tiktok"])
+router = APIRouter(
+    prefix="/tiktok",
+    tags=["tiktok"],
+    dependencies=[
+        Depends(require_operational_key),
+        Depends(expensive_endpoint_rate_limit("tiktok")),
+    ],
+)
 
 
 class TikTokSearchRequest(BaseModel):

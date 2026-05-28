@@ -1,14 +1,22 @@
 import os
 import json
 import asyncio
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from openai import OpenAI
 
 from app.models import IdeasRequest, IdeasResponse, VideoIdea
 from app.pinterest_client import pinterest_search
 from app.google_trends_client import google_trends_search
+from app.security import expensive_endpoint_rate_limit, require_operational_key
 
-router = APIRouter(prefix="/ideas", tags=["ideas"])
+router = APIRouter(
+    prefix="/ideas",
+    tags=["ideas"],
+    dependencies=[
+        Depends(require_operational_key),
+        Depends(expensive_endpoint_rate_limit("ideas")),
+    ],
+)
 
 SYSTEM_PROMPT = """You are a world-class short-form content creator and strategist known for making ideas feel human, bold, and impossible to scroll past.
 

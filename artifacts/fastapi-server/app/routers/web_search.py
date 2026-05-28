@@ -1,8 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from app.security import expensive_endpoint_rate_limit, require_operational_key
 from app.web_search_client import web_search, search_trending_content
 
-router = APIRouter(prefix="/web-search", tags=["web-search"])
+router = APIRouter(
+    prefix="/web-search",
+    tags=["web-search"],
+    dependencies=[
+        Depends(require_operational_key),
+        Depends(expensive_endpoint_rate_limit("web-search")),
+    ],
+)
 
 
 class WebSearchRequest(BaseModel):

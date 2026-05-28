@@ -1,8 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from app.pinterest_client import pinterest_search
+from app.security import expensive_endpoint_rate_limit, require_operational_key
 
-router = APIRouter(prefix="/pinterest", tags=["pinterest"])
+router = APIRouter(
+    prefix="/pinterest",
+    tags=["pinterest"],
+    dependencies=[
+        Depends(require_operational_key),
+        Depends(expensive_endpoint_rate_limit("pinterest")),
+    ],
+)
 
 
 class PinterestSearchRequest(BaseModel):

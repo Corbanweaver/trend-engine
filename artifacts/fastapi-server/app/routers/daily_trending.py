@@ -245,7 +245,11 @@ def _items_from_reddit(rows: object) -> list[DailyTrendItem]:
         )
     return out
 
-@router.get("/daily", response_model=DailyTrendingResponse)
+@router.get(
+    "/daily",
+    response_model=DailyTrendingResponse,
+    dependencies=[Depends(require_operational_key)],
+)
 async def get_daily_trending():
     """Cross-platform snapshot for the live trending page (raw signals only)."""
     loop_ts = datetime.now(timezone.utc).isoformat()

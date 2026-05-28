@@ -1,8 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from app.models import YouTubeSearchRequest, YouTubeSearchResponse, YouTubeVideo
+from app.security import expensive_endpoint_rate_limit, require_operational_key
 from app.youtube_client import youtube_search
 
-router = APIRouter(prefix="/youtube", tags=["youtube"])
+router = APIRouter(
+    prefix="/youtube",
+    tags=["youtube"],
+    dependencies=[
+        Depends(require_operational_key),
+        Depends(expensive_endpoint_rate_limit("youtube")),
+    ],
+)
 
 
 @router.post("/search", response_model=YouTubeSearchResponse)

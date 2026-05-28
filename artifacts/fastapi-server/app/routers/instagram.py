@@ -1,8 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from app.instagram_client import search_instagram
+from app.security import expensive_endpoint_rate_limit, require_operational_key
 
-router = APIRouter(prefix="/instagram", tags=["instagram"])
+router = APIRouter(
+    prefix="/instagram",
+    tags=["instagram"],
+    dependencies=[
+        Depends(require_operational_key),
+        Depends(expensive_endpoint_rate_limit("instagram")),
+    ],
+)
 
 
 class InstagramSearchRequest(BaseModel):

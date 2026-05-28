@@ -1,10 +1,18 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from typing import Annotated
 
 from pydantic import BaseModel, Field
 from app.google_trends_client import google_trends_search, google_trends_interest
+from app.security import expensive_endpoint_rate_limit, require_operational_key
 
-router = APIRouter(prefix="/google-trends", tags=["google-trends"])
+router = APIRouter(
+    prefix="/google-trends",
+    tags=["google-trends"],
+    dependencies=[
+        Depends(require_operational_key),
+        Depends(expensive_endpoint_rate_limit("google-trends")),
+    ],
+)
 
 
 class GoogleTrendsRequest(BaseModel):

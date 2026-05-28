@@ -129,28 +129,6 @@
   }
 }
 
-@keyframes creator-gradient-pan {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-@keyframes creator-pulse-ring {
-  0%,
-  100% {
-    box-shadow: 0 14px 34px rgb(36 79 106 / 18%);
-  }
-  50% {
-    box-shadow: 0 18px 44px rgb(235 91 132 / 22%);
-  }
-}
-
 @layer utilities {
   .animate-card-in {
     animation: card-in 0.45s ease-out both;
@@ -212,15 +190,29 @@
   .creator-topbar {
     background: rgb(255 255 255 / 78%);
     box-shadow: 0 14px 40px rgb(24 32 42 / 8%);
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    contain: paint style;
+    will-change: transform;
   }
   .creator-cta {
     background: linear-gradient(110deg, #244f6a, #1f7a8c, #e45d7d, #244f6a);
     background-size: 240% 240%;
-    animation: creator-gradient-pan 7s ease infinite, creator-pulse-ring 2.8s ease-in-out infinite;
+    background-position: 0% 50%;
     box-shadow: 0 14px 34px rgb(36 79 106 / 18%);
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-position 360ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   .creator-cta:hover {
+    background-position: 100% 50%;
     transform: translateY(-2px);
+    box-shadow: 0 18px 40px rgb(36 79 106 / 22%);
+  }
+  .creator-cta:disabled,
+  .creator-cta[aria-disabled="true"] {
+    transform: none;
+    box-shadow: 0 10px 24px rgb(36 79 106 / 14%);
   }
   .creator-outline-cta {
     background: linear-gradient(white, white) padding-box,
@@ -230,6 +222,33 @@
   .creator-dashboard-shell {
     background: linear-gradient(145deg, rgb(255 255 255 / 92%), rgb(255 251 245 / 88%));
     box-shadow: 0 22px 70px rgb(24 32 42 / 12%);
+  }
+  .creator-dashboard-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    height: 100dvh;
+    overflow: hidden;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    contain: layout paint style;
+    will-change: transform;
+  }
+  .creator-mobile-taskbar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    width: 100%;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    contain: layout paint style;
+    will-change: transform;
+  }
+  @media (min-width: 1024px) {
+    .creator-dashboard-content {
+      padding-top: 21rem;
+    }
   }
   .creator-idea-maker-panel {
     background:

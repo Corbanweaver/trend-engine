@@ -1,8 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from app.medium_client import medium_search
+from app.security import expensive_endpoint_rate_limit, require_operational_key
 
-router = APIRouter(prefix="/medium", tags=["medium"])
+router = APIRouter(
+    prefix="/medium",
+    tags=["medium"],
+    dependencies=[
+        Depends(require_operational_key),
+        Depends(expensive_endpoint_rate_limit("medium")),
+    ],
+)
 
 
 class MediumSearchRequest(BaseModel):

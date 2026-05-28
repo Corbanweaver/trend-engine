@@ -1,8 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from app.multi_reddit_client import multi_reddit_ingest, get_subreddits_for_niche
+from app.security import expensive_endpoint_rate_limit, require_operational_key
 
-router = APIRouter(prefix="/reddit", tags=["reddit"])
+router = APIRouter(
+    prefix="/reddit",
+    tags=["reddit"],
+    dependencies=[
+        Depends(require_operational_key),
+        Depends(expensive_endpoint_rate_limit("reddit")),
+    ],
+)
 
 
 class RedditSearchRequest(BaseModel):
