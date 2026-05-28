@@ -26,6 +26,9 @@ function LoginForm() {
     redirectTarget?.startsWith("/") && !redirectTarget.startsWith("//")
       ? redirectTarget
       : "/dashboard";
+  const signupHref = `/signup?redirect=${encodeURIComponent(
+    safeRedirectTarget,
+  )}`;
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -175,7 +178,7 @@ function LoginForm() {
         <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
           No account?{" "}
           <Link
-            href="/signup"
+            href={signupHref}
             className="text-primary hover:underline dark:text-cyan-300"
           >
             Sign up

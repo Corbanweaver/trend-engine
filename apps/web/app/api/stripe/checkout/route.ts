@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import {
+  type AffiliateAttribution,
   affiliateToStripeMetadata,
   getAffiliateFromFormData,
   getAffiliateFromMetadata,
@@ -93,6 +94,35 @@ function redirectToPricing(
   return NextResponse.redirect(url, 303);
 }
 
+function checkoutResumePath(
+  request: Request,
+  selectedPlan: string,
+  affiliate: AffiliateAttribution | null,
+) {
+  const url = new URL("/pricing", request.url);
+  url.searchParams.set("checkout", "choose-plan");
+  url.searchParams.set("plan", selectedPlan);
+  if (affiliate) {
+    url.searchParams.set("affiliate_ref", affiliate.code);
+    url.searchParams.set("affiliate_param", affiliate.param);
+  }
+  url.hash = "plans";
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function redirectToLoginForCheckout(
+  request: Request,
+  selectedPlan: string,
+  affiliate: AffiliateAttribution | null,
+) {
+  const url = new URL("/login", request.url);
+  url.searchParams.set(
+    "redirect",
+    checkoutResumePath(request, selectedPlan, affiliate),
+  );
+  return NextResponse.redirect(url, 303);
+}
+
 function checkoutFailureReason(error: StripeCheckoutError) {
   if (error.type === "StripeAuthenticationError") return "stripe-auth";
   if (error.type === "StripePermissionError") return "stripe-permission";
@@ -152,10 +182,7 @@ export async function POST(request: Request) {
       error: userError,
     } = await supabase.auth.getUser();
     if (userError || !user) {
-      return NextResponse.redirect(
-        new URL("/login?redirect=/pricing", request.url),
-        303,
-      );
+      return redirectToLoginForCheckout(request, selectedPlan, checkoutAffiliate);
     }
     const affiliate =
       checkoutAffiliate ?? getAffiliateFromMetadata(user.user_metadata);

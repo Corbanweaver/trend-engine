@@ -3,8 +3,8 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 
 import {
@@ -26,8 +26,15 @@ const signupBenefits = [
   "Upgrade only when you need more monthly credits",
 ] as const;
 
-export default function SignupPage() {
+function safeRedirectTarget(value: string | null) {
+  return value?.startsWith("/") && !value.startsWith("//")
+    ? value
+    : "/dashboard";
+}
+
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +42,11 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
 
   const strength = getPasswordStrength(password);
+  const redirectTarget = safeRedirectTarget(
+    searchParams.get("next") ?? searchParams.get("redirect"),
+  );
+  const encodedRedirectTarget = encodeURIComponent(redirectTarget);
+  const loginHref = `/login?redirect=${encodedRedirectTarget}`;
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -50,7 +62,7 @@ export default function SignupPage() {
       });
       const supabase = getSupabaseClient();
       const callbackUrl = appendAffiliateToUrl(
-        `${window.location.origin}/auth/callback?next=/dashboard`,
+        `${window.location.origin}/auth/callback?next=${encodedRedirectTarget}`,
         affiliate,
       );
       const { error: authError } = await supabase.auth.signUp({
@@ -67,14 +79,14 @@ export default function SignupPage() {
       }
 
       setSuccess(
-        "Account created. Check your email to confirm your account, then you will be sent to the dashboard.",
+        "Account created. Check your email to confirm your account, then you will continue where you left off.",
       );
       trackConversionEvent({
         event: "signup_completed",
         context: { method: "email", affiliate },
       });
       window.setTimeout(() => {
-        router.push("/login?verify=1");
+        router.push(`/login?verify=1&redirect=${encodedRedirectTarget}`);
       }, 600);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed.");
@@ -95,7 +107,7 @@ export default function SignupPage() {
       });
       const supabase = getSupabaseClient();
       const callbackUrl = appendAffiliateToUrl(
-        `${window.location.origin}/auth/callback?next=/dashboard`,
+        `${window.location.origin}/auth/callback?next=${encodedRedirectTarget}`,
         affiliate,
       );
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -275,7 +287,7 @@ export default function SignupPage() {
           <p className="mt-4 text-sm text-muted-foreground dark:text-slate-400">
             Already have an account?{" "}
             <Link
-              href="/login"
+              href={loginHref}
               className="text-primary hover:underline dark:text-cyan-300"
             >
               Log in
@@ -284,5 +296,23 @@ export default function SignupPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
+          <div className="glass-surface w-full max-w-md rounded-xl border border-border bg-card p-6 dark:border-white/10 dark:bg-slate-900">
+            <p className="text-sm text-muted-foreground dark:text-slate-300">
+              Loading signup...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <SignupForm />
+    </Suspense>
   );
 }

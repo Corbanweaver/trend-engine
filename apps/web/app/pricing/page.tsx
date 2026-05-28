@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { AffiliateCheckoutFields } from "@/components/affiliate-checkout-fields";
+import { ResumeCheckoutForm } from "@/components/resume-checkout-form";
 import { CREDIT_COSTS, CREDIT_LIMITS } from "@/lib/credits";
 
 export const metadata: Metadata = {
@@ -187,14 +188,14 @@ const pricingFaqJsonLd = {
 
 function PricingHeader() {
   return (
-    <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-7">
+    <header className="relative z-20 mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-7">
       <Link
         href="/"
         className="fluid-transition text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
       >
         TrendBoard
       </Link>
-      <nav className="flex items-center gap-6 text-sm">
+      <nav className="flex w-full flex-wrap items-center gap-x-4 gap-y-2 text-sm sm:w-auto sm:justify-end">
         <Link
           href="/trending"
           className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
@@ -233,6 +234,7 @@ function PricingHeader() {
 type PricingPageProps = {
   searchParams?: Promise<{
     checkout?: string;
+    plan?: string;
     reason?: string;
     request_id?: string;
   }>;
@@ -263,9 +265,19 @@ function checkoutErrorMessage(reason: string | undefined) {
   }
 }
 
+function getPaidPlan(plan: string | undefined) {
+  const paidPlan = plans.find(
+    (item) => item.planKey === plan && item.planKey !== "free",
+  );
+  return paidPlan as
+    | (typeof plans)[number] & { planKey: "creator" | "pro" }
+    | undefined;
+}
+
 export default async function PricingPage({ searchParams }: PricingPageProps) {
   const resolvedSearchParams = await searchParams;
   const checkoutStatus = resolvedSearchParams?.checkout;
+  const resumeCheckoutPlan = getPaidPlan(resolvedSearchParams?.plan);
   const checkoutReason = resolvedSearchParams?.reason;
   const stripeRequestId = resolvedSearchParams?.request_id;
   const isCheckoutSuccess = checkoutStatus === "success";
@@ -273,6 +285,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
   const isCheckoutError = checkoutStatus === "error";
   const isCheckoutConfigurationError = checkoutStatus === "configuration";
   const isChoosePlanNotice = checkoutStatus === "choose-plan";
+  const shouldResumeCheckout = isChoosePlanNotice && resumeCheckoutPlan;
 
   return (
     <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
@@ -345,7 +358,20 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
 
         {isChoosePlanNotice ? (
           <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-amber-400/40 bg-amber-500/10 px-5 py-4 text-center text-sm text-amber-100">
-            Choose a plan below to start checkout.
+            {shouldResumeCheckout ? (
+              <>
+                <p className="text-balance leading-6">
+                  Sign-in complete. Continuing to {resumeCheckoutPlan.name}{" "}
+                  checkout.
+                </p>
+                <ResumeCheckoutForm
+                  plan={resumeCheckoutPlan.planKey}
+                  planName={resumeCheckoutPlan.name}
+                />
+              </>
+            ) : (
+              "Choose a plan below to start checkout."
+            )}
           </div>
         ) : null}
 
@@ -416,6 +442,10 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
             <div
               key={plan.name}
               className={`fluid-transition relative flex flex-col rounded-3xl border p-8 shadow-xl ${
+                resumeCheckoutPlan?.planKey === plan.planKey
+                  ? "ring-2 ring-primary/55 ring-offset-2 ring-offset-background dark:ring-cyan-300/70"
+                  : ""
+              } ${
                 plan.featured
                   ? "z-[1] border-primary/30 bg-card shadow-[0_18px_44px_-20px_rgba(54,95,125,0.35)] lg:-translate-y-2 lg:scale-[1.02] dark:border-cyan-400/40 dark:bg-slate-950/80 dark:shadow-[0_0_60px_-12px_rgba(34,211,238,0.35)]"
                   : "glass-surface border-border bg-card backdrop-blur-sm hover:border-primary/25 dark:border-white/10 dark:bg-slate-950/50 dark:hover:border-white/20"
@@ -492,7 +522,9 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                         : "inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-card px-6 py-3.5 text-center text-base font-semibold text-foreground transition-all duration-200 hover:border-primary/25 hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:border-white/35 dark:hover:bg-white/10"
                     }
                   >
-                    {plan.ctaLabel}
+                    {resumeCheckoutPlan?.planKey === plan.planKey
+                      ? `Continue ${plan.name}`
+                      : plan.ctaLabel}
                     <ArrowRight className="size-4" />
                   </button>
                 </form>
