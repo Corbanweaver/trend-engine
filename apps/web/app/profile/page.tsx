@@ -155,6 +155,11 @@ export default function ProfilePage() {
         "Billing is not fully configured yet. Please contact support if this keeps happening.",
       );
     }
+    if (billingStatus === "rate-limited") {
+      setBillingMessage(
+        "Too many billing sessions were opened in a short period. Please wait a few minutes and try again.",
+      );
+    }
     if (billingStatus === "error" || billingStatus === "portal-error") {
       setBillingMessage(
         "Stripe billing could not open. If you just subscribed, wait a moment and refresh your profile.",

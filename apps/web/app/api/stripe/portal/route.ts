@@ -3,6 +3,8 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { enforceStripeRateLimit } from "../rate-limit";
+
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(
   /\/$/,
@@ -114,6 +116,14 @@ export async function POST(request: Request) {
         303,
       );
     }
+
+    const rateLimit = await enforceStripeRateLimit({
+      request,
+      target: "billing_portal",
+      userId: user.id,
+      redirect: () => redirectToProfile(request, "rate-limited"),
+    });
+    if (rateLimit) return rateLimit;
 
     const { data: subscription, error: subscriptionError } = await supabase
       .from("user_subscriptions")

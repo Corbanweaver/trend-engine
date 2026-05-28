@@ -10,6 +10,7 @@ import {
   getAffiliateFromMetadata,
 } from "@/lib/affiliate-attribution";
 import { recordConversionEvent } from "@/lib/conversion-events";
+import { enforceStripeRateLimit } from "../rate-limit";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const creatorPriceId = process.env.STRIPE_CREATOR_PRICE_ID;
@@ -208,6 +209,14 @@ export async function POST(request: Request) {
     return redirectToPricing(request, "configuration");
   }
 
+  const ipRateLimit = await enforceStripeRateLimit({
+    request,
+    target: "checkout",
+    redirect: () =>
+      redirectToPricing(request, "error", { reason: "rate-limited" }),
+  });
+  if (ipRateLimit) return ipRateLimit;
+
   try {
     if (!supabaseUrl || !supabaseAnonKey) {
       console.error("Stripe checkout missing Supabase configuration");
@@ -239,6 +248,17 @@ export async function POST(request: Request) {
       });
       return redirectToLoginForCheckout(request, selectedPlan, checkoutAffiliate);
     }
+
+    const userRateLimit = await enforceStripeRateLimit({
+      request,
+      target: "checkout",
+      userId: user.id,
+      includeIp: false,
+      redirect: () =>
+        redirectToPricing(request, "error", { reason: "rate-limited" }),
+    });
+    if (userRateLimit) return userRateLimit;
+
     const affiliate =
       checkoutAffiliate ?? getAffiliateFromMetadata(user.user_metadata);
     const affiliateMetadata = affiliateToStripeMetadata(affiliate);
