@@ -2008,6 +2008,33 @@ export function TrendDashboard() {
                   </>
                 )}
               </div>
+              {!isAdmin && !subscriptionLoading && plan === "free" ? (
+                <form
+                  action="/api/stripe/checkout"
+                  method="POST"
+                  onSubmit={() =>
+                    trackConversionEvent({
+                      event: "upgrade_prompt_clicked",
+                      context: {
+                        placement: "dashboard_header",
+                        plan: "free",
+                        targetPlan: "creator",
+                        creditsRemaining,
+                      },
+                    })
+                  }
+                >
+                  <input type="hidden" name="plan" value="creator" />
+                  <AffiliateCheckoutFields />
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-full bg-primary px-3 text-xs font-bold text-primary-foreground shadow-sm hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300 sm:px-4"
+                  >
+                    <span className="sm:hidden">Upgrade</span>
+                    <span className="hidden sm:inline">Start Creator</span>
+                  </button>
+                </form>
+              ) : null}
               <Link
                 href="/profile"
                 className="hidden items-center gap-2 rounded-full border border-border bg-card p-1.5 text-xs text-foreground shadow-sm hover:bg-muted dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 sm:flex"
