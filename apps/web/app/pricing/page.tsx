@@ -16,9 +16,9 @@ import { AffiliateCheckoutFields } from "@/components/affiliate-checkout-fields"
 import { CREDIT_COSTS, CREDIT_LIMITS } from "@/lib/credits";
 
 export const metadata: Metadata = {
-  title: "Pricing",
+  title: "Pricing for Live Creator Trend Scans",
   description:
-    "Choose a TrendBoard plan for trend analyses, niches, saved ideas, and organic source thumbnails.",
+    "Choose a TrendBoard plan for live trend scans across TikTok, Instagram, X, Bluesky, Threads, Pinterest, YouTube Shorts, Reddit, search, and news.",
 };
 
 const plans = [
@@ -54,6 +54,7 @@ const plans = [
     features: [
       `${CREDIT_LIMITS.creator} monthly credits`,
       "About 20 full trend analyses",
+      "Full cross-platform source coverage",
       "All niches",
       "Save and organize ideas",
       "Organic source thumbnails",
@@ -75,6 +76,7 @@ const plans = [
     features: [
       `${CREDIT_LIMITS.pro.toLocaleString()} monthly credits`,
       "About 60 full trend analyses",
+      "Full cross-platform source coverage",
       "All niches",
       "Saved ideas",
       "Organic source thumbnails",
@@ -129,6 +131,30 @@ const trustChecks = [
   { icon: BadgeCheck, label: "Cancel through billing anytime" },
   { icon: LockKeyhole, label: "Credits prevent overuse and keep costs fair" },
   { icon: Zap, label: "Built around fast creator workflows" },
+] as const;
+
+const sourceCoverageGroups = [
+  {
+    title: "Short-form platforms",
+    sources: ["TikTok", "Instagram Reels", "YouTube Shorts", "Threads"],
+    note: "Catch fast-moving creator formats before they become generic.",
+  },
+  {
+    title: "Social conversation",
+    sources: ["X", "Bluesky", "Reddit", "Hacker News"],
+    note: "See what people are arguing about, asking, and repeating.",
+  },
+  {
+    title: "Search and discovery",
+    sources: ["Pinterest", "Google Trends", "Google News", "Web search"],
+    note: "Balance viral signals with searchable, evergreen demand.",
+  },
+] as const;
+
+const paidScanProof = [
+  "Ranks topics by momentum, freshness, engagement, and cross-platform evidence.",
+  "Keeps source links attached so creators can verify the angle before filming.",
+  "Turns research into idea cards, hooks, hashtags, scripts, and saved calendar notes.",
 ] as const;
 
 const pricingFaqItems = [
@@ -323,7 +349,69 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           </div>
         ) : null}
 
-        <div className="mx-auto mt-16 grid max-w-5xl gap-8 lg:mx-auto lg:grid-cols-3 lg:items-stretch">
+        <section className="mx-auto mt-12 max-w-5xl rounded-3xl border border-primary/20 bg-card/90 p-6 shadow-sm dark:border-cyan-300/25 dark:bg-slate-950/70 sm:p-8">
+          <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary dark:text-cyan-200">
+                Why paid creators upgrade
+              </p>
+              <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-foreground dark:text-white">
+                One paid scan checks the places your next idea can spread
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground dark:text-slate-400">
+                Free is for testing the workflow. Creator and Pro are built for
+                repeat research, source-backed decisions, and faster publishing.
+              </p>
+              <ul className="mt-5 space-y-3 text-sm text-foreground dark:text-slate-200">
+                {paidScanProof.map((item) => (
+                  <li key={item} className="flex gap-3">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-cyan-500/15 dark:text-cyan-300">
+                      <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="#plans"
+                className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+              >
+                Compare plans
+                <ArrowRight className="size-4" />
+              </Link>
+            </div>
+            <div className="grid gap-3">
+              {sourceCoverageGroups.map((group) => (
+                <div
+                  key={group.title}
+                  className="rounded-2xl border border-border bg-background p-4 dark:border-white/10 dark:bg-slate-900/70"
+                >
+                  <h3 className="text-sm font-bold text-foreground dark:text-white">
+                    {group.title}
+                  </h3>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {group.sources.map((source) => (
+                      <span
+                        key={source}
+                        className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
+                      >
+                        {source}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-xs leading-5 text-muted-foreground dark:text-slate-400">
+                    {group.note}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <div
+          id="plans"
+          className="mx-auto mt-16 grid max-w-5xl scroll-mt-24 gap-8 lg:mx-auto lg:grid-cols-3 lg:items-stretch"
+        >
           {plans.map((plan) => (
             <div
               key={plan.name}
