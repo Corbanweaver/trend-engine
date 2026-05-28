@@ -2,8 +2,15 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import {
+  hasTrustedOrigin,
+  invalidOriginResponse,
+  parseLimitedJsonBody,
+} from "@/lib/api-request-guards";
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SESSION_BODY_LIMIT_BYTES = 8 * 1024;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,20 +21,34 @@ function safeNext(value: unknown) {
 }
 
 export async function POST(request: Request) {
+  if (!hasTrustedOrigin(request)) {
+    return invalidOriginResponse();
+  }
+
   if (!supabaseUrl || !supabaseAnonKey) {
     return NextResponse.json({ error: "Missing Supabase configuration." }, { status: 500 });
   }
 
-  let body: { access_token?: unknown; refresh_token?: unknown; next?: unknown };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
-  }
+  const parsedBody = await parseLimitedJsonBody<{
+    access_token?: unknown;
+    refresh_token?: unknown;
+    next?: unknown;
+  }>(request, {
+    maxBytes: SESSION_BODY_LIMIT_BYTES,
+    invalidMessage: "Invalid JSON.",
+    tooLargeMessage: "Session payload is too large.",
+  });
+  if (!parsedBody.ok) return parsedBody.response;
 
-  const access_token = typeof body.access_token === "string" ? body.access_token : "";
-  const refresh_token = typeof body.refresh_token === "string" ? body.refresh_token : "";
-  const next = safeNext(body.next);
+  const access_token =
+    typeof parsedBody.body.access_token === "string"
+      ? parsedBody.body.access_token
+      : "";
+  const refresh_token =
+    typeof parsedBody.body.refresh_token === "string"
+      ? parsedBody.body.refresh_token
+      : "";
+  const next = safeNext(parsedBody.body.next);
 
   if (!access_token || !refresh_token) {
     return NextResponse.json({ error: "Missing auth tokens." }, { status: 400 });
