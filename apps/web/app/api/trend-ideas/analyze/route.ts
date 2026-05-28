@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 
+import { parseLimitedJsonBody } from "@/lib/api-request-guards";
 import { CREDIT_COSTS } from "@/lib/credits";
 import { getBackendHeaders, getBackendUrl } from "@/lib/server-api";
 import { recordOperationalEvent } from "@/lib/server-events";
 import {
   checkRateLimits,
+  getClientIp,
   rateLimitResponse,
   type RateLimitRule,
 } from "@/lib/server-rate-limit";
@@ -20,6 +22,9 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
+
+const ANALYSIS_BODY_LIMIT_BYTES = 1024;
+const MAX_NICHE_LENGTH = 80;
 
 export async function POST(request: Request) {
   const usage = await loadUsage();
@@ -39,26 +44,33 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: { niche?: unknown };
-  try {
-    body = (await request.json()) as { niche?: unknown };
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid request body." },
-      { status: 400 },
-    );
-  }
+  const parsedBody = await parseLimitedJsonBody<{ niche?: unknown }>(request, {
+    maxBytes: ANALYSIS_BODY_LIMIT_BYTES,
+    invalidMessage: "Invalid request body.",
+    tooLargeMessage: "Trend scan requests must stay under 1 KB.",
+  });
+  if (!parsedBody.ok) return parsedBody.response;
 
-  const niche = typeof body.niche === "string" ? body.niche.trim() : "";
+  const niche =
+    typeof parsedBody.body.niche === "string"
+      ? parsedBody.body.niche.trim()
+      : "";
   if (!niche) {
     return NextResponse.json(
       { error: "Choose a niche to analyze." },
       { status: 400 },
     );
   }
+  if (niche.length > MAX_NICHE_LENGTH) {
+    return NextResponse.json(
+      { error: `Keep your niche under ${MAX_NICHE_LENGTH} characters.` },
+      { status: 400 },
+    );
+  }
 
   if (!usage.isAdmin) {
     const globalCostGuard = getOpenAICreditBudget();
+    const clientIp = getClientIp(request);
     const rules: RateLimitRule[] = [
       {
         key: `user:${usage.user.id}`,
@@ -71,6 +83,12 @@ export async function POST(request: Request) {
         action: "trend_analysis",
         limit: 80,
         windowSeconds: 24 * 60 * 60,
+      },
+      {
+        key: `ip:${clientIp}`,
+        action: "trend_analysis_ip",
+        limit: 30,
+        windowSeconds: 15 * 60,
       },
     ];
 

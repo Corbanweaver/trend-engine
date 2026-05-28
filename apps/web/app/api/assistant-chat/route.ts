@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 
+import { parseLimitedJsonBody } from "@/lib/api-request-guards";
 import { CREDIT_COSTS } from "@/lib/credits";
 import { recordOperationalEvent } from "@/lib/server-events";
 import {
   checkRateLimits,
+  getClientIp,
   rateLimitResponse,
   type RateLimitRule,
 } from "@/lib/server-rate-limit";
@@ -25,8 +27,12 @@ type ChatMessage = {
 };
 
 type ChatBody = {
-  messages?: ChatMessage[];
+  messages?: unknown;
 };
+
+const ASSISTANT_BODY_LIMIT_BYTES = 16 * 1024;
+const MAX_ASSISTANT_HISTORY_MESSAGES = 12;
+const MAX_ASSISTANT_MESSAGE_CHARS = 1200;
 
 const ASSISTANT_SYSTEM_PROMPT =
   "You are TrendBoard's AI coach. Sound like a friendly creator friend texting back. Keep it casual, specific, and practical. No markdown, no headers, no bullet points, no numbered lists. Keep replies under 3 short sentences unless the user explicitly asks for more detail. Focus on helping with niche selection, trend explanation, content brainstorming, and app navigation.";
@@ -50,15 +56,39 @@ function enforceBriefReply(text: string): string {
   return limited || "Got it - tell me your niche and goal.";
 }
 
-function normalizeMessages(messages: ChatMessage[]): ChatMessage[] {
-  return messages
-    .filter((message) => {
-      if (message.role !== "user" && message.role !== "assistant") return false;
-      return (
-        typeof message.content === "string" && message.content.trim().length > 0
-      );
-    })
-    .slice(-20);
+function normalizeMessages(
+  messages: unknown,
+): { ok: true; messages: ChatMessage[] } | { ok: false; response: NextResponse } {
+  if (!Array.isArray(messages)) {
+    return { ok: true, messages: [] };
+  }
+
+  const normalized: ChatMessage[] = [];
+  for (const message of messages) {
+    if (!message || typeof message !== "object") continue;
+    const candidate = message as { role?: unknown; content?: unknown };
+    if (candidate.role !== "user" && candidate.role !== "assistant") continue;
+    if (typeof candidate.content !== "string") continue;
+    const content = candidate.content.trim();
+    if (!content) continue;
+    if (content.length > MAX_ASSISTANT_MESSAGE_CHARS) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          {
+            error: `Assistant messages must stay under ${MAX_ASSISTANT_MESSAGE_CHARS} characters.`,
+          },
+          { status: 400 },
+        ),
+      };
+    }
+    normalized.push({ role: candidate.role, content });
+  }
+
+  return {
+    ok: true,
+    messages: normalized.slice(-MAX_ASSISTANT_HISTORY_MESSAGES),
+  };
 }
 
 async function callGpt4(messages: ChatMessage[]): Promise<string> {
@@ -109,11 +139,25 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = (await request.json()) as ChatBody;
-    const messages = normalizeMessages(body.messages ?? []);
+    const parsedBody = await parseLimitedJsonBody<ChatBody>(request, {
+      maxBytes: ASSISTANT_BODY_LIMIT_BYTES,
+      invalidMessage: "Invalid request body.",
+      tooLargeMessage: "Assistant requests must stay under 16 KB.",
+    });
+    if (!parsedBody.ok) return parsedBody.response;
+
+    const normalized = normalizeMessages(parsedBody.body.messages);
+    if (!normalized.ok) return normalized.response;
+    const messages = normalized.messages;
     if (!messages.length) {
       return NextResponse.json(
         { error: "Please send at least one message." },
+        { status: 400 },
+      );
+    }
+    if (messages[messages.length - 1].role !== "user") {
+      return NextResponse.json(
+        { error: "Please send a user message." },
         { status: 400 },
       );
     }
@@ -132,6 +176,7 @@ export async function POST(request: Request) {
 
     if (!usage.isAdmin) {
       const globalCostGuard = getOpenAICreditBudget();
+      const clientIp = getClientIp(request);
       const rules: RateLimitRule[] = [
         {
           key: `user:${usage.user.id}`,
@@ -144,6 +189,12 @@ export async function POST(request: Request) {
           action: "assistant_message",
           limit: 300,
           windowSeconds: 24 * 60 * 60,
+        },
+        {
+          key: `ip:${clientIp}`,
+          action: "assistant_message_ip",
+          limit: 120,
+          windowSeconds: 10 * 60,
         },
       ];
 
