@@ -48,6 +48,41 @@ function getIdeaText(item: SavedIdea) {
   return `${item.idea_title} ${item.idea_content} ${item.niche}`.toLowerCase();
 }
 
+function csvCell(value: string | null | undefined) {
+  const text = value ?? "";
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
+function savedIdeasCsv(items: SavedIdea[]) {
+  return [
+    ["Title", "Niche", "Saved date", "Content"].map(csvCell).join(","),
+    ...items.map((item) =>
+      [
+        item.idea_title || "Saved idea",
+        item.niche || "General",
+        new Date(item.created_at).toLocaleString(),
+        item.idea_content || "",
+      ]
+        .map(csvCell)
+        .join(","),
+    ),
+  ].join("\n");
+}
+
+function savedIdeasTextPack(items: SavedIdea[]) {
+  return items
+    .map((item, index) =>
+      [
+        `${index + 1}. ${item.idea_title || "Saved idea"}`,
+        `Niche: ${item.niche || "General"}`,
+        `Saved: ${new Date(item.created_at).toLocaleString()}`,
+        "",
+        item.idea_content || "",
+      ].join("\n"),
+    )
+    .join("\n\n---\n\n");
+}
+
 export default function SavedIdeasPage() {
   const [ideas, setIdeas] = useState<SavedIdea[]>([]);
   const [loading, setLoading] = useState(true);
@@ -302,6 +337,55 @@ export default function SavedIdeasPage() {
     showToast("Idea file downloaded");
   };
 
+  const downloadFilteredCsv = () => {
+    if (!filteredIdeas.length) return;
+    const blob = new Blob([savedIdeasCsv(filteredIdeas)], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const date = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `trendboard-saved-ideas-${date}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    trackUiEvent({
+      area: "saved",
+      action: "csv_export_started",
+      context: {
+        count: filteredIdeas.length,
+        filtered: filteredIdeas.length !== ideas.length,
+      },
+    });
+    showToast("CSV exported");
+  };
+
+  const copyFilteredIdeas = async () => {
+    if (!filteredIdeas.length) return;
+    try {
+      await navigator.clipboard.writeText(savedIdeasTextPack(filteredIdeas));
+      trackUiEvent({
+        area: "saved",
+        action: "bulk_copy_success",
+        context: {
+          count: filteredIdeas.length,
+          filtered: filteredIdeas.length !== ideas.length,
+        },
+      });
+      showToast("Shown ideas copied");
+    } catch (err) {
+      trackUiEvent({
+        area: "saved",
+        action: "bulk_copy_failed",
+        level: "error",
+        message: err instanceof Error ? err.message : "unknown",
+      });
+      setError(err instanceof Error ? err.message : "Failed to copy ideas.");
+    }
+  };
+
   const shareIdea = async (item: SavedIdea) => {
     const shareText = `${item.idea_title}\nNiche: ${item.niche}\n\n${item.idea_content}`;
     const shareUrl = `${SHARE_BASE_URL}/saved?idea=${encodeURIComponent(item.id)}`;
@@ -485,22 +569,42 @@ export default function SavedIdeasPage() {
                 </select>
               </label>
             </div>
-            <div className="mt-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <div className="mt-3 flex flex-col gap-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
               <span>
                 Showing {filteredIdeas.length} of {ideas.length}
               </span>
-              {query || nicheFilter !== "all" ? (
+              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                 <button
                   type="button"
-                  onClick={() => {
-                    setQuery("");
-                    setNicheFilter("all");
-                  }}
-                  className="font-medium text-primary hover:text-primary/80 dark:text-cyan-200 dark:hover:text-cyan-100"
+                  onClick={() => void copyFilteredIdeas()}
+                  disabled={!filteredIdeas.length}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
                 >
-                  Clear filters
+                  <Copy aria-hidden="true" className="size-3.5" />
+                  Copy shown
                 </button>
-              ) : null}
+                <button
+                  type="button"
+                  onClick={downloadFilteredCsv}
+                  disabled={!filteredIdeas.length}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+                >
+                  <Download aria-hidden="true" className="size-3.5" />
+                  Export CSV
+                </button>
+                {query || nicheFilter !== "all" ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setNicheFilter("all");
+                    }}
+                    className="font-medium text-primary hover:text-primary/80 dark:text-cyan-200 dark:hover:text-cyan-100"
+                  >
+                    Clear filters
+                  </button>
+                ) : null}
+              </div>
             </div>
           </section>
         ) : null}
