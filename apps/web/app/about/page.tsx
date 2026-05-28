@@ -1,117 +1,129 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Compass, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, Search, Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn how TrendBoard helps creators turn live trend signals into scripts, hooks, hashtags, and idea cards.",
+    "TrendBoard helps content creators find live trends and turn them into post ideas, hooks, scripts, hashtags, and content plans.",
 };
 
-const principles = [
-  "Creator workflows should be fast enough to use before a trend cools off.",
-  "AI output should include useful context, not just generic content ideas.",
-  "Saved ideas should keep source links, scripts, hashtags, and calendar context together.",
-];
+const steps = [
+  {
+    icon: Search,
+    title: "Find what people care about",
+    body: "Scan social, search, community, and news signals for topics that are moving now.",
+  },
+  {
+    icon: Sparkles,
+    title: "Turn trends into posts",
+    body: "Get simple idea cards with hooks, scripts, hashtags, source links, and next steps.",
+  },
+  {
+    icon: CalendarDays,
+    title: "Save the ideas worth filming",
+    body: "Keep strong ideas organized so you can film today or plan the week.",
+  },
+] as const;
+
+function Header() {
+  return (
+    <header className="border-b border-border bg-background/95 px-4 py-4 backdrop-blur dark:border-white/10 dark:bg-slate-950/95 sm:px-6">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+        <Link
+          href="/"
+          className="flex min-w-0 items-center gap-2 text-sm font-semibold tracking-[0.08em] text-foreground hover:text-primary sm:tracking-[0.16em]"
+        >
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
+            T
+          </span>
+          <span className="truncate">TrendBoard</span>
+        </Link>
+        <nav className="flex items-center gap-3 text-sm sm:gap-5">
+          <Link
+            href="/pricing"
+            className="hidden font-medium text-muted-foreground hover:text-foreground sm:inline"
+          >
+            Pricing
+          </Link>
+          <Link
+            href="/support"
+            className="hidden font-medium text-muted-foreground hover:text-foreground sm:inline"
+          >
+            Support
+          </Link>
+          <Link
+            href="/dashboard"
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+          >
+            Open app
+          </Link>
+        </nav>
+      </div>
+    </header>
+  );
+}
 
 export default function AboutPage() {
   return (
-    <main className="min-h-svh bg-background px-4 py-10 text-foreground">
-      <div className="mx-auto max-w-5xl space-y-10">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="text-sm font-semibold tracking-[0.18em] text-foreground hover:text-primary"
-          >
-            TrendBoard
-          </Link>
-          <nav className="flex items-center gap-4 text-sm text-muted-foreground">
-            <Link href="/pricing" className="hover:text-foreground">
-              Pricing
-            </Link>
-            <Link href="/support" className="hover:text-foreground">
-              Support
-            </Link>
-            <Link href="/dashboard" className="hover:text-foreground">
-              Open app
-            </Link>
-          </nav>
-        </header>
+    <main className="min-h-svh bg-background text-foreground">
+      <Header />
 
-        <section className="rounded-3xl border border-border bg-card p-8 shadow-sm dark:border-white/10 dark:bg-slate-950/60 sm:p-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary dark:text-cyan-200">
-            About
-          </p>
-          <h1 className="mt-4 max-w-3xl text-balance text-4xl font-extrabold tracking-tight sm:text-5xl">
-            Built for creators who need sharper ideas while the topic is still
-            moving.
+      <section className="mx-auto max-w-6xl px-4 pb-14 pt-10 sm:px-6 sm:pt-16">
+        <div className="max-w-3xl">
+          <h1 className="text-balance text-4xl font-extrabold tracking-tight sm:text-5xl">
+            TrendBoard helps creators decide what to post next.
           </h1>
-          <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">
-            TrendBoard gathers live momentum signals, turns them into short-form
-            video angles, and keeps the full creative brief together so you can
-            move from research to publishing without rebuilding the context from
-            scratch.
+          <p className="mt-5 text-lg leading-8 text-muted-foreground">
+            Instead of staring at a blank screen, type your niche and get trend
+            backed ideas you can turn into short videos, posts, and content
+            plans.
           </p>
-          <div className="mt-7 flex flex-wrap gap-3">
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:bg-primary/90"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
             >
-              Start an analysis
+              Open TrendBoard
               <ArrowRight className="size-4" />
             </Link>
             <Link
-              href="/status"
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+              href="/pricing"
+              className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-border bg-card px-6 text-sm font-bold text-foreground hover:bg-muted dark:border-white/10 dark:bg-slate-950 dark:hover:bg-slate-900"
             >
-              View system status
+              See pricing
             </Link>
           </div>
+        </div>
+
+        <section className="mt-12 grid gap-4 md:grid-cols-3">
+          {steps.map((step) => (
+            <article
+              key={step.title}
+              className="rounded-2xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/70"
+            >
+              <step.icon className="size-6 text-primary dark:text-cyan-300" />
+              <h2 className="mt-4 text-base font-bold">{step.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {step.body}
+              </p>
+            </article>
+          ))}
         </section>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/45">
-            <Compass className="size-6 text-primary dark:text-cyan-300" />
-            <h2 className="mt-4 text-base font-semibold">
-              Live signal research
+        <section className="mt-10 rounded-3xl border border-border bg-card p-6 dark:border-white/10 dark:bg-slate-950/70 sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+            <h2 className="text-3xl font-extrabold tracking-tight">
+              Built for content creators, not researchers.
             </h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              The app combines public trend signals across search, social,
-              communities, news, and video sources when they are available.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/45">
-            <Sparkles className="size-6 text-primary dark:text-cyan-300" />
-            <h2 className="mt-4 text-base font-semibold">AI creative briefs</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Each analysis can produce hooks, scripts, hashtags, organic source
-              thumbnails, source links, and polished idea cards.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/45">
-            <CheckCircle2 className="size-6 text-primary dark:text-cyan-300" />
-            <h2 className="mt-4 text-base font-semibold">
-              Built for launch discipline
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Credits, billing, alerts, saved ideas, and calendar planning are
-              designed around real creator workflows.
+            <p className="text-sm leading-6 text-muted-foreground">
+              The useful part is the workflow: find a signal, understand why it
+              matters, turn it into a post angle, and save it before the idea
+              disappears.
             </p>
           </div>
         </section>
-
-        <section className="rounded-2xl border border-border bg-muted/45 p-6 dark:border-white/10 dark:bg-white/[0.04]">
-          <h2 className="text-lg font-semibold">Product principles</h2>
-          <ul className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
-            {principles.map((item) => (
-              <li key={item} className="flex gap-3">
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary dark:text-cyan-300" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
+      </section>
     </main>
   );
 }
