@@ -256,6 +256,10 @@ function checkoutErrorMessage(reason: string | undefined) {
       return "Stripe checkout could not start because a redirect URL is invalid.";
     case "invalid-request":
       return "Stripe checkout could not start because Stripe rejected the checkout session request.";
+    case "request-too-large":
+      return "Checkout could not start because the submitted form was too large. Please refresh the page and try again.";
+    case "unsupported-form":
+      return "Checkout could not start because the browser sent an unsupported form format. Please refresh the page and try again.";
     case "missing-resource":
       return "Stripe checkout could not start because a saved Stripe resource could not be found.";
     case "stripe-error":

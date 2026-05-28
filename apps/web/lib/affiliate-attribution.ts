@@ -144,8 +144,12 @@ export function getAffiliateFromMetadata(
   return normalizeAttribution(metadata.affiliate);
 }
 
+type FormValueReader = {
+  get(name: string): FormDataEntryValue | string | null;
+};
+
 export function getAffiliateFromFormData(
-  formData: FormData,
+  formData: FormValueReader,
 ): AffiliateAttribution | null {
   const code = normalizeAffiliateCode(
     typeof formData.get("affiliate_ref") === "string"

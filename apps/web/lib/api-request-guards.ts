@@ -8,6 +8,10 @@ type LimitedJsonBodyResult<T> =
   | { ok: true; body: T }
   | { ok: false; response: NextResponse };
 
+type LimitedFormBodyResult =
+  | { ok: true; form: URLSearchParams }
+  | { ok: false; response: NextResponse; status: number };
+
 export function hasTrustedOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");
   if (!origin) return true;
@@ -84,4 +88,70 @@ export async function parseLimitedJsonBody<T>(
       response: NextResponse.json({ error: invalidMessage }, { status: 400 }),
     };
   }
+}
+
+export async function parseLimitedUrlEncodedForm(
+  request: Request,
+  {
+    maxBytes,
+    invalidMessage = "Invalid form body.",
+    tooLargeMessage = "Form body is too large.",
+    unsupportedMessage = "Unsupported form content type.",
+  }: {
+    maxBytes: number;
+    invalidMessage?: string;
+    tooLargeMessage?: string;
+    unsupportedMessage?: string;
+  },
+): Promise<LimitedFormBodyResult> {
+  const contentType = request.headers
+    .get("content-type")
+    ?.split(";")[0]
+    ?.trim()
+    .toLowerCase();
+
+  if (contentType && contentType !== "application/x-www-form-urlencoded") {
+    return {
+      ok: false,
+      status: 415,
+      response: NextResponse.json(
+        { error: unsupportedMessage },
+        { status: 415 },
+      ),
+    };
+  }
+
+  const declaredLength = request.headers.get("content-length");
+  const declaredBytes = declaredLength
+    ? Number.parseInt(declaredLength, 10)
+    : 0;
+
+  if (Number.isFinite(declaredBytes) && declaredBytes > maxBytes) {
+    return {
+      ok: false,
+      status: 413,
+      response: NextResponse.json({ error: tooLargeMessage }, { status: 413 }),
+    };
+  }
+
+  let raw = "";
+  try {
+    raw = await request.text();
+  } catch {
+    return {
+      ok: false,
+      status: 400,
+      response: NextResponse.json({ error: invalidMessage }, { status: 400 }),
+    };
+  }
+
+  if (new TextEncoder().encode(raw).length > maxBytes) {
+    return {
+      ok: false,
+      status: 413,
+      response: NextResponse.json({ error: tooLargeMessage }, { status: 413 }),
+    };
+  }
+
+  return { ok: true, form: new URLSearchParams(raw) };
 }

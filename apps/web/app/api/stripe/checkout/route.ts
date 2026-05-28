@@ -9,7 +9,10 @@ import {
   getAffiliateFromFormData,
   getAffiliateFromMetadata,
 } from "@/lib/affiliate-attribution";
-import { hasTrustedOrigin } from "@/lib/api-request-guards";
+import {
+  hasTrustedOrigin,
+  parseLimitedUrlEncodedForm,
+} from "@/lib/api-request-guards";
 import { recordConversionEvent } from "@/lib/conversion-events";
 import { enforceStripeRateLimit } from "../rate-limit";
 
@@ -24,6 +27,8 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const CHECKOUT_FORM_LIMIT_BYTES = 4 * 1024;
 
 const planToPriceId: Record<string, string | undefined> = {
   creator: creatorPriceId,
@@ -142,6 +147,12 @@ function checkoutFailureReason(error: StripeCheckoutError) {
   return "stripe-error";
 }
 
+function checkoutFormFailureReason(status: number) {
+  if (status === 413) return "request-too-large";
+  if (status === 415) return "unsupported-form";
+  return "invalid-request";
+}
+
 function isPaidStripeStatus(status: string | null | undefined) {
   return status === "active" || status === "trialing" || status === "past_due";
 }
@@ -200,7 +211,27 @@ export async function POST(request: Request) {
     return redirectToPricing(request, "configuration");
   }
 
-  const formData = await request.formData();
+  const ipRateLimit = await enforceStripeRateLimit({
+    request,
+    target: "checkout",
+    redirect: () =>
+      redirectToPricing(request, "error", { reason: "rate-limited" }),
+  });
+  if (ipRateLimit) return ipRateLimit;
+
+  const parsedForm = await parseLimitedUrlEncodedForm(request, {
+    maxBytes: CHECKOUT_FORM_LIMIT_BYTES,
+    invalidMessage: "Invalid checkout form.",
+    tooLargeMessage: "Checkout form is too large.",
+    unsupportedMessage: "Checkout forms must use URL-encoded fields.",
+  });
+  if (!parsedForm.ok) {
+    return redirectToPricing(request, "error", {
+      reason: checkoutFormFailureReason(parsedForm.status),
+    });
+  }
+
+  const formData = parsedForm.form;
   const selectedPlan = String(formData.get("plan") ?? "").toLowerCase();
   const checkoutAffiliate = getAffiliateFromFormData(formData);
   const priceId = planToPriceId[selectedPlan];
@@ -213,14 +244,6 @@ export async function POST(request: Request) {
     });
     return redirectToPricing(request, "configuration");
   }
-
-  const ipRateLimit = await enforceStripeRateLimit({
-    request,
-    target: "checkout",
-    redirect: () =>
-      redirectToPricing(request, "error", { reason: "rate-limited" }),
-  });
-  if (ipRateLimit) return ipRateLimit;
 
   try {
     if (!supabaseUrl || !supabaseAnonKey) {
