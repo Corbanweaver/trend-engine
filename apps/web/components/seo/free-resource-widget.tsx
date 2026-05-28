@@ -12,6 +12,7 @@ import {
   WandSparkles,
 } from "lucide-react";
 
+import { AffiliateCheckoutFields } from "@/components/affiliate-checkout-fields";
 import { cn } from "@/lib/utils";
 import type { SeoPage } from "@/lib/seo-content";
 import { trackConversionEvent } from "@/lib/telemetry";
@@ -310,26 +311,51 @@ export function FreeResourceWidget({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-bold text-foreground">
-                Want the live trend version?
+                Ready for live trend scans?
               </p>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Create a free account to run real scans, save source links, and
-                turn the best ideas into calendar-ready cards.
+                Creator gives you roughly 20 full scans each month, source
+                links, saved idea cards, hooks, scripts, and calendar notes.
               </p>
             </div>
-            <Link
-              href={`/signup?from=free-preview&resource=${kind}`}
-              onClick={() => {
-                trackConversionEvent({
-                  event: "signup_prompt_clicked",
-                  context: { resourceKind: kind },
-                });
-              }}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
-            >
-              Save and scan deeper
-              <ArrowRight className="size-4" />
-            </Link>
+            <div className="flex shrink-0 flex-col gap-2 sm:min-w-56">
+              <form
+                action="/api/stripe/checkout"
+                method="POST"
+                onSubmit={() => {
+                  trackConversionEvent({
+                    event: "upgrade_prompt_clicked",
+                    context: {
+                      resourceKind: kind,
+                      targetPlan: "creator",
+                      placement: "free_resource_widget",
+                    },
+                  });
+                }}
+              >
+                <input type="hidden" name="plan" value="creator" />
+                <AffiliateCheckoutFields />
+                <button
+                  type="submit"
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+                >
+                  Start Creator checkout
+                  <ArrowRight className="size-4" />
+                </button>
+              </form>
+              <Link
+                href={`/signup?from=free-preview&resource=${kind}`}
+                onClick={() => {
+                  trackConversionEvent({
+                    event: "signup_prompt_clicked",
+                    context: { resourceKind: kind },
+                  });
+                }}
+                className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-border bg-card px-5 text-sm font-semibold text-foreground hover:bg-muted dark:border-white/10 dark:bg-slate-950 dark:hover:bg-slate-900"
+              >
+                Create free account
+              </Link>
+            </div>
           </div>
         </div>
       ) : null}
