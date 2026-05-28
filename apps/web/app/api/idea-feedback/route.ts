@@ -1,14 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { parseLimitedJsonBody } from "@/lib/api-request-guards";
 import { createGmailTransporter } from "@/lib/gmail-transporter";
 import { recordOperationalEvent } from "@/lib/server-events";
-import { checkRateLimits, rateLimitResponse } from "@/lib/server-rate-limit";
+import {
+  checkRateLimits,
+  getClientIp,
+  rateLimitResponse,
+} from "@/lib/server-rate-limit";
+import { getServerSupabaseAdmin } from "@/lib/server-supabase-admin";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const gmailUser = process.env.GMAIL_USER;
 const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -24,6 +28,10 @@ const feedbackRecipientEmail =
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const FEEDBACK_BODY_LIMIT_BYTES = 8 * 1024;
+const MAX_IDEA_TITLE_LENGTH = 180;
+const MAX_FEEDBACK_MESSAGE_LENGTH = 2000;
 
 type FeedbackPayload = {
   idea_title: string;
@@ -51,14 +59,8 @@ function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
-function createAdminClient(): SupabaseClient | null {
-  if (!supabaseUrl || !supabaseServiceRoleKey) return null;
-  return createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
+function readText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 async function sendFeedbackEmail({
@@ -158,11 +160,32 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json()) as Partial<FeedbackPayload>;
-  const ideaTitle = (body.idea_title ?? "").trim();
+  const parsedBody = await parseLimitedJsonBody<Partial<FeedbackPayload>>(
+    request,
+    {
+      maxBytes: FEEDBACK_BODY_LIMIT_BYTES,
+      invalidMessage: "Invalid JSON payload",
+      tooLargeMessage: "Feedback payload is too large",
+    },
+  );
+  if (!parsedBody.ok) return parsedBody.response;
+
+  if (
+    !parsedBody.body ||
+    typeof parsedBody.body !== "object" ||
+    Array.isArray(parsedBody.body)
+  ) {
+    return NextResponse.json(
+      { error: "Invalid feedback payload" },
+      { status: 400 },
+    );
+  }
+
+  const body = parsedBody.body;
+  const ideaTitle = readText(body.idea_title);
   // Accept both new and legacy payload keys during rollout.
   const feedbackType = body.feedback_type ?? body.feedback;
-  const message = (body.message ?? body.feedback_text ?? "").trim();
+  const message = readText(body.message ?? body.feedback_text);
 
   const feedbackIsValid =
     feedbackType === "thumbs_up" ||
@@ -172,6 +195,20 @@ export async function POST(request: Request) {
   if (!ideaTitle || !feedbackIsValid) {
     return NextResponse.json(
       { error: "Invalid feedback payload" },
+      { status: 400 },
+    );
+  }
+  if (ideaTitle.length > MAX_IDEA_TITLE_LENGTH) {
+    return NextResponse.json(
+      { error: `Idea title must stay under ${MAX_IDEA_TITLE_LENGTH} characters` },
+      { status: 400 },
+    );
+  }
+  if (message.length > MAX_FEEDBACK_MESSAGE_LENGTH) {
+    return NextResponse.json(
+      {
+        error: `Feedback message must stay under ${MAX_FEEDBACK_MESSAGE_LENGTH} characters`,
+      },
       { status: 400 },
     );
   }
@@ -202,7 +239,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = createAdminClient();
+  const admin = getServerSupabaseAdmin();
   if (!admin) {
     return NextResponse.json(
       { error: "Missing Supabase service role configuration" },
@@ -210,6 +247,7 @@ export async function POST(request: Request) {
     );
   }
 
+  const ip = getClientIp(request);
   const rateLimit = await checkRateLimits(admin, [
     {
       key: `user:${user.id}`,
@@ -222,6 +260,12 @@ export async function POST(request: Request) {
       action: "idea_feedback",
       limit: 40,
       windowSeconds: 24 * 60 * 60,
+    },
+    {
+      key: `ip:${ip}`,
+      action: "idea_feedback_ip",
+      limit: 60,
+      windowSeconds: 60 * 60,
     },
   ]);
   if (!rateLimit.ok) return rateLimitResponse(rateLimit);
@@ -282,14 +326,15 @@ export async function POST(request: Request) {
       userId: user.id,
       metadata: { ideaTitle, feedbackType },
     });
-    return NextResponse.json({
-      ok: false,
-      emailSent: false,
-      error:
-        emailError instanceof Error
-          ? emailError.message
-          : "Failed to send feedback email",
-    });
+    return NextResponse.json(
+      {
+        ok: true,
+        emailSent: false,
+        error:
+          "We saved your feedback, but the email notification could not be sent.",
+      },
+      { status: 202 },
+    );
   }
 
   return NextResponse.json({

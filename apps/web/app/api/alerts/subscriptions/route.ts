@@ -1,7 +1,10 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+import { parseLimitedJsonBody } from "@/lib/api-request-guards";
+import { checkRateLimits, rateLimitResponse } from "@/lib/server-rate-limit";
+import { getServerSupabaseAdmin } from "@/lib/server-supabase-admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,24 +17,24 @@ type SubscriptionRow = {
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const ALERT_BODY_LIMIT_BYTES = 512;
+const MAX_NICHE_LENGTH = 80;
+const MAX_ALERT_SUBSCRIPTIONS = 20;
 
 function jsonError(error: string, status: number) {
   return NextResponse.json({ error }, { status });
 }
 
 function normalizeNiche(value: unknown): string {
-  return typeof value === "string" ? value.trim().toLowerCase() : "";
+  return typeof value === "string"
+    ? value.trim().replace(/\s+/g, " ").toLowerCase()
+    : "";
 }
 
-function createAdminClient(): SupabaseClient | null {
-  if (!supabaseUrl || !supabaseServiceRoleKey) return null;
-  return createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
 }
 
 async function createUserClient() {
@@ -78,9 +81,11 @@ async function getAuthorizedClients() {
     return { error: jsonError("Please log in to manage trend alerts.", 401) };
   }
 
+  const admin = getServerSupabaseAdmin();
   return {
     user,
-    db: createAdminClient() ?? userClient,
+    db: admin ?? userClient,
+    admin,
   };
 }
 
@@ -106,16 +111,86 @@ export async function POST(request: Request) {
   const auth = await getAuthorizedClients();
   if ("error" in auth) return auth.error;
 
-  let niche = "";
-  try {
-    const body = (await request.json()) as { niche?: unknown };
-    niche = normalizeNiche(body.niche);
-  } catch {
-    return jsonError("Invalid JSON payload.", 400);
+  const parsedBody = await parseLimitedJsonBody<{ niche?: unknown }>(request, {
+    maxBytes: ALERT_BODY_LIMIT_BYTES,
+    invalidMessage: "Invalid JSON payload.",
+    tooLargeMessage: "Alert subscription payload is too large.",
+  });
+  if (!parsedBody.ok) return parsedBody.response;
+
+  const payload =
+    parsedBody.body &&
+    typeof parsedBody.body === "object" &&
+    !Array.isArray(parsedBody.body)
+      ? parsedBody.body
+      : null;
+  const niche = normalizeNiche(payload?.niche);
+
+  if (auth.admin) {
+    const rateLimit = await checkRateLimits(auth.admin, [
+      {
+        key: `user:${auth.user.id}`,
+        action: "trend_alert_subscription",
+        limit: 10,
+        windowSeconds: 60 * 60,
+      },
+      {
+        key: `user:${auth.user.id}`,
+        action: "trend_alert_subscription",
+        limit: 30,
+        windowSeconds: 24 * 60 * 60,
+      },
+    ]);
+    if (!rateLimit.ok) return rateLimitResponse(rateLimit);
   }
 
   if (!niche) {
     return jsonError("Choose a niche or enter a custom one.", 400);
+  }
+  if (niche.length > MAX_NICHE_LENGTH) {
+    return jsonError(
+      `Keep alert niches under ${MAX_NICHE_LENGTH} characters.`,
+      400,
+    );
+  }
+
+  const { data: existing, error: existingLookupError } = await auth.db
+    .from("trend_alert_subscriptions")
+    .select("id, niche, created_at")
+    .eq("user_id", auth.user.id)
+    .eq("niche", niche)
+    .maybeSingle<SubscriptionRow>();
+
+  if (existingLookupError) {
+    console.error(
+      "Failed to check existing trend alert subscription:",
+      existingLookupError,
+    );
+    return jsonError("Unable to save trend alert subscription.", 500);
+  }
+
+  if (existing) {
+    return NextResponse.json({
+      subscription: existing,
+      duplicate: true,
+    });
+  }
+
+  const { count, error: countError } = await auth.db
+    .from("trend_alert_subscriptions")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", auth.user.id);
+
+  if (countError) {
+    console.error("Failed to count trend alert subscriptions:", countError);
+    return jsonError("Unable to save trend alert subscription.", 500);
+  }
+
+  if ((count ?? 0) >= MAX_ALERT_SUBSCRIPTIONS) {
+    return jsonError(
+      `You can track up to ${MAX_ALERT_SUBSCRIPTIONS} alert niches at a time.`,
+      400,
+    );
   }
 
   const { data: inserted, error } = await auth.db
@@ -158,6 +233,9 @@ export async function DELETE(request: Request) {
   const id = url.searchParams.get("id")?.trim();
   if (!id) {
     return jsonError("Missing subscription id.", 400);
+  }
+  if (!isUuid(id)) {
+    return jsonError("Invalid subscription id.", 400);
   }
 
   const { error } = await auth.db
