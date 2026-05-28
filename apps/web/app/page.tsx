@@ -20,6 +20,7 @@ import {
 
 import { ConversionEventTracker } from "@/components/analytics/conversion-event-tracker";
 import { EmailWaitlistForm } from "@/components/email-waitlist-form";
+import { CreatorCheckoutForm } from "@/components/landing/creator-checkout-form";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import { MobileInstallButton } from "@/components/landing/mobile-install-button";
 import {
@@ -349,6 +350,11 @@ export default function Home() {
         </p>
 
         <div className="mt-8 flex w-full max-w-sm flex-col items-stretch justify-center gap-3 sm:mt-12 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+          <CreatorCheckoutForm
+            placement="home_hero_paid"
+            className="w-full sm:w-auto"
+            buttonClassName="fluid-transition inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-3 text-base font-bold text-primary-foreground shadow-[0_12px_28px_rgba(54,95,125,0.2)] hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_36px_rgba(54,95,125,0.24)] sm:w-auto sm:px-10 sm:py-4 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
+          />
           <ConversionLink
             href="#free-preview"
             event="landing_cta_clicked"
@@ -357,7 +363,7 @@ export default function Home() {
               destination: "#free-preview",
               placement: "hero_primary",
             }}
-            className="fluid-transition inline-flex min-h-12 items-center justify-center rounded-2xl bg-primary px-8 py-3 text-base font-bold text-primary-foreground shadow-[0_12px_28px_rgba(54,95,125,0.2)] hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_36px_rgba(54,95,125,0.24)] sm:px-10 sm:py-4 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
+            className="fluid-transition inline-flex min-h-12 items-center justify-center rounded-2xl border border-border bg-card px-8 py-3 text-base font-semibold text-foreground hover:bg-muted sm:py-4 dark:border-white/15 dark:bg-slate-900/60 dark:hover:bg-slate-800"
           >
             Generate Free Ideas
           </ConversionLink>
@@ -374,6 +380,9 @@ export default function Home() {
             See live trending
           </ConversionLink>
         </div>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Creator is $19.99/mo. Free preview is still available below.
+        </p>
 
         <MobileHeroPreview />
       </section>
