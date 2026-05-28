@@ -1,33 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  Bot,
+  ArrowRight,
   Bookmark,
   CalendarDays,
+  Check,
   CreditCard,
-  Layers,
-  Link2,
-  LineChart,
+  Film,
+  ListChecks,
   Play,
-  Radio,
-  RotateCcw,
   Search,
   ShieldCheck,
   Sparkles,
-  Star,
-  Zap,
+  WandSparkles,
 } from "lucide-react";
 
 import { ConversionEventTracker } from "@/components/analytics/conversion-event-tracker";
 import { EmailWaitlistForm } from "@/components/email-waitlist-form";
 import { CreatorCheckoutForm } from "@/components/landing/creator-checkout-form";
-import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import { MobileInstallButton } from "@/components/landing/mobile-install-button";
-import {
-  keywordLandingPages,
-  nicheLandingPages,
-  resourcePages,
-} from "@/lib/seo-content";
 import { ConversionLink } from "@/components/seo/conversion-link";
 import { FreeResourceWidget } from "@/components/seo/free-resource-widget";
 
@@ -41,145 +32,73 @@ export const metadata: Metadata = {
   },
 };
 
-const howSteps = [
+const workflowSteps = [
   {
-    step: "01",
-    title: "Choose your niche",
-    body: "Pick a preset category—from breaking news to gaming—or type a custom focus so scans stay relevant.",
-  },
-  {
-    step: "02",
-    title: "Scan live signals",
-    body: "We pull fresh momentum from TikTok, X, Bluesky, Threads, Instagram, Pinterest, YouTube Shorts, search, and news in one run.",
-  },
-  {
-    step: "03",
-    title: "Ship warmer ideas",
-    body: "Start with short idea cards, then expand only the winners into hooks, scripts, hashtags, and saved calendar plans.",
-  },
-] as const;
-
-const featureCards = [
-  {
-    icon: Layers,
-    title: "Multi-platform intel",
-    body: "See what’s rising across short video, social, and search—not just one feed.",
+    icon: Search,
+    title: "Type your niche",
+    body: "Fitness coach, real estate agent, beauty creator, gaming channel, or anything else.",
   },
   {
     icon: Sparkles,
-    title: "Short idea cards first",
-    body: "Analyze faster with concise idea cards, then generate hooks or full scripts only when an idea is worth expanding.",
+    title: "Scan live trends",
+    body: "TrendBoard checks short-form, search, social, news, and community signals in one run.",
   },
   {
-    icon: Zap,
-    title: "Organic thumbnails",
-    body: "Cards use thumbnails and source links from the platforms we find instead of generated images.",
+    icon: Film,
+    title: "Get post ideas",
+    body: "Use the cards as-is, or turn the best ones into hooks, hashtags, scripts, and calendar notes.",
+  },
+] as const;
+
+const productOutputs = [
+  "Trend ideas matched to your niche",
+  "Hooks people can understand fast",
+  "Short scripts and talking points",
+  "Hashtags and source links",
+  "Saved ideas and content calendar",
+] as const;
+
+const simpleProof = [
+  {
+    icon: Play,
+    title: "Post faster",
+    body: "Stop staring at a blank screen. Start with a ready idea card.",
+  },
+  {
+    icon: Bookmark,
+    title: "Keep the good ideas",
+    body: "Save winners so you can come back when it is time to film.",
   },
   {
     icon: CalendarDays,
-    title: "Save & schedule",
-    body: "Bookmark winners and map them on your content calendar without losing context.",
-  },
-  {
-    icon: Radio,
-    title: "Live trending pulse",
-    body: "Visit the trending hub for a cross-platform snapshot that auto-refreshes for a real-time feel.",
-  },
-  {
-    icon: Bot,
-    title: "Member idea tools",
-    body: "Logged-in creators can expand ideas into hooks, hashtags, and scripts.",
-  },
-] as const;
-
-const trustItems = [
-  {
-    icon: CreditCard,
-    title: "Stripe-secured billing",
-    body: "Checkout and billing portal actions run through Stripe, with plan access synced back to your account.",
+    title: "Plan the week",
+    body: "Move ideas into a simple calendar instead of rebuilding your plan every day.",
   },
   {
     icon: ShieldCheck,
-    title: "Credits protect fair usage",
-    body: "Monthly credits keep heavier trend scans predictable and harder to abuse.",
-  },
-  {
-    icon: Link2,
-    title: "Source links stay attached",
-    body: "Saved ideas keep the research context, source links, hooks, scripts, and hashtags together.",
-  },
-  {
-    icon: RotateCcw,
-    title: "Cancel anytime",
-    body: "Paid access continues through the current billing period after cancellation.",
-  },
-] as const;
-
-const testimonials = [
-  {
-    quote:
-      "Turn a rising food story into three short-form angles: a curiosity hook, a step-by-step script, and source links you can act on today.",
-    name: "Food & lifestyle",
-    handle: "Weekly creator workflow",
-    role: "Hooks, scripts, hashtags, and idea cards",
-    initials: "FL",
-  },
-  {
-    quote:
-      "Watch TikTok, X, Bluesky, Threads, Instagram, Pinterest, YouTube Shorts, search, and news signals together so a small team can choose the angle before the topic cools off.",
-    name: "Tech & news",
-    handle: "Small team workflow",
-    role: "Cross-platform signal checks",
-    initials: "TN",
-  },
-  {
-    quote:
-      "Save winners with source links and move the full creative brief into your calendar so publishing stays organized after the first idea sprint.",
-    name: "Fitness & coaching",
-    handle: "Solo creator workflow",
-    role: "Saved ideas and content calendar",
-    initials: "FC",
+    title: "Stay in control",
+    body: "Credits keep heavy AI and trend scans fair, predictable, and harder to abuse.",
   },
 ] as const;
 
 const faqItems = [
   {
-    q: "Which platforms does TrendBoard scan?",
-    a: "We aggregate momentum signals from short-form video, community discussions, news, and search—so you see a cross-platform picture instead of one siloed feed.",
+    q: "What does TrendBoard do?",
+    a: "You enter a niche. TrendBoard finds current content angles and turns them into creator-ready post ideas.",
   },
   {
-    q: "How fresh is the trend data?",
-    a: "Trending views refresh on a short cadence designed for daily publishing. Saved ideas keep the snapshot so you always know what context you planned against.",
+    q: "Do I need to understand AI tools?",
+    a: "No. Pick a niche, run a scan, open an idea card, and use the buttons for hooks, hashtags, scripts, saving, and scheduling.",
   },
   {
-    q: "Is there a free plan?",
-    a: "You can explore core flows and see how ideas are generated before upgrading. Paid plans unlock higher limits and the full copilot experience—see Pricing for details.",
+    q: "Which platforms does it watch?",
+    a: "TrendBoard combines signals from TikTok, Instagram, YouTube Shorts, Pinterest, Reddit, search, news, and other social sources when available.",
   },
   {
-    q: "Can I cancel anytime?",
-    a: "Yes. Subscriptions are billed in advance but you can cancel whenever you like; access continues through the end of the paid period.",
-  },
-  {
-    q: "Do you train models on my scripts or niche inputs?",
-    a: "We process your requests to deliver answers and ideas. We don’t use your content to advertise other customers’ channels or sell your niche data.",
+    q: "Why are there credits?",
+    a: "Live trend scans and AI writing cost money to run. Credits make usage clear for creators and protect the app from abuse.",
   },
 ] as const;
-
-const freeResourceLinks = resourcePages.map((page) => ({
-  title: page.title,
-  description: page.description,
-  href: page.path,
-}));
-
-const seoTopicLinks = [
-  ...keywordLandingPages,
-  { title: "Niche content ideas", path: "/niches" },
-  ...nicheLandingPages.slice(0, 4),
-  ...resourcePages.slice(0, 3),
-].map((page) => ({
-  title: page.title,
-  href: page.path,
-}));
 
 const homepageFaqJsonLd = {
   "@context": "https://schema.org",
@@ -194,70 +113,157 @@ const homepageFaqJsonLd = {
   })),
 };
 
-function MobileHeroPreview() {
-  const previewCards = [
-    {
-      icon: Play,
-      label: "TikTok",
-      title: "3 short hooks for a rising trend",
-      accent: "from-fuchsia-400 to-rose-400",
-    },
-    {
-      icon: Bookmark,
-      label: "Saved",
-      title: "Move the best idea into your calendar",
-      accent: "from-cyan-300 to-blue-400",
-    },
-    {
-      icon: Search,
-      label: "Pinterest",
-      title: "Find a visual angle people will save",
-      accent: "from-emerald-300 to-cyan-300",
-    },
-  ] as const;
-
+function Header() {
   return (
-    <div className="mt-10 w-full max-w-sm sm:max-w-2xl">
-      <div className="mx-auto overflow-hidden rounded-[2rem] border border-border bg-card/90 p-3 text-left shadow-[0_24px_80px_rgba(15,23,42,0.16)] dark:border-white/10 dark:bg-slate-950/80 dark:shadow-[0_24px_90px_rgba(34,211,238,0.12)]">
-        <div className="flex items-center justify-between rounded-[1.35rem] border border-border bg-background px-4 py-3 dark:border-white/10 dark:bg-slate-900/80">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary dark:text-cyan-200">
-              Live scan
-            </p>
-            <p className="mt-1 text-sm font-bold">TrendBoard</p>
-          </div>
-          <span className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
-            Live
+    <header className="sticky top-0 z-30 border-b border-border/70 bg-background/92 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/92 sm:px-6">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
+        <Link
+          href="/"
+          className="flex min-w-0 items-center gap-2 text-sm font-semibold tracking-[0.08em] text-foreground hover:text-primary sm:tracking-[0.16em]"
+        >
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
+            T
           </span>
-        </div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          {previewCards.map((card) => (
-            <div
-              key={card.label}
-              className="min-h-32 rounded-[1.35rem] border border-border bg-muted/45 p-4 dark:border-white/10 dark:bg-white/[0.04]"
-            >
-              <div
-                className={`flex size-10 items-center justify-center rounded-2xl bg-gradient-to-br ${card.accent} text-slate-950 shadow-sm`}
-              >
-                <card.icon className="size-5" />
-              </div>
-              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                {card.label}
-              </p>
-              <p className="mt-2 text-sm font-semibold leading-5">
-                {card.title}
-              </p>
-            </div>
-          ))}
+          <span className="truncate">TrendBoard</span>
+        </Link>
+        <nav className="hidden items-center gap-5 text-sm md:flex">
+          <Link
+            href="#how-it-works"
+            className="font-medium text-muted-foreground hover:text-foreground"
+          >
+            How it works
+          </Link>
+          <Link
+            href="#free-preview"
+            className="font-medium text-muted-foreground hover:text-foreground"
+          >
+            Free preview
+          </Link>
+          <Link
+            href="/pricing"
+            className="font-medium text-muted-foreground hover:text-foreground"
+          >
+            Pricing
+          </Link>
+          <Link
+            href="/login"
+            className="font-medium text-muted-foreground hover:text-foreground"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/dashboard"
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+          >
+            Open app
+          </Link>
+        </nav>
+        <div className="flex shrink-0 items-center gap-2 md:hidden">
+          <MobileInstallButton />
+          <Link
+            href="/dashboard"
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-3 text-sm font-bold text-primary-foreground shadow-sm dark:bg-cyan-400 dark:text-slate-950"
+          >
+            Open
+          </Link>
         </div>
       </div>
+    </header>
+  );
+}
+
+function ProductPreview() {
+  return (
+    <section
+      aria-label="Example TrendBoard scan"
+      className="mx-auto mt-10 w-[calc(100vw_-_2rem)] max-w-5xl rounded-3xl border border-border bg-card p-4 text-left shadow-sm dark:border-white/10 dark:bg-slate-950/80 sm:w-full sm:p-5"
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary dark:text-cyan-200">
+            Example scan
+          </p>
+          <h2 className="mt-1 text-lg font-bold text-foreground">
+            Fitness creators
+          </h2>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs font-semibold text-muted-foreground">
+          {["TikTok", "Instagram", "YouTube", "Reddit", "Search"].map(
+            (source) => (
+              <span
+                key={source}
+                className="rounded-full border border-border bg-background px-3 py-1.5 dark:border-white/10 dark:bg-slate-900"
+              >
+                {source}
+              </span>
+            ),
+          )}
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        {[
+          {
+            label: "Trend",
+            title: "Beginner strength mistakes",
+            body: "Make a short video showing one form fix people can use today.",
+          },
+          {
+            label: "Hook",
+            title: "Stop doing squats like this",
+            body: "Open with the mistake, show the fix, then give one simple cue.",
+          },
+          {
+            label: "Next action",
+            title: "Save to Friday",
+            body: "Add hashtags, write a 45-second script, and move it to your calendar.",
+          },
+        ].map((item) => (
+          <article
+            key={item.label}
+            className="rounded-2xl border border-border bg-background p-4 dark:border-white/10 dark:bg-slate-900/70"
+          >
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary dark:text-cyan-200">
+              {item.label}
+            </p>
+            <h3 className="mt-3 text-base font-bold text-foreground">
+              {item.title}
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {item.body}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SectionHeading({
+  eyebrow,
+  title,
+  body,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="mx-auto max-w-2xl text-center">
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary dark:text-cyan-200">
+        {eyebrow}
+      </p>
+      <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
+        {title}
+      </h2>
+      <p className="mt-3 text-base leading-7 text-muted-foreground">{body}</p>
     </div>
   );
 }
 
 export default function Home() {
   return (
-    <main className="relative min-h-svh overflow-hidden bg-background text-foreground">
+    <main className="min-h-svh bg-background text-foreground">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageFaqJsonLd) }}
@@ -266,333 +272,224 @@ export default function Home() {
         event="landing_page_viewed"
         context={{ page: "home" }}
       />
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-[-6rem] h-80 w-80 animate-pulse rounded-full bg-primary/10 blur-3xl dark:bg-fuchsia-500/25" />
-        <div className="absolute right-[-5rem] top-10 h-96 w-96 animate-pulse rounded-full bg-secondary/70 blur-3xl dark:bg-cyan-500/20" />
-        <div className="absolute bottom-[-7rem] left-1/3 h-96 w-96 animate-pulse rounded-full bg-primary/5 blur-3xl dark:bg-indigo-500/20" />
-      </div>
+      <Header />
 
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/88 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/82 sm:px-6 md:relative md:border-b-0 md:bg-transparent md:py-7 md:backdrop-blur-0">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
-          <Link
-            href="/"
-            className="fluid-transition flex min-w-0 items-center gap-2 text-sm font-semibold tracking-[0.08em] text-foreground hover:text-primary sm:tracking-[0.18em]"
-          >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-black text-primary-foreground dark:bg-cyan-400 dark:text-slate-950">
-              T
-            </span>
-            <span className="truncate">TrendBoard</span>
-          </Link>
-          <nav className="hidden items-center gap-6 text-sm md:flex">
-            <Link
-              href="#features"
-              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-            >
-              Features
-            </Link>
-            <Link
-              href="#how-it-works"
-              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-            >
-              How it works
-            </Link>
-            <Link
-              href="/trending"
-              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-            >
-              Trending
-            </Link>
-            <Link
-              href="#faq"
-              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-            >
-              FAQ
-            </Link>
-            <Link
-              href="/about"
-              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-            >
-              About
-            </Link>
-            <Link
-              href="/pricing"
-              className="fluid-transition font-medium text-muted-foreground hover:text-foreground"
-            >
-              Pricing
-            </Link>
-          </nav>
-          <div className="flex shrink-0 items-center gap-2 md:hidden">
-            <MobileInstallButton />
-            <Link
-              href="/dashboard"
-              className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-3 text-sm font-bold text-primary-foreground shadow-sm dark:bg-cyan-400 dark:text-slate-950"
-            >
-              Open
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <section className="relative mx-auto flex min-h-[calc(100svh-4.25rem)] w-full max-w-6xl flex-col items-center justify-center px-4 pb-10 pt-8 text-center sm:px-6 sm:py-18">
-        <span className="glass-surface hairline-ring rounded-full border border-border bg-card px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary dark:text-cyan-200 sm:tracking-[0.24em]">
-          TrendBoard
-        </span>
-
-        <h1 className="mt-6 max-w-5xl text-balance bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-4xl font-extrabold leading-[1.04] text-transparent sm:mt-8 sm:text-6xl lg:text-7xl dark:from-white dark:via-cyan-100 dark:to-fuchsia-200">
-          AI Content Idea Generator for TikTok, Instagram, YouTube Shorts, and
-          Pinterest
-        </h1>
-
-        <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground sm:mt-6 sm:text-lg sm:leading-relaxed">
-          Find live creator trends, draft short idea cards, generate warmer
-          hooks and scripts, and move the winners into a simple content
-          calendar.
+      <section className="mx-auto flex min-h-[calc(100svh-4rem)] w-full max-w-[100vw] flex-col items-center justify-center overflow-hidden px-4 pb-12 pt-10 text-center sm:max-w-6xl sm:px-6 sm:pb-16 sm:pt-16">
+        <p className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-primary dark:border-white/10 dark:bg-slate-950 dark:text-cyan-200">
+          <WandSparkles className="size-4" />
+          For content creators
         </p>
 
-        <div className="mt-8 flex w-full max-w-sm flex-col items-stretch justify-center gap-3 sm:mt-12 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-          <CreatorCheckoutForm
-            placement="home_hero_paid"
-            className="w-full sm:w-auto"
-            buttonClassName="fluid-transition inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-3 text-base font-bold text-primary-foreground shadow-[0_12px_28px_rgba(54,95,125,0.2)] hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_16px_36px_rgba(54,95,125,0.24)] sm:w-auto sm:px-10 sm:py-4 dark:bg-gradient-to-r dark:from-cyan-400 dark:to-indigo-500 dark:text-slate-950"
-          />
+        <h1 className="mt-6 w-[calc(100vw_-_2rem)] max-w-4xl text-balance text-4xl font-extrabold leading-[1.06] tracking-tight sm:w-full sm:text-6xl">
+          Find trends. Turn them into posts.
+        </h1>
+
+        <p className="mt-5 w-[calc(100vw_-_2rem)] max-w-2xl text-base leading-7 text-muted-foreground sm:w-full sm:text-lg">
+          TrendBoard helps you choose what to make next. Type your niche, scan
+          live platforms, and get clear ideas with hooks, scripts, hashtags,
+          source links, and calendar notes.
+        </p>
+
+        <div className="mt-7 grid w-[calc(100vw_-_2rem)] max-w-md gap-3 sm:w-full sm:max-w-none sm:grid-cols-[auto_auto_auto] sm:justify-center">
+          <ConversionLink
+            href="/dashboard"
+            event="landing_cta_clicked"
+            eventContext={{
+              page: "home",
+              destination: "/dashboard",
+              placement: "hero_open_app",
+            }}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-7 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+          >
+            Open the app
+            <ArrowRight className="size-4" />
+          </ConversionLink>
           <ConversionLink
             href="#free-preview"
             event="landing_cta_clicked"
             eventContext={{
               page: "home",
               destination: "#free-preview",
-              placement: "hero_primary",
+              placement: "hero_free_preview",
             }}
-            className="fluid-transition inline-flex min-h-12 items-center justify-center rounded-2xl border border-border bg-card px-8 py-3 text-base font-semibold text-foreground hover:bg-muted sm:py-4 dark:border-white/15 dark:bg-slate-900/60 dark:hover:bg-slate-800"
+            className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-border bg-card px-7 text-sm font-semibold text-foreground hover:bg-muted dark:border-white/10 dark:bg-slate-950 dark:hover:bg-slate-900"
           >
-            Generate Free Ideas
+            Try free ideas
           </ConversionLink>
-          <ConversionLink
-            href="/trending"
-            event="landing_cta_clicked"
-            eventContext={{
-              page: "home",
-              destination: "/trending",
-              placement: "hero_secondary",
-            }}
-            className="fluid-transition inline-flex min-h-12 items-center justify-center rounded-2xl border border-border bg-card px-8 py-3 text-base font-semibold text-foreground hover:bg-muted sm:py-4 dark:border-white/15 dark:bg-slate-900/60 dark:hover:bg-slate-800"
-          >
-            See live trending
-          </ConversionLink>
+          <CreatorCheckoutForm
+            placement="home_hero_paid"
+            label="Start Creator"
+            className="w-full sm:w-auto"
+            buttonClassName="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/10 px-7 text-sm font-bold text-primary hover:bg-primary/15 dark:border-cyan-300/25 dark:bg-cyan-400/10 dark:text-cyan-100 dark:hover:bg-cyan-400/15"
+          />
         </div>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Creator is $19.99/mo. Free preview is still available below.
+
+        <p className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <CreditCard className="size-4" />
+            Free preview
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <ShieldCheck className="size-4" />
+            Credit-protected usage
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <ListChecks className="size-4" />
+            Save and schedule ideas
+          </span>
         </p>
 
-        <MobileHeroPreview />
+        <ProductPreview />
       </section>
 
-      <section className="relative z-20 mx-auto w-full max-w-6xl px-6 py-12">
+      <section
+        id="how-it-works"
+        className="border-y border-border bg-card/45 px-4 py-16 dark:border-white/10 dark:bg-slate-950/35 sm:px-6"
+      >
+        <div className="mx-auto max-w-6xl">
+          <SectionHeading
+            eyebrow="How it works"
+            title="Three simple steps"
+            body="The app is built so a creator can go from blank page to a useful post idea without learning a complicated workflow."
+          />
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {workflowSteps.map((step, index) => (
+              <article
+                key={step.title}
+                className="rounded-2xl border border-border bg-background p-5 dark:border-white/10 dark:bg-slate-900/65"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-cyan-400/10 dark:text-cyan-200">
+                    <step.icon className="size-5" />
+                  </span>
+                  <span className="text-sm font-black text-muted-foreground">
+                    {index + 1}
+                  </span>
+                </div>
+                <h3 className="mt-5 text-lg font-bold">{step.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {step.body}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary dark:text-cyan-200">
+            What you get
+          </p>
+          <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
+            A content creation tool, not a pile of random ideas
+          </h2>
+          <p className="mt-4 text-base leading-7 text-muted-foreground">
+            The goal is simple: help creators decide what to post, why it might
+            work, and how to turn it into a short video or social post.
+          </p>
+          <Link
+            href="/pricing"
+            className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-5 text-sm font-bold text-foreground hover:bg-muted dark:border-white/10 dark:bg-slate-950 dark:hover:bg-slate-900"
+          >
+            See simple pricing
+            <ArrowRight className="size-4" />
+          </Link>
+        </div>
+
+        <div className="grid gap-3">
+          {productOutputs.map((item) => (
+            <div
+              key={item}
+              className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 dark:border-white/10 dark:bg-slate-950/70"
+            >
+              <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-cyan-400/10 dark:text-cyan-200">
+                <Check className="size-4" strokeWidth={3} />
+              </span>
+              <p className="text-sm font-semibold leading-6">{item}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6">
         <FreeResourceWidget kind="hooks" defaultTopic="fitness creators" />
       </section>
 
-      <HowItWorksSection steps={howSteps} />
-
-      <section className="relative z-20 mx-auto w-full max-w-6xl px-6 py-12">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary dark:text-cyan-200">
-              Free resources
-            </span>
-            <h2 className="mt-4 max-w-2xl text-balance text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Useful pages people can try before paying
-            </h2>
-            <p className="mt-3 max-w-2xl text-muted-foreground">
-              Start with free hook ideas, calendar templates, platform guides,
-              and niche idea lists. Upgrade when you want live scans, source
-              links, saved ideas, and full workflow tools.
-            </p>
-          </div>
-          <ConversionLink
-            href="/free-tiktok-hook-ideas"
-            event="landing_cta_clicked"
-            eventContext={{
-              page: "home",
-              destination: "/free-tiktok-hook-ideas",
-              placement: "free_resources",
-            }}
-            className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted dark:border-white/10 dark:bg-slate-900 dark:hover:bg-slate-800"
-          >
-            Try a free tool
-          </ConversionLink>
-        </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {freeResourceLinks.map((resource) => (
-            <Link
-              key={resource.href}
-              href={resource.href}
-              className="rounded-2xl border border-border bg-card/85 p-5 shadow-sm hover:border-primary/30 hover:bg-muted/40 dark:border-white/10 dark:bg-slate-900/50 dark:hover:border-cyan-300/30"
-            >
-              <h3 className="text-base font-semibold">{resource.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {resource.description}
-              </p>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="relative z-20 mx-auto w-full max-w-6xl px-6 py-12">
-        <div className="grid gap-4 md:grid-cols-4">
-          {trustItems.map((item) => (
-            <div
+      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
+        <SectionHeading
+          eyebrow="Creator workflow"
+          title="Built for making content"
+          body="Each feature supports the real job: finding an angle, filming it, and keeping your publishing plan organized."
+        />
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {simpleProof.map((item) => (
+            <article
               key={item.title}
-              className="rounded-2xl border border-border bg-card/85 p-5 shadow-sm dark:border-white/10 dark:bg-slate-900/50"
+              className="rounded-2xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/70"
             >
-              <div className="flex size-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 dark:border-cyan-400/25 dark:bg-cyan-400/10">
-                <item.icon className="size-5 text-primary dark:text-cyan-300" />
-              </div>
-              <h2 className="mt-4 text-sm font-semibold text-foreground">
-                {item.title}
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-cyan-400/10 dark:text-cyan-200">
+                <item.icon className="size-5" />
+              </span>
+              <h3 className="mt-4 text-base font-bold">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {item.body}
               </p>
-            </div>
+            </article>
           ))}
         </div>
       </section>
 
-      <section
-        id="features"
-        className="relative z-20 mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-12"
-      >
-        <div className="text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary dark:text-cyan-200">
-            Features
-          </span>
-          <h2 className="mt-4 text-balance text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Everything you need to ride the wave
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-            Six pillars that keep research, ideation, and packaging in one loop.
-          </p>
-        </div>
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {featureCards.map((f) => (
-            <div
-              key={f.title}
-              className="spring-pop group fluid-transition flex flex-col rounded-2xl border border-border bg-gradient-to-br from-card to-card/40 p-6 shadow-sm hover:-translate-y-1 hover:border-primary/25 hover:shadow-md dark:border-white/10 dark:from-slate-900/80 dark:to-slate-950/60 dark:hover:border-cyan-400/20"
+      <section className="border-y border-border bg-card/45 px-4 py-16 dark:border-white/10 dark:bg-slate-950/35 sm:px-6">
+        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-center">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary dark:text-cyan-200">
+              Paid plan
+            </p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
+              Creator is for people who post every week
+            </h2>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+              Creator is $19.99/mo for about 20 full trend scans, plus room to
+              expand ideas into hooks, hashtags, and scripts. Free is still
+              available when you want to test the workflow first.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            <CreatorCheckoutForm
+              placement="home_paid_section"
+              label="Start Creator checkout"
+              buttonClassName="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-bold text-primary-foreground hover:bg-primary/90 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+            />
+            <Link
+              href="/pricing"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-border bg-background px-6 text-sm font-bold text-foreground hover:bg-muted dark:border-white/10 dark:bg-slate-900 dark:hover:bg-slate-800"
             >
-              <div className="flex size-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 transition-transform duration-300 group-hover:scale-105 dark:border-cyan-400/25 dark:bg-cyan-400/10">
-                <f.icon className="size-5 text-primary transition-transform duration-300 group-hover:rotate-6 dark:text-cyan-300" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">{f.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {f.body}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section
-        id="testimonials"
-        className="relative z-20 mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-16"
-      >
-        <div className="text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary dark:text-cyan-200">
-            Creator workflows
-          </span>
-          <h2 className="mt-4 text-balance text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Built for creators who ship on deadlines
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-            Practical examples of how TrendBoard turns live momentum into
-            content you can plan, save, and publish.
-          </p>
-        </div>
-
-        <div className="mt-10 grid gap-6 lg:grid-cols-3">
-          {testimonials.map((t) => (
-            <figure
-              key={t.handle}
-              className="flex h-full flex-col rounded-2xl border border-border bg-card/90 p-6 text-left shadow-sm dark:border-white/10 dark:bg-slate-900/55"
-            >
-              <div className="flex gap-1 text-primary dark:text-cyan-300">
-                <Star className="size-4 fill-current" aria-hidden />
-              </div>
-              <blockquote className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground">
-                <span className="text-foreground">“</span>
-                {t.quote}
-                <span className="text-foreground">”</span>
-              </blockquote>
-              <figcaption className="mt-6 flex items-center gap-3 border-t border-border pt-5 dark:border-white/10">
-                <div
-                  className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary dark:bg-cyan-400/15 dark:text-cyan-200"
-                  aria-hidden
-                >
-                  {t.initials}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-foreground">
-                    {t.name}
-                  </p>
-                  <p className="truncate text-xs text-primary dark:text-cyan-300">
-                    {t.handle}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {t.role}
-                  </p>
-                </div>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-
-        <div className="mt-12 rounded-3xl border border-border bg-muted/40 px-6 py-8 dark:border-white/10 dark:bg-white/[0.04]">
-          <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:justify-center sm:gap-10">
-            <div className="flex items-center gap-2">
-              <LineChart className="size-8 text-primary dark:text-cyan-300" />
-              <div className="text-left">
-                <p className="text-2xl font-extrabold text-foreground">3x</p>
-                <p className="text-xs text-muted-foreground">
-                  Ideas from each trend pass
-                </p>
-              </div>
-            </div>
-            <div className="hidden h-10 w-px bg-border sm:block dark:bg-white/15" />
-            <div className="text-sm text-muted-foreground sm:max-w-xs sm:text-left">
-              Each analysis gives you trend context, source links, hooks,
-              scripts, hashtags, organic thumbnails, and save-ready cards in one
-              workflow.
-            </div>
+              Compare plans
+            </Link>
           </div>
         </div>
       </section>
 
       <section
         id="faq"
-        className="relative z-20 mx-auto w-full max-w-3xl scroll-mt-24 px-6 py-16"
+        className="mx-auto w-full max-w-3xl px-4 py-16 sm:px-6"
       >
-        <div className="text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary dark:text-cyan-200">
-            FAQ
-          </span>
-          <h2 className="mt-4 text-balance text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Questions, answered
-          </h2>
-        </div>
-        <div className="mt-10 flex flex-col gap-3">
+        <SectionHeading
+          eyebrow="FAQ"
+          title="Quick answers"
+          body="Short answers for creators who just want to know whether the tool can help them post faster."
+        />
+        <div className="mt-8 space-y-3">
           {faqItems.map((item) => (
             <details
               key={item.q}
-              className="group fluid-transition rounded-2xl border border-border bg-card/80 px-5 py-1 open:border-primary/25 open:bg-card dark:border-white/10 dark:bg-slate-900/45 dark:open:border-cyan-400/25"
+              className="rounded-2xl border border-border bg-card px-5 py-2 dark:border-white/10 dark:bg-slate-950/70"
             >
-              <summary className="cursor-pointer list-none py-4 pr-2 text-left text-sm font-semibold text-foreground marker:content-none [&::-webkit-details-marker]:hidden">
-                <span className="flex items-start justify-between gap-3">
-                  {item.q}
-                  <span className="mt-0.5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-45">
-                    +
-                  </span>
-                </span>
+              <summary className="cursor-pointer py-3 text-sm font-bold">
+                {item.q}
               </summary>
-              <p className="border-t border-border pb-4 pt-0 text-sm leading-relaxed text-muted-foreground dark:border-white/10">
+              <p className="border-t border-border pb-4 pt-3 text-sm leading-6 text-muted-foreground dark:border-white/10">
                 {item.a}
               </p>
             </details>
@@ -600,180 +497,36 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="relative z-20 mx-auto w-full max-w-6xl px-6 pb-8">
-        <div className="rounded-3xl border border-border bg-card/85 p-8 shadow-[0_16px_42px_rgba(34,39,47,0.08)] backdrop-blur-sm dark:border-cyan-300/20 dark:bg-gradient-to-br dark:from-slate-950/90 dark:via-slate-900/90 dark:to-indigo-950/70 dark:shadow-[0_0_48px_rgba(59,130,246,0.18)] sm:p-10">
-          <p className="text-center text-2xl font-semibold text-foreground dark:text-slate-100 sm:text-3xl">
-            Join the creator launch list
-          </p>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-muted-foreground dark:text-slate-300 sm:text-base">
-            Get product updates, early feature access, and weekly trend insights
-            straight to your inbox.
+      <section className="mx-auto w-full max-w-4xl px-4 pb-16 sm:px-6">
+        <div className="rounded-3xl border border-border bg-card p-6 text-center dark:border-white/10 dark:bg-slate-950/70 sm:p-8">
+          <h2 className="text-2xl font-bold tracking-tight">
+            Get creator updates
+          </h2>
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+            Join the list for product updates, new platform support, and useful
+            trend research notes.
           </p>
           <EmailWaitlistForm />
         </div>
       </section>
 
-      <footer className="relative z-20 border-t border-border bg-muted/30 dark:border-white/10 dark:bg-slate-950/40">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-14 sm:flex-row sm:items-start sm:justify-between">
-          <div className="max-w-sm">
-            <p className="text-sm font-semibold tracking-[0.18em] text-foreground">
-              TrendBoard
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              TrendBoard turns live trend signals into creator-ready briefs,
-              scripts, and polished idea cards.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 sm:gap-12">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Product
-              </p>
-              <ul className="mt-4 flex flex-col gap-2 text-sm">
-                <li>
-                  <Link
-                    href="#features"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    Features
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#how-it-works"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    How it works
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/pricing"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    Pricing
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/about"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    About
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/trending"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    Trending hub
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#faq"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    FAQ
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/support"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    Support
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/status"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    Status
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/privacy"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    Privacy
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/terms"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    Terms
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Company
-              </p>
-              <ul className="mt-4 flex flex-col gap-3 text-sm">
-                <li>
-                  <Link
-                    href="/about"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    About
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/status"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    Status
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/support"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    Support
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/pricing"
-                    className="fluid-transition text-muted-foreground hover:text-foreground"
-                  >
-                    Pricing
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Guides
-              </p>
-              <ul className="mt-4 flex flex-col gap-3 text-sm">
-                {seoTopicLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="fluid-transition text-muted-foreground hover:text-foreground"
-                    >
-                      {link.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div className="border-t border-border py-6 dark:border-white/10">
-          <p className="text-center text-xs text-muted-foreground">
-            © {new Date().getFullYear()} TrendBoard. All rights reserved.
-          </p>
+      <footer className="border-t border-border bg-muted/30 px-4 py-8 dark:border-white/10 dark:bg-slate-950/45 sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-semibold text-foreground">TrendBoard</p>
+          <nav className="flex flex-wrap gap-4">
+            <Link href="/pricing" className="hover:text-foreground">
+              Pricing
+            </Link>
+            <Link href="/support" className="hover:text-foreground">
+              Support
+            </Link>
+            <Link href="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-foreground">
+              Terms
+            </Link>
+          </nav>
         </div>
       </footer>
     </main>

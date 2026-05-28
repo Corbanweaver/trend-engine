@@ -77,9 +77,15 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
+  }
+  *::before,
+  *::after {
+    box-sizing: border-box;
   }
   :focus-visible {
     outline: 2px solid color-mix(in oklab, var(--ring) 74%, white);
@@ -91,6 +97,7 @@
     -webkit-font-smoothing: antialiased;
     font-size: 15px;
     line-height: 1.55;
+    overflow-x: hidden;
     transition: background-color 260ms cubic-bezier(0.22, 1, 0.36, 1),
       color 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
