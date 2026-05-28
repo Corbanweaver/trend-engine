@@ -1,29 +1,37 @@
 import { NextResponse } from "next/server";
 
+import { parseLimitedJsonBody } from "@/lib/api-request-guards";
 import {
   isAllowedConversionEvent,
   recordConversionEvent,
   sanitizeMetadata,
 } from "@/lib/conversion-events";
+import { checkRateLimits, getClientIp } from "@/lib/server-rate-limit";
+import { getServerSupabaseAdmin } from "@/lib/server-supabase-admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+const CONVERSION_EVENT_BODY_LIMIT_BYTES = 4 * 1024;
 
 function hasTrustedOrigin(request: Request) {
   const origin = request.headers.get("origin");
   if (!origin) return true;
 
-  const requestOrigin = new URL(request.url).origin;
-  const originHost = new URL(origin).hostname;
-  const requestHost = new URL(requestOrigin).hostname;
-  const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
-  if (localHosts.has(originHost) && localHosts.has(requestHost)) {
-    return true;
-  }
+  try {
+    const requestOrigin = new URL(request.url).origin;
+    const originHost = new URL(origin).hostname;
+    const requestHost = new URL(requestOrigin).hostname;
+    const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+    if (localHosts.has(originHost) && localHosts.has(requestHost)) {
+      return true;
+    }
 
-  return origin === requestOrigin || (siteUrl ? origin === siteUrl : false);
+    return origin === requestOrigin || (siteUrl ? origin === siteUrl : false);
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(request: Request) {
@@ -31,18 +39,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const parsedBody = await parseLimitedJsonBody<unknown>(request, {
+    maxBytes: CONVERSION_EVENT_BODY_LIMIT_BYTES,
+    invalidMessage: "Invalid JSON",
+    tooLargeMessage: "Conversion event payload is too large.",
+  });
+  if (!parsedBody.ok) return parsedBody.response;
 
-  if (!body || typeof body !== "object") {
+  if (!parsedBody.body || typeof parsedBody.body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const payload = body as {
+  const payload = parsedBody.body as {
     event?: unknown;
     path?: unknown;
     context?: unknown;
@@ -51,6 +59,48 @@ export async function POST(request: Request) {
 
   if (!isAllowedConversionEvent(payload.event)) {
     return NextResponse.json({ error: "Invalid event" }, { status: 400 });
+  }
+
+  const admin = getServerSupabaseAdmin();
+  if (admin) {
+    try {
+      const ip = getClientIp(request);
+      const rateLimit = await checkRateLimits(admin, [
+        {
+          key: `ip:${ip}`,
+          action: "conversion_event",
+          limit: 120,
+          windowSeconds: 10 * 60,
+        },
+        {
+          key: `ip:${ip}`,
+          action: "conversion_event",
+          limit: 800,
+          windowSeconds: 24 * 60 * 60,
+        },
+      ]);
+      if (!rateLimit.ok) {
+        return NextResponse.json(
+          {
+            error: "Too many conversion events.",
+            resetAt: rateLimit.resetAt,
+          },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(rateLimit.retryAfterSeconds),
+            },
+          },
+        );
+      }
+    } catch (error) {
+      console.error("Conversion event rate limit failed:", error);
+      return NextResponse.json({
+        ok: true,
+        recorded: false,
+        storage: "rate_limit_unavailable",
+      });
+    }
   }
 
   const result = await recordConversionEvent({

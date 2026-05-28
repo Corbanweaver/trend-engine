@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+import { parseLimitedJsonBody } from "@/lib/api-request-guards";
 import {
   checkRateLimits,
   getClientIp,
@@ -13,6 +14,8 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const EMAIL_WAITLIST_BODY_LIMIT_BYTES = 512;
 
 function getSupabaseAdmin() {
   if (!supabaseUrl || !supabaseServiceRoleKey) {
@@ -35,15 +38,17 @@ export async function POST(request: Request) {
   }
 
   let email = "";
-  try {
-    const body = (await request.json()) as { email?: string };
-    email = (body.email ?? "").trim().toLowerCase();
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON payload" },
-      { status: 400 },
-    );
-  }
+  const parsedBody = await parseLimitedJsonBody<{ email?: unknown }>(request, {
+    maxBytes: EMAIL_WAITLIST_BODY_LIMIT_BYTES,
+    invalidMessage: "Invalid JSON payload",
+    tooLargeMessage: "Waitlist signup payload is too large",
+  });
+  if (!parsedBody.ok) return parsedBody.response;
+
+  email =
+    typeof parsedBody.body.email === "string"
+      ? parsedBody.body.email.trim().toLowerCase()
+      : "";
 
   if (!isValidEmail(email)) {
     return NextResponse.json(
