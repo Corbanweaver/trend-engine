@@ -1,5 +1,6 @@
 "use client";
 
+import { Copy, Download } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -18,11 +19,68 @@ type SavedIdea = {
 };
 
 type CalendarMap = Record<string, string[]>;
+type CalendarEntry = {
+  dateKey: string;
+  order: number;
+  idea: SavedIdea;
+};
 
 const PLAN_KEY = "calendar:plans";
 
 function dayKey(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+function csvCell(value: string | number | null | undefined) {
+  const text = String(value ?? "");
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
+function formatPlanDate(dateKey: string) {
+  const date = new Date(`${dateKey}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return dateKey;
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+function buildCalendarText(entries: CalendarEntry[], month: Date) {
+  const monthLabel = month.toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
+  return [
+    `TrendBoard content calendar - ${monthLabel}`,
+    "",
+    ...entries.map(({ dateKey, order, idea }) =>
+      [
+        `${formatPlanDate(dateKey)} - Post ${order}`,
+        `Title: ${idea.idea_title || "Saved idea"}`,
+        `Niche: ${idea.niche || "General"}`,
+        "",
+        idea.idea_content || "",
+      ].join("\n"),
+    ),
+  ].join("\n\n---\n\n");
+}
+
+function buildCalendarCsv(entries: CalendarEntry[]) {
+  return [
+    ["Date", "Post order", "Title", "Niche", "Content"].map(csvCell).join(","),
+    ...entries.map(({ dateKey, order, idea }) =>
+      [
+        formatPlanDate(dateKey),
+        order,
+        idea.idea_title || "Saved idea",
+        idea.niche || "General",
+        idea.idea_content || "",
+      ]
+        .map(csvCell)
+        .join(","),
+    ),
+  ].join("\n");
 }
 
 export default function CalendarPage() {
@@ -38,6 +96,7 @@ export default function CalendarPage() {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [selectedIdeaId, setSelectedIdeaId] = useState<string | null>(null);
   const [deletingIdeaId, setDeletingIdeaId] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const blockDetailClickUntilRef = useRef(0);
 
   const closeDetail = useCallback(() => {
@@ -128,6 +187,11 @@ export default function CalendarPage() {
     }
   };
 
+  const showToast = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 1800);
+  };
+
   const days = useMemo(() => {
     const start = new Date(month.getFullYear(), month.getMonth(), 1);
     const startWeekday = (start.getDay() + 6) % 7;
@@ -143,6 +207,72 @@ export default function CalendarPage() {
   const ideaById = new Map(ideas.map((i) => [i.id, i]));
   const scheduled = new Set(Object.values(calendarMap).flat());
   const unscheduled = ideas.filter((i) => !scheduled.has(i.id));
+  const monthKey = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`;
+  const monthEntries = useMemo(() => {
+    const lookup = new Map(ideas.map((idea) => [idea.id, idea]));
+    return Object.entries(calendarMap)
+      .filter(([dateKey]) => dateKey.startsWith(monthKey))
+      .flatMap(([dateKey, ids]) =>
+        ids
+          .map((id, index): CalendarEntry | null => {
+            const idea = lookup.get(id);
+            return idea ? { dateKey, order: index + 1, idea } : null;
+          })
+          .filter((entry): entry is CalendarEntry => Boolean(entry)),
+      )
+      .sort((a, b) => {
+        if (a.dateKey === b.dateKey) return a.order - b.order;
+        return a.dateKey.localeCompare(b.dateKey);
+      });
+  }, [calendarMap, ideas, monthKey]);
+
+  const copyMonthPlan = async () => {
+    if (!monthEntries.length) {
+      showToast("No scheduled ideas this month");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(buildCalendarText(monthEntries, month));
+      trackUiEvent({
+        area: "calendar",
+        action: "copy_month_plan_success",
+        context: { count: monthEntries.length, month: monthKey },
+      });
+      showToast("Month plan copied");
+    } catch (err) {
+      trackUiEvent({
+        area: "calendar",
+        action: "copy_month_plan_failed",
+        level: "error",
+        message: err instanceof Error ? err.message : "unknown",
+      });
+      setError(err instanceof Error ? err.message : "Failed to copy plan.");
+    }
+  };
+
+  const exportMonthCsv = () => {
+    if (!monthEntries.length) {
+      showToast("No scheduled ideas this month");
+      return;
+    }
+    const blob = new Blob([buildCalendarCsv(monthEntries)], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `trendboard-calendar-${monthKey}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    trackUiEvent({
+      area: "calendar",
+      action: "export_month_calendar_csv",
+      context: { count: monthEntries.length, month: monthKey },
+    });
+    showToast("Calendar CSV exported");
+  };
 
   const assignIdea = (dateKey: string, ideaId: string) => {
     const next: CalendarMap = { ...calendarMap };
@@ -157,6 +287,7 @@ export default function CalendarPage() {
       action: "assign_idea_to_date",
       context: { dateKey, ideaId },
     });
+    showToast("Idea scheduled");
   };
 
   const removeFromCalendar = (ideaId: string) => {
@@ -171,6 +302,7 @@ export default function CalendarPage() {
       action: "remove_idea_from_calendar",
       context: { ideaId },
     });
+    showToast("Removed from calendar");
   };
 
   const deleteIdea = async (ideaId: string) => {
@@ -215,6 +347,12 @@ export default function CalendarPage() {
   return (
     <main className="min-h-svh bg-background p-4 text-foreground">
       <div className="mx-auto max-w-7xl space-y-5">
+        {toast ? (
+          <div className="fixed right-4 top-4 z-[60] rounded-xl border border-emerald-300/60 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 shadow-lg backdrop-blur dark:border-emerald-300/40 dark:bg-emerald-500/15 dark:text-emerald-100">
+            {toast}
+          </div>
+        ) : null}
+
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">
             Content Calendar
@@ -227,6 +365,36 @@ export default function CalendarPage() {
           </Link>
         </div>
         <AppQuickNav active="calendar" />
+        <section className="glass-surface flex flex-col gap-3 rounded-2xl border border-border bg-card p-3.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid grid-cols-2 gap-2 text-sm sm:flex sm:flex-wrap">
+            <div className="rounded-xl border border-border bg-muted/60 px-3 py-2 dark:border-white/10">
+              <p className="text-[11px] text-muted-foreground">Scheduled</p>
+              <p className="font-semibold">{monthEntries.length} this month</p>
+            </div>
+            <div className="rounded-xl border border-border bg-muted/60 px-3 py-2 dark:border-white/10">
+              <p className="text-[11px] text-muted-foreground">Unscheduled</p>
+              <p className="font-semibold">{unscheduled.length} ideas</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void copyMonthPlan()}
+              className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-card px-3 text-xs font-semibold text-foreground hover:bg-muted dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+            >
+              <Copy className="size-4" />
+              Copy month plan
+            </button>
+            <button
+              type="button"
+              onClick={exportMonthCsv}
+              className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-card px-3 text-xs font-semibold text-foreground hover:bg-muted dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+            >
+              <Download className="size-4" />
+              Export CSV
+            </button>
+          </div>
+        </section>
         <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
           {loading ? (
             <div className="glass-surface shimmer rounded-2xl border border-border p-5 text-sm text-muted-foreground lg:col-span-2 dark:border-white/10 dark:text-slate-300">
