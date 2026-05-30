@@ -2,35 +2,25 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
+  AtSign,
+  BarChart3,
+  Bell,
+  Bookmark,
   CalendarDays,
   CheckCircle2,
-  FileText,
-  Flame,
-  Layers3,
-  Link2,
-  PlayCircle,
-  Search,
+  LayoutDashboard,
+  ListChecks,
   Sparkles,
   TrendingUp,
-  Zap,
 } from "lucide-react";
 
 import { ConversionEventTracker } from "@/components/analytics/conversion-event-tracker";
+import { HandleScanHero } from "@/components/marketing/handle-scan-hero";
 import {
   MarketingFooter,
   MarketingHeader,
 } from "@/components/marketing/marketing-shell";
-import { ConversionLink } from "@/components/seo/conversion-link";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   keywordLandingPages,
   nicheLandingPages,
@@ -39,88 +29,86 @@ import {
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Trend Analyze and Organic Video Idea Cards",
+  title: "ContentIdeaMaker | Online Content Manager for Creators",
   description:
-    "TrendBoard analyzes creator trends and turns them into source-backed organic video idea cards with hooks, shot lists, captions, and posting windows.",
+    "ContentIdeaMaker helps creators enter an Instagram or TikTok handle, detect the account niche, get specific post ideas and actions, then manage trends, saved ideas, calendars, alerts, and analytics.",
   alternates: {
     canonical: "/",
   },
 };
 
-const ideaCards = [
+const outcomes = [
+  "Account-specific post ideas",
+  "Daily creator action list",
+  "Calendar-ready content plan",
+] as const;
+
+const workflow = [
   {
-    title: "Desk mobility reset",
-    score: "92",
-    window: "18h",
-    hook: "If your back gets tight after two hours at your desk, try this before you stand up.",
-    tone: "creator-wave-coral",
+    title: "Add your handle",
+    body: "Start with a public Instagram or TikTok username so the manager knows the creator account it is planning for.",
+    icon: AtSign,
   },
   {
-    title: "Budget protein bowls",
-    score: "84",
-    window: "2d",
-    hook: "Here is how one $20 grocery run turns into four high-protein lunches.",
-    tone: "creator-wave-gold",
+    title: "Get the content plan",
+    body: "TrendBoard finds the niche, then turns it into posts, hooks, daily tasks, profile fixes, and schedule ideas.",
+    icon: ListChecks,
   },
   {
-    title: "Creator income receipts",
-    score: "76",
-    window: "Today",
-    hook: "I tracked one small creator income stream for 30 days. Here is what actually worked.",
-    tone: "creator-wave-cyan",
+    title: "Run the content loop",
+    body: "Use trends, saved ideas, calendar planning, alerts, and analytics to keep publishing instead of starting over.",
+    icon: CalendarDays,
   },
 ] as const;
 
-const functionCards = [
+const toolkit = [
   {
-    title: "Analyze trends",
-    body: "Enter a niche or topic and generate ranked organic video idea cards.",
-    href: "/analyze",
-    cta: "Run analysis",
-    icon: Zap,
+    title: "Creator Manager",
+    body: "Account scan, niche plan, posts, tasks, schedule, and profile moves.",
+    href: "/manager",
+    cta: "Start here",
+    icon: LayoutDashboard,
     featured: true,
   },
   {
-    title: "Live trend feed",
-    body: "Browse current creator signals across short video, search, and social platforms.",
+    title: "Trend Analysis",
+    body: "Turn a niche into ranked organic video ideas and hooks.",
+    href: "/analyze",
+    cta: "Analyze",
+    icon: Sparkles,
+    featured: false,
+  },
+  {
+    title: "Live Trends",
+    body: "Watch creator signals across social, search, and short-form platforms.",
     href: "/trending",
     cta: "View trends",
     icon: TrendingUp,
     featured: false,
   },
   {
-    title: "Free idea tools",
-    body: "Try hooks, calendars, and niche ideas before creating an account.",
-    href: "/free-tiktok-hook-ideas",
-    cta: "Try free tools",
-    icon: Sparkles,
+    title: "Saved Ideas",
+    body: "Keep the strongest hooks, scripts, and post angles in one place.",
+    href: "/saved",
+    cta: "Open saved",
+    icon: Bookmark,
     featured: false,
   },
   {
-    title: "Plans",
-    body: "Pick the scan volume that matches how often you create and publish.",
-    href: "/pricing",
-    cta: "See pricing",
-    icon: Layers3,
+    title: "Calendar",
+    body: "Move ideas into a weekly posting rhythm you can actually follow.",
+    href: "/calendar",
+    cta: "Plan posts",
+    icon: CalendarDays,
     featured: false,
   },
-] as const;
-
-const workflow = [
   {
-    title: "Analyze",
-    body: "TrendBoard pulls creator signals for a niche, topic, or platform.",
-    icon: Search,
-  },
-  {
-    title: "Review cards",
-    body: "Each idea card includes a trend score, source context, hook, shot list, and caption angle.",
-    icon: FileText,
-  },
-  {
-    title: "Film faster",
-    body: "Save the best idea, schedule it, and publish while the window is still open.",
-    icon: PlayCircle,
+    title: "Alerts + Analytics",
+    body: "Monitor niches and track what is happening across your creator workflow.",
+    href: "/alerts",
+    cta: "Set alerts",
+    icon: Bell,
+    featured: false,
   },
 ] as const;
 
@@ -134,91 +122,6 @@ const footerLinks = [
   href: page.path,
 }));
 
-function AnalysisPreview() {
-  return (
-    <Card className="creator-idea-maker-panel overflow-hidden">
-      <CardHeader className="p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="creator-sidebar-active flex size-9 items-center justify-center rounded-lg text-primary-foreground">
-              <Zap className="size-4" />
-            </span>
-            <div>
-              <CardTitle>Trend Analyze</CardTitle>
-              <CardDescription>Fitness creators / organic video ideas</CardDescription>
-            </div>
-          </div>
-          <Badge variant="secondary">Idea cards ready</Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="grid gap-4 px-5 lg:grid-cols-[0.72fr_1fr]">
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-white/70 p-4">
-          <p className="text-xs font-semibold uppercase text-muted-foreground">
-            Analysis input
-          </p>
-          <div className="rounded-lg border border-border bg-card px-4 py-3">
-            <p className="text-sm font-semibold">fitness creators</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              TikTok, Reels, Shorts, Pinterest, Search
-            </p>
-          </div>
-          <div className="grid gap-2 text-sm">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="size-4 text-primary" />
-              Public trend signals scanned
-            </div>
-            <div className="flex items-center gap-2">
-              <Link2 className="size-4 text-primary" />
-              Source links attached
-            </div>
-            <div className="flex items-center gap-2">
-              <CalendarDays className="size-4 text-primary" />
-              Posting windows ranked
-            </div>
-          </div>
-          <Button asChild className="creator-cta mt-auto">
-            <Link href="/analyze">
-              Run trend analysis
-              <ArrowRight data-icon="inline-end" />
-            </Link>
-          </Button>
-        </div>
-
-        <div className="grid gap-3">
-          {ideaCards.map((idea) => (
-            <div
-              key={idea.title}
-              className={cn("creator-wave-card rounded-xl border p-4", idea.tone)}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase text-muted-foreground">
-                    Organic video idea
-                  </p>
-                  <h2 className="mt-1 text-lg font-semibold">{idea.title}</h2>
-                </div>
-                <div className="flex gap-2">
-                  <Badge variant="outline">Score {idea.score}</Badge>
-                  <Badge variant="secondary">{idea.window}</Badge>
-                </div>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                {idea.hook}
-              </p>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-      <CardFooter className="px-5 pb-5">
-        <p className="text-sm text-muted-foreground">
-          The full analysis opens the ranked cards, hooks, scripts, hashtags,
-          source links, and saved planning flow.
-        </p>
-      </CardFooter>
-    </Card>
-  );
-}
-
 export default function Home() {
   return (
     <main className="creator-page min-h-svh text-foreground">
@@ -227,151 +130,156 @@ export default function Home() {
         context={{ page: "home" }}
       />
 
-      <MarketingHeader currentPath="/" />
+      <MarketingHeader
+        currentPath="/"
+        ctaHref="/manager"
+        ctaLabel="Get my plan"
+      />
 
-      <section className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[0.64fr_1fr] lg:items-center lg:py-16">
-        <div>
-          <div className="mb-5 flex flex-wrap gap-2">
-            <Badge variant="outline" className="bg-white/70">
-              Organic video idea maker
-            </Badge>
-            <Badge variant="outline" className="bg-white/70">
-              Trend analysis
-            </Badge>
-          </div>
-          <h1 className="max-w-3xl text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-            Analyze trends and get organic video idea cards
+      <section className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:py-12">
+        <div className="max-w-2xl">
+          <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
+            Know what to post next.
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-            Enter a niche or topic. TrendBoard pulls current creator signals and
-            turns the strongest angles into source-backed idea cards with hooks,
-            shot lists, captions, and posting windows.
+          <p className="mt-5 text-base leading-7 text-muted-foreground sm:text-lg">
+            ContentIdeaMaker is an online content manager for creators. Type an
+            Instagram or TikTok handle, find the account niche, get specific
+            posts and actions, then keep the workflow moving with trends, saved
+            ideas, calendars, alerts, and analytics.
           </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg" className="creator-cta">
-              <ConversionLink
-                href="/analyze"
-                event="landing_cta_clicked"
-                eventContext={{
-                  page: "home",
-                  destination: "/analyze",
-                  placement: "hero_primary",
-                }}
-              >
-                Run trend analysis
-                <ArrowRight data-icon="inline-end" />
-              </ConversionLink>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="creator-outline-cta">
-              <ConversionLink
-                href="/trending"
-                event="landing_cta_clicked"
-                eventContext={{
-                  page: "home",
-                  destination: "/trending",
-                  placement: "hero_secondary",
-                }}
-              >
-                View live trends
-                <Flame data-icon="inline-end" />
-              </ConversionLink>
-            </Button>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-3 text-sm text-muted-foreground">
-            <span className="flex items-center gap-2">
-              <CheckCircle2 className="size-4 text-primary" />
-              Source links included
-            </span>
-            <span className="flex items-center gap-2">
-              <CheckCircle2 className="size-4 text-primary" />
-              Idea cards ready to save
-            </span>
+
+          <div className="mt-6 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+            {outcomes.map((outcome) => (
+              <span key={outcome} className="flex items-center gap-2">
+                <CheckCircle2 className="size-4 shrink-0 text-primary" />
+                {outcome}
+              </span>
+            ))}
           </div>
         </div>
 
-        <AnalysisPreview />
+        <HandleScanHero />
       </section>
 
-      <section className="border-y border-border bg-background">
-        <div className="mx-auto grid w-full max-w-7xl gap-4 px-4 py-12 sm:px-6 lg:grid-cols-4">
-          {functionCards.map((item) => (
-            <Card
-              key={item.title}
-              className={cn(
-                "creator-card",
-                item.featured ? "creator-card-coral" : "bg-card",
-              )}
-            >
-              <CardHeader>
-                <item.icon className="size-5 text-muted-foreground" />
-                <CardTitle>{item.title}</CardTitle>
-                <CardDescription>{item.body}</CardDescription>
-              </CardHeader>
-              <CardFooter>
-                <Button
-                  asChild
-                  className={item.featured ? "creator-cta" : undefined}
-                  variant={item.featured ? "default" : "outline"}
-                >
-                  <Link href={item.href}>
-                    {item.cta}
-                    <ArrowRight data-icon="inline-end" />
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6">
-        <div className="grid gap-8 lg:grid-cols-[0.52fr_1fr] lg:items-start">
+      <section className="border-y border-border bg-white">
+        <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-10 sm:px-6 lg:grid-cols-[0.48fr_1fr] lg:items-start">
           <div>
             <h2 className="text-3xl font-semibold tracking-tight">
-              One workflow, separate pages
+              A creator workflow, not another idea list.
             </h2>
             <p className="mt-3 text-base leading-7 text-muted-foreground">
-              The landing page stays simple. The actual product functions live
-              where creators expect them.
+              The landing page points to one simple loop: scan the account,
+              decide what to create, then manage the content work from the same
+              product.
             </p>
           </div>
+
           <div className="grid gap-4 md:grid-cols-3">
             {workflow.map((item) => (
-              <Card key={item.title} className="creator-card">
-                <CardHeader>
-                  <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <item.icon className="size-5" />
-                  </span>
-                  <CardTitle>{item.title}</CardTitle>
-                  <CardDescription>{item.body}</CardDescription>
-                </CardHeader>
-              </Card>
+              <div
+                key={item.title}
+                className="rounded-xl border border-border bg-background p-5"
+              >
+                <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <item.icon className="size-5" />
+                </span>
+                <h3 className="mt-4 text-base font-semibold text-foreground">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {item.body}
+                </p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6">
-        <Card className="creator-studio-panel">
-          <CardHeader className="mx-auto max-w-2xl items-center text-center">
-            <Zap className="size-8 text-primary" />
-            <CardTitle className="text-2xl sm:text-3xl">
-              Start with one trend analysis
-            </CardTitle>
-            <CardDescription>
-              The main product experience is the analysis page: enter a niche,
-              run the scan, and review the organic video idea cards.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Button asChild size="lg" className="creator-cta">
-              <Link href="/analyze">
-                Open trend analyze
+      <section className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-3xl font-semibold tracking-tight">
+              Everything a creator manager needs.
+            </h2>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
+              Start with the Manager, then use the rest of the toolkit when you
+              need deeper research, planning, monitoring, or performance
+              context.
+            </p>
+          </div>
+          <Link
+            href="/manager"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-primary"
+          >
+            Start with Manager
+            <ArrowRight className="size-4" />
+          </Link>
+        </div>
+
+        <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {toolkit.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "group rounded-xl border p-5 transition hover:-translate-y-1 hover:shadow-lg",
+                  item.featured
+                    ? "border-[#f3c9bb] bg-[#fff7f2]"
+                    : "border-border bg-white",
+                )}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <span
+                    className={cn(
+                      "flex size-11 items-center justify-center rounded-lg",
+                      item.featured
+                        ? "bg-[#141a23] text-white"
+                        : "bg-primary/10 text-primary",
+                    )}
+                  >
+                    <Icon className="size-5" />
+                  </span>
+                  <ArrowRight className="size-4 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
+                </div>
+                <h3 className="mt-4 text-base font-semibold text-foreground">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {item.body}
+                </p>
+                <p className="mt-4 text-sm font-semibold text-primary">
+                  {item.cta}
+                </p>
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="mt-8 rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+          <div className="grid gap-5 lg:grid-cols-[auto_1fr_auto] lg:items-center">
+            <span className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <BarChart3 className="size-6" />
+            </span>
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">
+                Built around the account, not generic prompts.
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                The manager connects niche detection, trend research, post
+                ideas, daily tasks, saved scripts, publishing plans, alerts, and
+                analytics into one creator operating system.
+              </p>
+            </div>
+            <Button asChild className="creator-cta">
+              <Link href="/manager">
+                Get my plan
                 <ArrowRight data-icon="inline-end" />
               </Link>
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </section>
 
       <MarketingFooter guideLinks={footerLinks} />

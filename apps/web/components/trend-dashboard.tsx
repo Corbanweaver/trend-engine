@@ -8,6 +8,7 @@ import {
   ChevronRight,
   ExternalLink,
   HelpCircle,
+  LayoutDashboard,
   Loader2,
   LogOut,
   Music2,
@@ -48,6 +49,7 @@ import {
   getRemainingCredits,
   shouldResetMonthlyUsage,
 } from "@/lib/credits";
+import type { CreatorManagerPlan } from "@/lib/creator-manager";
 import { NICHE_OPTIONS } from "@/lib/niches";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getVideoIdeaThumbnailUrls } from "@/lib/trend-ideas-types";
@@ -124,6 +126,7 @@ type HandleNicheApiResponse = {
   sourceCount?: number;
   error?: string;
   upgradeUrl?: string;
+  managerPlan?: CreatorManagerPlan;
 };
 
 const checkoutConversionValues: Record<string, number> = {
@@ -1628,6 +1631,7 @@ export function TrendDashboard() {
     subscriptionLoading ||
     !effectiveNiche.trim();
   const dashboardNavItems: DashboardNavItem[] = [
+    { href: "/manager", label: "Manager", icon: LayoutDashboard },
     { href: "/dashboard", label: "Create", icon: Sparkles, active: true },
     { href: "/saved", label: "Saved", icon: Bookmark },
     { href: "/calendar", label: "Calendar", icon: Calendar },
@@ -2113,29 +2117,52 @@ export function TrendDashboard() {
                     we&apos;ll suggest the niche to scan first.
                   </p>
                   {handleLookupResult?.niche ? (
-                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <span className="rounded-full bg-white/80 px-2.5 py-1 font-semibold text-foreground">
-                        {handleLookupResult.nicheLabel ??
-                          getNicheDisplayLabel(handleLookupResult.niche)}
-                      </span>
-                      {handleLookupResult.platform ? (
-                        <span className="rounded-full bg-white/70 px-2.5 py-1">
-                          {handleLookupResult.platform}
+                    <div className="mt-3 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span className="rounded-full bg-white/80 px-2.5 py-1 font-semibold text-foreground">
+                          {handleLookupResult.nicheLabel ??
+                            getNicheDisplayLabel(handleLookupResult.niche)}
                         </span>
+                        {handleLookupResult.platform ? (
+                          <span className="rounded-full bg-white/70 px-2.5 py-1">
+                            {handleLookupResult.platform}
+                          </span>
+                        ) : null}
+                        {handleLookupResult.confidence ? (
+                          <span className="rounded-full bg-white/70 px-2.5 py-1 capitalize">
+                            {handleLookupResult.confidence} confidence
+                          </span>
+                        ) : null}
+                        {(handleLookupResult.signals ?? [])
+                          .slice(0, 3)
+                          .map((s) => (
+                            <span
+                              key={s}
+                              className="rounded-full bg-white/60 px-2.5 py-1"
+                            >
+                              {s}
+                            </span>
+                          ))}
+                      </div>
+                      {handleLookupResult.managerPlan?.postQueue.length ? (
+                        <div className="grid gap-2 text-xs sm:grid-cols-2">
+                          {handleLookupResult.managerPlan.postQueue
+                            .slice(0, 2)
+                            .map((post) => (
+                              <div
+                                key={post.title}
+                                className="rounded-xl border border-border bg-white/70 p-3"
+                              >
+                                <p className="font-semibold text-foreground">
+                                  {post.title}
+                                </p>
+                                <p className="mt-1 line-clamp-2 text-muted-foreground">
+                                  {post.action}
+                                </p>
+                              </div>
+                            ))}
+                        </div>
                       ) : null}
-                      {handleLookupResult.confidence ? (
-                        <span className="rounded-full bg-white/70 px-2.5 py-1 capitalize">
-                          {handleLookupResult.confidence} confidence
-                        </span>
-                      ) : null}
-                      {(handleLookupResult.signals ?? []).slice(0, 3).map((s) => (
-                        <span
-                          key={s}
-                          className="rounded-full bg-white/60 px-2.5 py-1"
-                        >
-                          {s}
-                        </span>
-                      ))}
                     </div>
                   ) : null}
                 </div>
@@ -2737,9 +2764,16 @@ export function TrendDashboard() {
         <div
           className={cn(
             "mx-auto grid h-12 w-full max-w-lg items-center",
-            isAdmin ? "grid-cols-7" : "grid-cols-6",
+            isAdmin ? "grid-cols-8" : "grid-cols-7",
           )}
         >
+          <Link
+            href="/manager"
+            className="flex h-12 min-w-0 flex-col items-center justify-center text-[11px] text-muted-foreground"
+          >
+            <LayoutDashboard className="mb-1 size-4" />
+            Manager
+          </Link>
           <Link
             href="/dashboard"
             className="flex h-12 min-w-0 flex-col items-center justify-center text-[11px] text-primary"

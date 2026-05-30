@@ -89,6 +89,8 @@ const privatePageSources = [
   "/calendar/:path*",
   "/dashboard",
   "/dashboard/:path*",
+  "/manager",
+  "/manager/:path*",
   "/forgot-password",
   "/login",
   "/pricing",

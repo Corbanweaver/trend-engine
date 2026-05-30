@@ -37,6 +37,7 @@ export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const isProtectedRoute =
     pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/manager") ||
     pathname.startsWith("/saved") ||
     pathname.startsWith("/calendar") ||
     pathname.startsWith("/alerts") ||
@@ -73,6 +74,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/manager/:path*",
     "/saved/:path*",
     "/calendar/:path*",
     "/alerts",

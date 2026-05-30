@@ -19,6 +19,7 @@ type MarketingFooterProps = {
 };
 
 const navItems = [
+  { label: "Creator Manager", href: "/manager" },
   { label: "Analyze", href: "/analyze" },
   { label: "Trends", href: "/trending" },
   { label: "Pricing", href: "/pricing" },
@@ -47,8 +48,8 @@ export function MarketingLogo() {
 
 export function MarketingHeader({
   currentPath,
-  ctaHref = "/analyze",
-  ctaLabel = "Analyze trends",
+  ctaHref = "/manager",
+  ctaLabel = "Get my plan",
   className,
 }: MarketingHeaderProps) {
   return (
@@ -98,14 +99,20 @@ export function MarketingFooter({ guideLinks }: MarketingFooterProps) {
         <div className="max-w-sm">
           <MarketingLogo />
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Trend analysis, organic video idea cards, and source-backed creator
-            planning for people who need to film while the window is open.
+            Type a creator handle, find the niche, get specific post ideas and
+            actions, then manage trends, saved ideas, calendars, alerts, and
+            analytics in one place.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3">
           <div>
             <p className="font-semibold text-foreground">Product</p>
             <ul className="mt-4 flex flex-col gap-2 text-muted-foreground">
+              <li>
+                <Link href="/manager" className="hover:text-foreground">
+                  Creator manager
+                </Link>
+              </li>
               <li>
                 <Link href="/analyze" className="hover:text-foreground">
                   Analyze

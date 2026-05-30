@@ -5,7 +5,14 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/dashboard", "/profile", "/saved", "/calendar", "/analytics"],
+      disallow: [
+        "/dashboard",
+        "/manager",
+        "/profile",
+        "/saved",
+        "/calendar",
+        "/analytics",
+      ],
     },
     sitemap: "https://www.contentideamaker.com/sitemap.xml",
   };

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getBackendHeaders, getBackendUrl } from "@/lib/server-api";
+import { buildCreatorManagerPlan } from "@/lib/creator-manager";
 import { recordOperationalEvent } from "@/lib/server-events";
 import {
   checkRateLimits,
@@ -556,14 +557,29 @@ export async function POST(request: Request) {
   }
 
   const suggestion = inferNiche(profile, searchResults);
+  const confidence =
+    suggestion.confidence === "high" ||
+    suggestion.confidence === "medium" ||
+    suggestion.confidence === "low"
+      ? suggestion.confidence
+      : undefined;
+  const managerPlan = buildCreatorManagerPlan({
+    handle: profile.displayHandle,
+    platform: profile.platform,
+    niche: suggestion.niche,
+    nicheLabel: suggestion.label,
+    confidence,
+  });
+
   return NextResponse.json({
     handle: profile.displayHandle,
     platform: profile.platform,
     niche: suggestion.niche,
     nicheLabel: suggestion.label,
-    confidence: suggestion.confidence,
+    confidence,
     signals: suggestion.signals,
     reasoning: suggestion.reasoning,
     sourceCount: searchResults.length,
+    managerPlan,
   });
 }

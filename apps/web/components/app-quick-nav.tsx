@@ -7,6 +7,7 @@ import {
   Bell,
   Bookmark,
   CalendarDays,
+  LayoutDashboard,
   Sparkles,
   UserRound,
 } from "lucide-react";
@@ -15,6 +16,7 @@ import { FloatingAiAssistant } from "@/components/floating-ai-assistant";
 import { cn } from "@/lib/utils";
 
 const appLinks = [
+  { href: "/manager", label: "Manager", icon: LayoutDashboard, key: "manager" },
   { href: "/dashboard", label: "Create", icon: Sparkles, key: "dashboard" },
   { href: "/saved", label: "Saved", icon: Bookmark, key: "saved" },
   { href: "/calendar", label: "Calendar", icon: CalendarDays, key: "calendar" },
