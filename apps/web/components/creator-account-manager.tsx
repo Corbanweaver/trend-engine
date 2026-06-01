@@ -299,14 +299,31 @@ export function CreatorAccountManager() {
         <div className="flex flex-col gap-5">
           <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                 Creator Manager
               </h1>
-              <p className="mt-1 max-w-3xl break-words text-sm leading-6 text-muted-foreground">
-                Scan a public Instagram or TikTok account, detect the creator
-                niche, then turn it into what to post, what to improve, and what
-                to schedule next.
+              <p className="mt-2 max-w-2xl break-words text-sm leading-6 text-muted-foreground">
+                A full content manager for creators. Scan a public Instagram or
+                TikTok account and run your whole posting workflow in one place.
               </p>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {[
+                  { icon: Compass, label: "Niche detection" },
+                  { icon: Sparkles, label: "Post ideas & hooks" },
+                  { icon: LayoutList, label: "Daily task list" },
+                  { icon: CalendarDays, label: "Content calendar" },
+                  { icon: Bookmark, label: "Saved ideas & scripts" },
+                  { icon: Bell, label: "Trend alerts & analytics" },
+                ].map((feature) => (
+                  <li
+                    key={feature.label}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/70 px-3 py-1 text-xs font-medium text-muted-foreground"
+                  >
+                    <feature.icon className="size-3.5 text-primary" />
+                    {feature.label}
+                  </li>
+                ))}
+              </ul>
             </div>
             <Button asChild className="creator-cta w-full sm:w-auto">
               <Link href="/analyze">
@@ -384,24 +401,7 @@ export function CreatorAccountManager() {
             </Button>
           </form>
 
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <input
-                type="text"
-                value={manualNiche}
-                onChange={(event) => setManualNiche(event.target.value)}
-                placeholder="Manual niche fallback"
-                className="h-11 w-full rounded-xl border border-border bg-white/80 px-4 text-sm font-semibold text-foreground outline-none focus:ring-2 focus:ring-primary/30 sm:max-w-xs"
-              />
-              <button
-                type="button"
-                onClick={buildManualPlan}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-white/80 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-white"
-              >
-                Build manual plan
-                <ChevronRight className="size-4" />
-              </button>
-            </div>
+          <div className="space-y-3">
             {message ? (
               <div
                 className={cn(
@@ -423,6 +423,28 @@ export function CreatorAccountManager() {
                 ) : null}
               </div>
             ) : null}
+            <details className="group">
+              <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground [&::-webkit-details-marker]:hidden">
+                <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
+                Enter a niche manually instead
+              </summary>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="text"
+                  value={manualNiche}
+                  onChange={(event) => setManualNiche(event.target.value)}
+                  placeholder="e.g. fitness, real estate, skincare"
+                  className="h-11 w-full rounded-xl border border-border bg-white/80 px-4 text-sm font-semibold text-foreground outline-none focus:ring-2 focus:ring-primary/30 sm:max-w-xs"
+                />
+                <button
+                  type="button"
+                  onClick={buildManualPlan}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-white/80 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-white"
+                >
+                  Build manual plan
+                </button>
+              </div>
+            </details>
           </div>
         </div>
       </section>

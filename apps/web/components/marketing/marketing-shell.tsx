@@ -55,13 +55,13 @@ export function MarketingHeader({
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:px-6",
+        "sticky top-0 z-30 border-b border-border bg-background/80 px-4 py-4 backdrop-blur sm:px-6",
         className,
       )}
     >
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
         <MarketingLogo />
-        <nav className="hidden items-center gap-6 text-sm md:flex">
+        <nav className="hidden items-center gap-8 text-sm md:flex">
           {navItems.map((item) => {
             const active = currentPath === item.href;
             return (
@@ -171,7 +171,7 @@ export function MarketingFooter({ guideLinks }: MarketingFooterProps) {
           <div>
             <p className="font-semibold text-foreground">Guides</p>
             <ul className="mt-4 flex flex-col gap-2 text-muted-foreground">
-              {guides.slice(0, 7).map((link) => (
+              {guides.slice(0, 4).map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="hover:text-foreground">
                     {link.title}

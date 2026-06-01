@@ -102,7 +102,9 @@
   h1,
   h2,
   h3 {
-    letter-spacing: 0;
+    font-family: var(--font-display), var(--font-geist-sans), system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -223,23 +225,22 @@
     will-change: transform;
   }
   .creator-cta {
-    background: linear-gradient(110deg, #244f6a, #1f7a8c, #e45d7d, #244f6a);
-    background-size: 240% 240%;
-    background-position: 0% 50%;
-    box-shadow: 0 14px 34px rgb(36 79 106 / 18%);
+    background: linear-gradient(110deg, #244f6a, #1f7a8c);
+    box-shadow: 0 12px 28px rgb(36 79 106 / 18%);
     transition:
       transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
-      background-position 360ms cubic-bezier(0.22, 1, 0.36, 1);
+      filter 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   .creator-cta:hover {
-    background-position: 100% 50%;
     transform: translateY(-2px);
+    filter: brightness(1.06);
     box-shadow: 0 18px 40px rgb(36 79 106 / 22%);
   }
   .creator-cta:disabled,
   .creator-cta[aria-disabled="true"] {
     transform: none;
+    filter: none;
     box-shadow: 0 10px 24px rgb(36 79 106 / 14%);
   }
   .creator-outline-cta {
@@ -425,4 +426,290 @@
   .how-step-icon-pop {
     animation: how-icon-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
+
+  /* Consistent premium elevation scale (stacked, soft) */
+  .shadow-soft {
+    box-shadow:
+      0 1px 2px rgb(24 32 42 / 4%),
+      0 8px 24px -12px rgb(24 32 42 / 10%);
+  }
+  .shadow-soft-lg {
+    box-shadow:
+      0 2px 4px rgb(24 32 42 / 5%),
+      0 18px 44px -16px rgb(24 32 42 / 14%);
+  }
+  /* Tabular figures for any numeric UI */
+  .nums {
+    font-feature-settings: "tnum" 1;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ── Creator Bold theme ─────────────────────────────────────────────
+   One electric accent on a high-contrast dark hero, oversized type,
+   punchy load motion. The signature color is used sparingly. ──────── */
+:root {
+  /* TikTok × Instagram palette */
+  --tt-pink: #fe2c55; /* TikTok red/pink — primary accent */
+  --tt-cyan: #25f4ee; /* TikTok cyan — secondary pop */
+  --electric: var(--tt-pink);
+  --ig-gradient: linear-gradient(
+    120deg,
+    #feda75 0%,
+    #fa7e1e 20%,
+    #d62976 48%,
+    #962fbf 74%,
+    #4f5bd5 100%
+  );
+}
+
+.text-electric {
+  color: var(--electric);
+}
+.text-tt-cyan {
+  color: var(--tt-cyan);
+}
+.bg-electric {
+  background-color: var(--electric);
+}
+.border-electric {
+  border-color: var(--electric);
+}
+/* Instagram signature gradient — used on a single accent word */
+.text-ig-gradient {
+  background-image: var(--ig-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.bg-ig-gradient {
+  background-image: var(--ig-gradient);
+}
+
+/* High-contrast near-black hero: TikTok cyan + pink glow on black */
+.hero-dark {
+  position: relative;
+  background:
+    radial-gradient(100% 120% at 90% -20%, rgba(254, 44, 85, 0.24), transparent 55%),
+    radial-gradient(92% 115% at 4% -12%, rgba(37, 244, 238, 0.16), transparent 52%),
+    linear-gradient(180deg, #0c0c11 0%, #08080b 100%);
+  color: #f6f7f8;
+}
+.hero-dark ::selection {
+  background: rgba(254, 44, 85, 0.35);
+  color: #fff;
+}
+
+/* Punchy entrance motion (no JS; respects reduced-motion globally) */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.rise-in {
+  opacity: 0;
+  animation: rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Creator glass theme (dark, premium, poppy) ──────────────────────
+   Flips the token system to a dark base, frosts every surface into
+   glass, and lets the blob field glow through. ─────────────────────── */
+.theme-creator {
+  --background: #09090e;
+  --foreground: #f3f4f8;
+  --card: rgba(255, 255, 255, 0.07);
+  --card-foreground: #f3f4f8;
+  --popover: #14141d;
+  --popover-foreground: #f3f4f8;
+  --secondary: rgba(255, 255, 255, 0.09);
+  --secondary-foreground: #f3f4f8;
+  --muted: rgba(255, 255, 255, 0.07);
+  --muted-foreground: #a7adc0;
+  --accent: rgba(255, 255, 255, 0.1);
+  --accent-foreground: #f3f4f8;
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.16);
+  --ring: var(--tt-cyan);
+  /* Bright, readable accent on dark (was dark teal = unreadable) */
+  --primary: #ff6585;
+  --primary-foreground: #0b0b10;
+  background-color: #09090e;
+  color: var(--foreground);
+}
+/* Fixed dark base so the blob field + content layer cleanly site-wide */
+.theme-creator::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 82% -12%, rgba(254, 44, 85, 0.1), transparent 55%),
+    radial-gradient(100% 90% at 4% 112%, rgba(37, 244, 238, 0.08), transparent 55%),
+    #09090e;
+}
+/* Let the dark base + blobs show through existing page backgrounds */
+.theme-creator .creator-page,
+.theme-creator .creator-app-page {
+  background: transparent !important;
+}
+
+/* Frost the hardcoded light + dark surfaces into glass */
+.theme-creator :is(.bg-white, .bg-card, .bg-background, .bg-muted),
+.theme-creator [class*="#f7f8f5"],
+.theme-creator [class*="#fff7f2"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 18px 48px -22px rgba(0, 0, 0, 0.7);
+}
+.theme-creator [class*="#141a23"] {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.theme-creator :is(.border-border, .border-primary, .border-input) {
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+/* Convert the light gradient app panels/cards to glass for a constant theme */
+.theme-creator :is(
+    .creator-card,
+    .creator-card-coral,
+    .creator-card-cyan,
+    .creator-card-gold,
+    .creator-card-lime,
+    .creator-wave-card,
+    .creator-wave-coral,
+    .creator-wave-gold,
+    .creator-wave-cyan,
+    .creator-studio-panel,
+    .creator-idea-maker-panel,
+    .creator-app-surface,
+    .creator-brief-panel,
+    .creator-chart-panel,
+    .creator-dashboard-shell,
+    .creator-topbar,
+    .creator-mobile-taskbar,
+    .creator-row-highlight
+  ) {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 18px 48px -22px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Gradient buttons / logo keep white text (they have coloured fills, so the
+   dark primary-foreground would be unreadable on them). */
+.theme-creator :is(.creator-cta, .creator-sidebar-active) {
+  color: #fff !important;
+}
+.theme-creator :is(.creator-cta, .creator-sidebar-active) :is(svg, span) {
+  color: #fff !important;
+}
+
+/* Readability safety net — force hardcoded dark text to the light foreground.
+   (Coloured pills like amber/emerald keep their own dark-on-light text.) */
+.theme-creator :is(
+    [class*="text-[#141a23]"],
+    [class*="text-[#1c"],
+    [class*="text-[#17"],
+    [class*="text-[#0"],
+    .text-slate-900,
+    .text-slate-800,
+    .text-slate-700,
+    .text-gray-900,
+    .text-gray-800,
+    .text-gray-700,
+    .text-zinc-900,
+    .text-zinc-800,
+    .text-neutral-900,
+    .text-neutral-800,
+    .text-black
+  ) {
+  color: var(--foreground) !important;
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .theme-creator :is(.bg-white, .bg-card, .bg-background, .bg-muted, .glass),
+  .theme-creator [class*="#f7f8f5"],
+  .theme-creator [class*="#fff7f2"],
+  .theme-creator [class*="#141a23"],
+  .theme-creator :is(.creator-card, .creator-wave-card, .creator-studio-panel, .creator-idea-maker-panel, .creator-app-surface, .creator-brief-panel, .creator-chart-panel, .creator-dashboard-shell, .creator-topbar, .creator-mobile-taskbar),
+  .theme-creator header {
+    -webkit-backdrop-filter: blur(18px) saturate(155%);
+    backdrop-filter: blur(18px) saturate(155%);
+  }
+}
+
+/* ── Interactive gradient blob field ─────────────────────────────── */
+.blob-field {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0.6;
+  translate: var(--bx, 0px) var(--by, 0px);
+  transition: translate 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, translate;
+}
+.blob-1 {
+  --p: 55;
+  width: 46vw;
+  height: 46vw;
+  left: -8vw;
+  top: -6vw;
+  background: radial-gradient(circle at 35% 35%, #fe2c55, #d62976 55%, transparent 72%);
+  animation: blob-drift-a 19s ease-in-out infinite;
+}
+.blob-2 {
+  --p: 30;
+  width: 40vw;
+  height: 40vw;
+  right: -6vw;
+  top: -4vw;
+  background: radial-gradient(circle at 60% 40%, #25f4ee, #4f5bd5 60%, transparent 74%);
+  animation: blob-drift-b 23s ease-in-out infinite;
+}
+.blob-3 {
+  --p: 42;
+  width: 38vw;
+  height: 38vw;
+  left: 18vw;
+  bottom: -12vw;
+  background: radial-gradient(circle at 50% 50%, #962fbf, #fa7e1e 70%, transparent 78%);
+  animation: blob-drift-a 26s ease-in-out infinite reverse;
+}
+.blob-4 {
+  --p: 22;
+  width: 30vw;
+  height: 30vw;
+  right: 14vw;
+  bottom: -10vw;
+  background: radial-gradient(circle at 50% 50%, #feda75, #fa7e1e 65%, transparent 78%);
+  opacity: 0.45;
+  animation: blob-drift-b 21s ease-in-out infinite reverse;
+}
+@keyframes blob-drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(5%, -4%) scale(1.09); }
+}
+@keyframes blob-drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-4%, 5%) scale(1.07); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .blob { animation: none !important; transition: none !important; }
 }

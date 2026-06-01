@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Tilt } from "@/components/creator/tilt";
 import { buildCreatorManagerPlan } from "@/lib/creator-manager";
 import { cn } from "@/lib/utils";
 
@@ -95,11 +96,11 @@ export function HandleScanHero() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-5 lg:grid-cols-[1fr_0.62fr]">
-        <div className="self-start rounded-2xl border border-border bg-[#f7f8f5] p-4 shadow-sm sm:p-5">
-          <form onSubmit={submitHandle} className="space-y-4">
+      <div className="grid gap-7 lg:grid-cols-[1fr_0.62fr]">
+        <div className="self-start rounded-2xl border border-border bg-[#f7f8f5] p-6 shadow-sm sm:p-7">
+          <form onSubmit={submitHandle} className="space-y-5">
             <div
-              className="grid grid-cols-2 overflow-hidden rounded-lg border border-border bg-white p-1"
+              className="grid grid-cols-2 gap-1 overflow-hidden rounded-xl border border-border bg-white p-1.5"
               role="group"
               aria-label="Creator platform"
             >
@@ -115,7 +116,7 @@ export function HandleScanHero() {
                       setError(null);
                     }}
                     className={cn(
-                      "inline-flex h-11 items-center justify-center gap-2 rounded-md text-sm font-semibold transition-colors",
+                      "inline-flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors",
                       active
                         ? "bg-[#141a23] text-white shadow-sm"
                         : "text-muted-foreground hover:text-foreground",
@@ -143,7 +144,7 @@ export function HandleScanHero() {
                     setError(null);
                   }}
                   placeholder="@username or profile URL"
-                  className="h-12 w-full rounded-xl border border-border bg-white py-0 pl-11 pr-4 text-sm font-semibold text-foreground outline-none placeholder:font-medium placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/35"
+                  className="h-[3.25rem] w-full rounded-xl border border-border bg-white py-0 pl-11 pr-4 text-sm font-semibold text-foreground outline-none placeholder:font-medium placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/35"
                   autoComplete="off"
                 />
               </span>
@@ -155,8 +156,8 @@ export function HandleScanHero() {
               </p>
             ) : null}
 
-            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-              <Button type="submit" size="lg" className="creator-cta h-12">
+            <div className="grid gap-3.5 pt-1 sm:grid-cols-[1fr_auto]">
+              <Button type="submit" size="lg" className="creator-cta h-[3.25rem] text-base">
                 <Search className="size-4" />
                 Get my plan
               </Button>
@@ -164,7 +165,7 @@ export function HandleScanHero() {
                 type="button"
                 size="lg"
                 variant="outline"
-                className="creator-outline-cta h-12 bg-white lg:hidden"
+                className="creator-outline-cta h-[3.25rem] bg-white text-base lg:hidden"
                 onClick={() => setShowSample((current) => !current)}
               >
                 <Sparkles className="size-4" />
@@ -173,7 +174,7 @@ export function HandleScanHero() {
             </div>
           </form>
 
-          <div className="mt-4 grid gap-2 text-sm text-muted-foreground">
+          <div className="mt-6 grid gap-3 text-sm text-muted-foreground">
             <span className="flex items-center gap-2">
               <CheckCircle2 className="size-4 text-primary" />
               Detect the account niche
@@ -185,8 +186,19 @@ export function HandleScanHero() {
           </div>
         </div>
 
-        <div className="hidden gap-3 lg:grid">
-          <div className="rounded-xl bg-[#141a23] p-4 text-white shadow-sm">
+        <Tilt className="hidden lg:block">
+          <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-soft-lg">
+            <div className="flex items-center justify-between border-b border-border bg-[#f7f8f5] px-4 py-2.5">
+              <span className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                <span className="size-2 rounded-full bg-emerald-500" />
+                Creator Manager
+              </span>
+              <span className="font-[family-name:var(--font-geist-mono)] text-xs text-muted-foreground">
+                @fitfuelbyalex · Fitness
+              </span>
+            </div>
+            <div className="grid gap-4 p-4">
+          <div className="rounded-xl bg-[#141a23] p-5 text-white shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase text-white/60">
@@ -196,7 +208,7 @@ export function HandleScanHero() {
                   {samplePlan.postQueue[0]?.title}
                 </h2>
               </div>
-              <span className="rounded-full bg-white/12 px-3 py-1 text-xs font-bold">
+              <span className="rounded-full bg-white/12 px-3 py-1 text-xs font-bold tabular-nums">
                 Score {samplePlan.postQueue[0]?.score}
               </span>
             </div>
@@ -206,7 +218,7 @@ export function HandleScanHero() {
           </div>
 
           <div className="grid gap-3">
-            <div className="rounded-xl border border-border bg-white p-4">
+            <div className="rounded-xl border border-border bg-white p-5">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-foreground">
                   Do today
@@ -225,7 +237,7 @@ export function HandleScanHero() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-border bg-white p-4">
+            <div className="rounded-xl border border-border bg-white p-5">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-foreground">
                   Calendar
@@ -260,7 +272,9 @@ export function HandleScanHero() {
               <ArrowRight data-icon="inline-end" />
             </Link>
           </Button>
-        </div>
+            </div>
+          </div>
+        </Tilt>
       </div>
 
       {showSample ? (

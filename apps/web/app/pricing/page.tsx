@@ -5,11 +5,8 @@ import {
   BadgeCheck,
   Check,
   CreditCard,
-  FileText,
-  LineChart,
   LockKeyhole,
   ShieldCheck,
-  Timer,
   TrendingUp,
 } from "lucide-react";
 
@@ -93,24 +90,6 @@ const plans = [
     ctaVariant: "outline" as const,
   },
 ];
-
-const buyerSignals = [
-  {
-    icon: LineChart,
-    title: "Pay for clearer posting windows",
-    body: "Each scan ranks wave score, platform fit, and saturation risk so you can post before a topic cools off.",
-  },
-  {
-    icon: FileText,
-    title: "Package the winners fast",
-    body: "Turn a promising wave into organic video hooks, shot lists, captions, hashtags, and planning notes.",
-  },
-  {
-    icon: Timer,
-    title: "Keep creator research organized",
-    body: "Save source links, proof points, organic video packs, and calendar notes together.",
-  },
-] as const;
 
 const creditExamples = [
   {
@@ -388,21 +367,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           ))}
         </div>
 
-        <section className="mx-auto mt-12 grid max-w-5xl gap-4 lg:grid-cols-3">
-          {buyerSignals.map((item) => (
-            <div key={item.title} className="creator-card rounded-lg border border-border bg-card p-5 shadow-sm">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <item.icon className="size-5" />
-              </div>
-              <h2 className="mt-4 text-base font-bold">{item.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {item.body}
-              </p>
-            </div>
-          ))}
-        </section>
-
-        <section className="creator-studio-panel mx-auto mt-10 max-w-5xl rounded-xl border border-border p-6 shadow-sm sm:p-8">
+        <section className="creator-studio-panel mx-auto mt-12 max-w-5xl rounded-xl border border-border p-6 shadow-sm sm:p-8">
           <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
             <div>
               <h2 className="text-2xl font-extrabold">

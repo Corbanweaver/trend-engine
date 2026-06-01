@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 import { AffiliateAttributionCapture } from "@/components/analytics/affiliate-attribution-capture";
 import { GoogleAdsTag } from "@/components/analytics/google-ads-tag";
 import { PwaRegistration } from "@/components/pwa-registration";
+import { BlobField } from "@/components/creator/blob-field";
 
 import "./globals.css";
 
@@ -16,6 +17,13 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-geist-mono",
+});
+
+// Display font for headings — editorial, warm, distinctive
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -135,8 +143,9 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${geistSans.className}`}
+        className={`theme-creator ${geistSans.variable} ${geistMono.variable} ${bricolage.variable} ${geistSans.className}`}
       >
+        <BlobField />
         {children}
         <AffiliateAttributionCapture />
         <GoogleAdsTag />
