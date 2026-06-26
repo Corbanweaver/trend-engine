@@ -2,21 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
-  Bookmark,
-  CalendarDays,
   Check,
-  CreditCard,
   Film,
-  ListChecks,
-  Play,
   Search,
-  ShieldCheck,
   Sparkles,
-  WandSparkles,
 } from "lucide-react";
 
 import { ConversionEventTracker } from "@/components/analytics/conversion-event-tracker";
-import { EmailWaitlistForm } from "@/components/email-waitlist-form";
 import { CreatorCheckoutForm } from "@/components/landing/creator-checkout-form";
 import { MobileInstallButton } from "@/components/landing/mobile-install-button";
 import { ConversionLink } from "@/components/seo/conversion-link";
@@ -56,29 +48,6 @@ const productOutputs = [
   "Short scripts and talking points",
   "Hashtags and source links",
   "Saved ideas and content calendar",
-] as const;
-
-const simpleProof = [
-  {
-    icon: Play,
-    title: "Post faster",
-    body: "Stop staring at a blank screen. Start with a ready idea.",
-  },
-  {
-    icon: Bookmark,
-    title: "Keep the good ideas",
-    body: "Save winners so you can come back when it is time to film.",
-  },
-  {
-    icon: CalendarDays,
-    title: "Plan the week",
-    body: "Move ideas into a simple calendar instead of rebuilding your plan every day.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Stay in control",
-    body: "Credits keep heavy AI and trend scans fair, predictable, and harder to abuse.",
-  },
 ] as const;
 
 const faqItems = [
@@ -208,12 +177,7 @@ export default function Home() {
       <Header />
 
       <section className="mx-auto flex w-full max-w-[100vw] flex-col items-center justify-center overflow-hidden px-4 pb-12 pt-10 text-center sm:max-w-6xl sm:px-6 sm:pb-16 sm:pt-16">
-        <p className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-primary dark:border-white/10 dark:bg-slate-950 dark:text-cyan-200">
-          <WandSparkles className="size-4" />
-          For content creators
-        </p>
-
-        <h1 className="mt-6 w-[calc(100vw_-_2rem)] max-w-4xl text-balance text-4xl font-extrabold leading-[1.06] tracking-tight sm:w-full sm:text-6xl">
+        <h1 className="w-[calc(100vw_-_2rem)] max-w-4xl text-balance text-4xl font-extrabold leading-[1.06] tracking-tight sm:w-full sm:text-6xl">
           Find trends. Turn them into posts.
         </h1>
 
@@ -223,7 +187,7 @@ export default function Home() {
           source links, and calendar notes.
         </p>
 
-        <div className="mt-7 grid w-[calc(100vw_-_2rem)] max-w-md gap-3 sm:w-full sm:max-w-none sm:grid-cols-[auto_auto_auto] sm:justify-center">
+        <div className="mt-7 grid w-[calc(100vw_-_2rem)] max-w-md gap-3 sm:w-full sm:max-w-none sm:grid-cols-[auto_auto] sm:justify-center">
           <ConversionLink
             href="/dashboard"
             event="landing_cta_clicked"
@@ -249,29 +213,7 @@ export default function Home() {
           >
             Try free ideas
           </ConversionLink>
-          <CreatorCheckoutForm
-            placement="home_hero_paid"
-            label="Start Creator"
-            className="w-full sm:w-auto"
-            buttonClassName="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/10 px-7 text-sm font-bold text-primary hover:bg-primary/15 dark:border-cyan-300/25 dark:bg-cyan-400/10 dark:text-cyan-100 dark:hover:bg-cyan-400/15"
-          />
         </div>
-
-        <p className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5">
-            <CreditCard className="size-4" />
-            Free preview
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <ShieldCheck className="size-4" />
-            Credit-protected usage
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <ListChecks className="size-4" />
-            Save and schedule ideas
-          </span>
-        </p>
-
       </section>
 
       <section
@@ -348,30 +290,6 @@ export default function Home() {
         <FreeResourceWidget kind="hooks" defaultTopic="fitness creators" />
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-        <SectionHeading
-          eyebrow="Creator workflow"
-          title="Built for making content"
-          body="Each feature supports the real job: finding an angle, filming it, and keeping your publishing plan organized."
-        />
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {simpleProof.map((item) => (
-            <article
-              key={item.title}
-              className="rounded-2xl border border-border bg-card p-5 dark:border-white/10 dark:bg-slate-950/70"
-            >
-              <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-cyan-400/10 dark:text-cyan-200">
-                <item.icon className="size-5" />
-              </span>
-              <h3 className="mt-4 text-base font-bold">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {item.body}
-              </p>
-            </article>
-          ))}
-        </div>
-      </section>
-
       <section className="border-y border-border bg-card/45 px-4 py-16 dark:border-white/10 dark:bg-slate-950/35 sm:px-6">
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-center">
           <div>
@@ -426,19 +344,6 @@ export default function Home() {
               </p>
             </details>
           ))}
-        </div>
-      </section>
-
-      <section className="mx-auto w-full max-w-4xl px-4 pb-16 sm:px-6">
-        <div className="rounded-3xl border border-border bg-card p-6 text-center dark:border-white/10 dark:bg-slate-950/70 sm:p-8">
-          <h2 className="text-2xl font-bold tracking-tight">
-            Get creator updates
-          </h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Join the list for product updates, new platform support, and useful
-            trend research notes.
-          </p>
-          <EmailWaitlistForm />
         </div>
       </section>
 
